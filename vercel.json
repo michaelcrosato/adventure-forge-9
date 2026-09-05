@@ -1,0 +1,14 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "npm run verify",
+  "outputDirectory": "public",
+  "functions": {
+    "api/index.ts": {
+      "includeFiles": "{src/engine/**,src/content/**,package.json,package-lock.json,tsconfig.json}"
+    }
+  },
+  "routes": [
+    { "src": "/(.*)", "dest": "/api/index.ts" }
+  ]
+}

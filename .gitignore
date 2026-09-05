@@ -7,3 +7,5 @@ coverage/
 playtest-runs/
 *.save.json
 *:Zone.Identifier
+.vercel/
+.vercel

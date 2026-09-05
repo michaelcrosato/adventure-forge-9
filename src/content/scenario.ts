@@ -98,7 +98,7 @@ export const FACT_LABELS = {
   "nessa-tools-borrowed": "Nessa Quill lent you one repair kit.",
   "tools-skipped": "You entered the road without repair tools.",
   "scouts-paid": "Canal scouts marked a path that all eight families can cross.",
-  "order-names-council": "The stolen order bears Tovan Rusk's seal.",
+  "order-names-council": "The stolen order is stamped with Tovan Rusk's mark.",
   "gate-forced": "The Red Sluice gate was forced open.",
   "shared-flow-repaired": "Red Sluice is set to share clean water.",
   "council-flow-controlled": "Red Sluice is under council control.",

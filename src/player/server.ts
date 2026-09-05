@@ -27,6 +27,9 @@ export interface PlayerServer extends Server {
   readonly sessionCount: () => number;
 }
 
+/** Vercel's Node adapter parses the request body before invoking a handler. */
+export type VercelRequest = IncomingMessage & { body?: unknown };
+
 interface Session {
   state: GameState;
 }
@@ -122,8 +125,34 @@ function sendText(response: ServerResponse, status: number, contentType: string,
   response.end(body);
 }
 
-async function readJson(request: IncomingMessage, maxBodyBytes: number): Promise<unknown> {
+async function readJson(request: VercelRequest, maxBodyBytes: number): Promise<unknown> {
   const contentType = String(request.headers["content-type"] ?? "").toLowerCase();
+  const declaredLength = Number(request.headers["content-length"] ?? "");
+  if (Number.isSafeInteger(declaredLength) && declaredLength > maxBodyBytes) {
+    throw new RequestError({ code: "request_too_large", message: "Request body is too large.", status: 413 });
+  }
+
+  // Vercel's Node runtime may expose a parsed body while the request stream
+  // has already been consumed. Validate its serialized size before using it.
+  if ("body" in request) {
+    if (request.body === undefined) {
+      if (contentType.length === 0 || contentType.startsWith("application/json")) return {};
+      throw new RequestError({ code: "invalid_request", message: "Use application/json for API requests.", status: 400 });
+    }
+    if (contentType.length > 0 && !contentType.startsWith("application/json")) {
+      throw new RequestError({ code: "invalid_request", message: "Use application/json for API requests.", status: 400 });
+    }
+    let serialized: string;
+    try {
+      serialized = JSON.stringify(request.body) ?? "";
+    } catch {
+      throw new RequestError({ code: "invalid_request", message: "Request JSON could not be read.", status: 400 });
+    }
+    if (Buffer.byteLength(serialized, "utf8") > maxBodyBytes) {
+      throw new RequestError({ code: "request_too_large", message: "Request body is too large.", status: 413 });
+    }
+    return request.body;
+  }
 
   const chunks: Buffer[] = [];
   let length = 0;
@@ -181,12 +210,39 @@ function lookup(sessions: Map<string, Session>, rawId: unknown): { id: string; s
   return { id, session };
 }
 
-function observationPayload(id: string, state: GameState): { sessionId: string; observation: Observation } {
-  return { sessionId: id, observation: publicObservation(observe(state)) };
+function optionalCheckpoint(value: unknown, maxLength: number): string | undefined {
+  if (value === undefined || value === null) return undefined;
+  return requiredString(value, "checkpoint", maxLength);
+}
+
+function lookupOrRestore(
+  sessions: Map<string, Session>,
+  rawId: unknown,
+  checkpoint: string | undefined,
+): { id: string; session: Session } {
+  const id = sessionId(rawId);
+  const existing = sessions.get(id);
+  if (existing) return { id, session: existing };
+  if (checkpoint === undefined) {
+    throw new RequestError({ code: "session_not_found", message: "That crossing session no longer exists.", status: 404 });
+  }
+  let state: GameState;
+  try {
+    state = restore(checkpoint);
+  } catch {
+    throw new RequestError({ code: "invalid_save", message: "That save cannot be loaded.", status: 400 });
+  }
+  const session = { state };
+  sessions.set(id, session);
+  return { id, session };
+}
+
+function observationPayload(id: string, state: GameState): { sessionId: string; observation: Observation; checkpoint: string } {
+  return { sessionId: id, observation: publicObservation(observe(state)), checkpoint: save(state) };
 }
 
 async function handleRequest(
-  request: IncomingMessage,
+  request: VercelRequest,
   response: ServerResponse,
   sessions: Map<string, Session>,
   maxBodyBytes: number,
@@ -253,8 +309,8 @@ async function handleRequest(
       if (method !== "POST") {
         throw new RequestError({ code: "method_not_allowed", message: "Use GET or POST to observe a crossing.", status: 405 });
       }
-      assertKeys(data, ["sessionId"]);
-      const found = lookup(sessions, idFromRoute ?? data.sessionId);
+      assertKeys(data, ["sessionId", "checkpoint"]);
+      const found = lookupOrRestore(sessions, idFromRoute ?? data.sessionId, optionalCheckpoint(data.checkpoint, maxBodyBytes));
       sendJson(response, 200, observationPayload(found.id, found.session.state));
       return;
     }
@@ -263,8 +319,8 @@ async function handleRequest(
       if (method !== "POST") {
         throw new RequestError({ code: "method_not_allowed", message: "Use POST to choose a bearing.", status: 405 });
       }
-      assertKeys(data, ["sessionId", "id", "expectedRevision"]);
-      const found = lookup(sessions, idFromRoute ?? data.sessionId);
+      assertKeys(data, ["sessionId", "checkpoint", "id", "expectedRevision"]);
+      const found = lookupOrRestore(sessions, idFromRoute ?? data.sessionId, optionalCheckpoint(data.checkpoint, maxBodyBytes));
       const choiceId = requiredString(data.id, "choice id", 128);
       const expectedRevision = requiredRevision(data.expectedRevision);
       try {
@@ -285,8 +341,8 @@ async function handleRequest(
       if (method !== "POST") {
         throw new RequestError({ code: "method_not_allowed", message: "Use POST to end a crossing.", status: 405 });
       }
-      assertKeys(data, ["sessionId", "expectedRevision"]);
-      const found = lookup(sessions, idFromRoute ?? data.sessionId);
+      assertKeys(data, ["sessionId", "checkpoint", "expectedRevision"]);
+      const found = lookupOrRestore(sessions, idFromRoute ?? data.sessionId, optionalCheckpoint(data.checkpoint, maxBodyBytes));
       const expectedRevision = requiredRevision(data.expectedRevision);
       try {
         found.session.state = end(found.session.state, expectedRevision);
@@ -306,9 +362,10 @@ async function handleRequest(
       if (method !== "POST") {
         throw new RequestError({ code: "method_not_allowed", message: "Use POST to export a save.", status: 405 });
       }
-      assertKeys(data, ["sessionId"]);
-      const found = lookup(sessions, idFromRoute ?? data.sessionId);
-      sendJson(response, 200, { sessionId: found.id, serialized: save(found.session.state) });
+      assertKeys(data, ["sessionId", "checkpoint"]);
+      const found = lookupOrRestore(sessions, idFromRoute ?? data.sessionId, optionalCheckpoint(data.checkpoint, maxBodyBytes));
+      const serialized = save(found.session.state);
+      sendJson(response, 200, { sessionId: found.id, serialized, checkpoint: serialized });
       return;
     }
 
@@ -339,6 +396,13 @@ async function handleRequest(
     sendJson(response, 500, { error: { code: "internal_error", message: "The crossing server could not complete that request." } });
   }
 }
+
+/** Stateless deployment entry: each request reconstructs its session from a checkpoint. */
+export async function handleVercelRequest(request: VercelRequest, response: ServerResponse): Promise<void> {
+  await handleRequest(request, response, new Map<string, Session>(), DEFAULT_MAX_BODY_BYTES);
+}
+
+export const vercelHandler = handleVercelRequest;
 
 export function createPlayerServer(options: PlayerServerOptions = {}): PlayerServer {
   const sessions = new Map<string, Session>();

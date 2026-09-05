@@ -93,14 +93,14 @@ export const PAGE_HTML = String.raw`<!doctype html>
               <button id="export-button" class="tool-button" type="button">Export ending</button>
             </div>
             <input id="load-input" type="file" accept=".save,.json,application/json,text/plain" hidden />
-            <p class="tool-caption">Keep a save file nearby if you want to return to this journey.</p>
+            <p class="tool-caption">Progress saves automatically in this browser. Download a save to keep a separate copy.</p>
           </section>
         </aside>
       </main>
 
       <footer class="site-footer">
-        <span>Local play · your browser holds the visible journal</span>
-        <span>Local expedition</span>
+        <span>Your progress stays in this browser</span>
+        <span>Veyra Basin</span>
       </footer>
     </div>
     <script src="/app.js"></script>
@@ -260,13 +260,16 @@ export const APP_JS = String.raw`(() => {
   'use strict';
 
   const SESSION_STORAGE_KEY = 'adventure-forge-session';
+  const CHECKPOINT_STORAGE_KEY = 'adventure-forge-checkpoint';
   const RECENT_LOG_LIMIT = 5;
   let sessionId = null;
+  let checkpoint = null;
   let observation = null;
   let journal = [];
   let logExpanded = false;
   let busy = false;
   let nextSeed = 1;
+  let storageUnavailable = false;
 
   const byId = (id) => document.getElementById(id);
   const statusDot = byId('status-dot');
@@ -294,7 +297,7 @@ export const APP_JS = String.raw`(() => {
   const loadInput = byId('load-input');
 
   function showNotice(message, kind) {
-    notice.textContent = message || '';
+    notice.textContent = (message || '') + (storageUnavailable ? ' Browser storage is unavailable; download a save before closing this page.' : '');
     notice.className = 'notice' + (kind ? ' ' + kind : '');
   }
 
@@ -335,6 +338,28 @@ export const APP_JS = String.raw`(() => {
     } catch (_) {
       // Storage can be disabled by the browser.
     }
+  }
+
+  function rememberCheckpoint(payload) {
+    if (typeof payload.checkpoint !== 'string' || typeof payload.sessionId !== 'string') return;
+    checkpoint = payload.checkpoint;
+    sessionId = payload.sessionId;
+    rememberSession(sessionId);
+    try {
+      localStorage.setItem(CHECKPOINT_STORAGE_KEY, JSON.stringify({ sessionId, checkpoint }));
+      storageUnavailable = false;
+    } catch (_) {
+      storageUnavailable = true;
+      showNotice('Browser storage is unavailable. Download a save before closing this page.', 'error');
+    }
+  }
+
+  function storedCheckpoint() {
+    try {
+      const value = JSON.parse(localStorage.getItem(CHECKPOINT_STORAGE_KEY) || 'null');
+      return value && typeof value.sessionId === 'string' && value.sessionId.length <= 128
+        && typeof value.checkpoint === 'string' ? value : null;
+    } catch (_) { return null; }
   }
 
   function publicJournal(values) {
@@ -477,6 +502,7 @@ export const APP_JS = String.raw`(() => {
     const response = await fetch(path, Object.assign({ headers: { 'content-type': 'application/json' } }, options || {}));
     let payload = null;
     try { payload = await response.json(); } catch (_) { payload = {}; }
+    rememberCheckpoint(payload);
     if (!response.ok) {
       const error = new Error((payload.error && payload.error.message) || 'The journey could not complete that request.');
       error.status = response.status;
@@ -508,7 +534,7 @@ export const APP_JS = String.raw`(() => {
   async function refresh() {
     if (!sessionId) return newJourney();
     try {
-      const payload = await request('/api/observe?sessionId=' + encodeURIComponent(sessionId), { method: 'GET', headers: {} });
+      const payload = await request('/api/observe', { method: 'POST', body: jsonBody({ sessionId, checkpoint }) });
       render(payload.observation);
     } catch (error) {
       showNotice(error.message, 'error');
@@ -520,7 +546,7 @@ export const APP_JS = String.raw`(() => {
     const previous = observation;
     setBusy(true);
     try {
-      const payload = await request('/api/choose', { method: 'POST', body: jsonBody({ sessionId, id, expectedRevision: previous.revision }) });
+      const payload = await request('/api/choose', { method: 'POST', body: jsonBody({ sessionId, checkpoint, id, expectedRevision: previous.revision }) });
       render(payload.observation);
       showNotice(payload.observation.status === 'playing' ? 'The path responds.' : 'The journey has reached its ending.', 'success');
     } catch (error) {
@@ -539,7 +565,7 @@ export const APP_JS = String.raw`(() => {
     if (!observation || observation.status !== 'playing' || busy) return;
     setBusy(true);
     try {
-      const payload = await request('/api/end', { method: 'POST', body: jsonBody({ sessionId, expectedRevision: observation.revision }) });
+      const payload = await request('/api/end', { method: 'POST', body: jsonBody({ sessionId, checkpoint, expectedRevision: observation.revision }) });
       render(payload.observation);
       showNotice('Your ending has been recorded.', 'success');
     } catch (error) {
@@ -567,7 +593,13 @@ export const APP_JS = String.raw`(() => {
   }
 
   async function saveJourney() {
-    if (!sessionId || busy) return;
+    if (busy) return;
+    if (checkpoint) {
+      download('the-split-tide.save', checkpoint, 'application/octet-stream');
+      showNotice('Your saved journey was downloaded.', 'success');
+      return;
+    }
+    if (!sessionId) return;
     setBusy(true);
     try {
       const payload = await request('/api/save', { method: 'POST', body: jsonBody({ sessionId }) });
@@ -626,21 +658,28 @@ export const APP_JS = String.raw`(() => {
   });
 
   async function restoreSession() {
-    const savedSession = rememberedSession();
+    const stored = storedCheckpoint();
+    const savedSession = stored ? stored.sessionId : rememberedSession();
     if (!savedSession) return newJourney();
     sessionId = savedSession;
+    checkpoint = stored ? stored.checkpoint : null;
     setBusy(true);
     try {
-      const payload = await request('/api/observe?sessionId=' + encodeURIComponent(sessionId), { method: 'GET', headers: {} });
+      const payload = await request('/api/observe', { method: 'POST', body: jsonBody({ sessionId, checkpoint }) });
       render(payload.observation);
       showNotice('Resumed ' + payload.observation.title + '.', 'success');
     } catch (error) {
-      if (error.status === 404) {
+      if (error.status === 404 && !checkpoint) {
         forgetSession();
         sessionId = null;
         await newJourney();
       } else {
-        showNotice('Unable to resume this journey. Load a save or start a new one.', 'error');
+        sceneTitle.textContent = 'Your saved journey is safe.';
+        setTextList(storyText, ['This journey could not be resumed. A game update may require a new journey. Download your previous save before starting again, or reload to retry.']);
+        statusLabel.textContent = 'Save available';
+        leaveButton.disabled = true;
+        exportButton.disabled = true;
+        showNotice('Use Save journey to keep the previous file, or New journey to begin again.', 'error');
       }
     } finally {
       setBusy(false);

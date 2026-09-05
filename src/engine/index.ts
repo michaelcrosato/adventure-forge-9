@@ -425,9 +425,7 @@ function terminalState(
 }
 
 function departureSummary(scene: string): string {
-  return scene === "ferry-crisis"
-    ? "You depart before taking a side. The ferry bell fades into the storm."
-    : "You depart the south quay while the harbor makes its own judgment.";
+  return `Your journey ends at ${SCENES.get(scene)!.title}. Your choices and their consequences remain.`;
 }
 
 /** Apply an already validated, legal choice without revalidating its input. */
