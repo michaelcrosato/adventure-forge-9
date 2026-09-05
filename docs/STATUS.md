@@ -16,7 +16,9 @@ Stage 1 accepted on frozen commit `04b492b`: live specialist capability audit pa
 
 Stage 2 now active: complete Lowsail/Red Sluice small game with three resolutions, meaningful resource or obligation costs, and a changed return. The first player understood the rescue choice but was uncertain about the downstream medicine loss; authored clinic consequences are an explicit requirement for the next game. This is not yet an improvement comparison.
 
-The Stage 2 candidate is implemented: 11 scenes, 44 authored choices (including exits), three resolution families, and four named inhabitants. `npm run verify` passes 20 tests. Exhaustive traversal covers 2,429 semantic states and 2,428 transitions; every unfinished state can reach a completed resolution. Browser ten-decision shared-water route, reload, save/load with journal, and mobile width pass. Terminal reaches the same ending. Fresh live feedback is the next gate.
+Stage 2 is accepted: 11 scenes, 44 authored choices (including exits), three resolution families, and four named inhabitants. Twenty tests, exhaustive 2,429-state traversal, terminal/browser and save/load checks pass. Its first fresh blind player completed, gave an authentic same-session interview, and passed integrity/replay validation. Ratings were clarity 5 and enjoyment 5; slight ambiguity about canal scouting supplied the next improvement question. See STAGE2.md for original evidence.
+
+Stage 3 / Cycle 1 is active. CYCLE1.md predeclares a two-baseline/two-candidate comparison of road cost wording, with unchanged mechanics and neutral interviews. No source should change in a checkout used by a running player.
 
 Assignments: Luna/max engine and mechanical proofs; Luna/max human player surfaces; Luna/max subscription boundary probe and adapter. Manager owns integration, evidence runner, publication, and quality decisions.
 
