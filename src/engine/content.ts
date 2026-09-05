@@ -1,4 +1,4 @@
-import { FACT_LABELS, RAW_SCENARIO, type ChoiceData, type ConditionData, type EffectData, type ScenarioData, type SceneData, type TextLineData } from "../content/scenario.js";
+import { FACT_LABELS, RAW_SCENARIO, type ChoiceData, type ClockData, type ConditionData, type EffectData, type ScenarioData, type SceneData, type TextLineData } from "../content/scenario.js";
 
 export type Condition = ConditionData;
 export type Effect = EffectData;
@@ -33,7 +33,7 @@ function exactKeys(value: Record<string, unknown>, allowed: readonly string[], p
 }
 
 function required(value: Record<string, unknown>, key: string, path: string): unknown {
-  if (!(key in value)) fail(path, `missing property ${JSON.stringify(key)}`);
+  if (!Object.hasOwn(value, key)) fail(path, `missing property ${JSON.stringify(key)}`);
   return value[key];
 }
 
@@ -94,6 +94,14 @@ function condition(value: unknown, path: string): Condition {
       value: nonNegativeInteger(required(value, "value", path), `${path}.value`),
     };
   }
+  if (type === "resourceAtMost") {
+    exactKeys(value, ["type", "resource", "value"], path);
+    return {
+      type,
+      resource: idValue(required(value, "resource", path), `${path}.resource`),
+      value: nonNegativeInteger(required(value, "value", path), `${path}.value`),
+    };
+  }
   fail(`${path}.type`, `unknown condition type ${JSON.stringify(type)}`);
 }
 
@@ -127,6 +135,16 @@ function effect(value: unknown, path: string): Effect {
       type,
       resource: idValue(required(value, "resource", path), `${path}.resource`),
       delta: finiteInteger(required(value, "delta", path), `${path}.delta`),
+    };
+  }
+  if (type === "advanceClock") {
+    exactKeys(value, ["type", "clock", "delta"], path);
+    const delta = finiteInteger(required(value, "delta", path), `${path}.delta`);
+    if (delta < 1) fail(`${path}.delta`, "must be a positive safe integer");
+    return {
+      type,
+      clock: idValue(required(value, "clock", path), `${path}.clock`),
+      delta,
     };
   }
   if (type === "addFact") {
@@ -200,6 +218,16 @@ function choice(value: unknown, path: string): Choice {
   };
 }
 
+function clock(value: unknown, path: string): ClockData {
+  if (!isRecord(value)) fail(path, "must be an object");
+  exactKeys(value, ["id", "resource", "max"], path);
+  return {
+    id: idValue(required(value, "id", path), `${path}.id`),
+    resource: idValue(required(value, "resource", path), `${path}.resource`),
+    max: nonNegativeInteger(required(value, "max", path), `${path}.max`),
+  };
+}
+
 function deepFreeze<T>(value: T): T {
   if (typeof value !== "object" || value === null || Object.isFrozen(value)) return value;
   Object.freeze(value);
@@ -209,7 +237,7 @@ function deepFreeze<T>(value: T): T {
 
 function validateScenario(value: unknown): Scenario {
   if (!isRecord(value)) fail("scenario", "must be an object");
-  exactKeys(value, ["version", "initialScene", "initialResources", "initialFacts", "scenes", "choices"], "scenario");
+  exactKeys(value, ["version", "initialScene", "initialResources", "initialFacts", "clocks", "scenes", "choices"], "scenario");
   if (required(value, "version", "scenario") !== 1) fail("scenario.version", "must be 1");
 
   const initialResourcesValue = required(value, "initialResources", "scenario");
@@ -220,6 +248,28 @@ function validateScenario(value: unknown): Scenario {
     initialResources[resource] = nonNegativeInteger(resourceValue, `scenario.initialResources.${key}`);
   }
   if (Object.keys(initialResources).length === 0) fail("scenario.initialResources", "must contain a resource");
+
+  const clocksValue = value.clocks;
+  if (clocksValue !== undefined && !Array.isArray(clocksValue)) fail("scenario.clocks", "must be an array");
+  const clocks = clocksValue === undefined
+    ? []
+    : clocksValue.map((entry, index) => clock(entry, `scenario.clocks[${index}]`));
+  const clockIds = new Set<string>();
+  const clockResources = new Set<string>();
+  for (const [index, clockValue] of clocks.entries()) {
+    if (clockIds.has(clockValue.id)) fail(`scenario.clocks[${index}].id`, "must be unique");
+    clockIds.add(clockValue.id);
+    if (!Object.hasOwn(initialResources, clockValue.resource)) {
+      fail(`scenario.clocks[${index}].resource`, `unknown resource ${JSON.stringify(clockValue.resource)}`);
+    }
+    if (clockResources.has(clockValue.resource)) {
+      fail(`scenario.clocks[${index}].resource`, "a resource may be declared by only one clock");
+    }
+    clockResources.add(clockValue.resource);
+    if (initialResources[clockValue.resource]! > clockValue.max) {
+      fail(`scenario.clocks[${index}].max`, `must be at least the initial ${JSON.stringify(clockValue.resource)} value`);
+    }
+  }
 
   const initialFacts = stringArray(required(value, "initialFacts", "scenario"), "scenario.initialFacts");
   const scenesValue = required(value, "scenes", "scenario");
@@ -260,9 +310,18 @@ function validateScenario(value: unknown): Scenario {
       if (effectValue.type === "setFlag") flags.add(effectValue.flag);
       if (effectValue.type === "addFact") facts.add(effectValue.fact);
       if (effectValue.type === "setResource" || effectValue.type === "adjustResource") {
-        if (!(effectValue.resource in initialResources)) {
+        if (!Object.hasOwn(initialResources, effectValue.resource)) {
           fail(`scenario.choices[${index}].effects`, `unknown resource ${JSON.stringify(effectValue.resource)}`);
         }
+        if (clockResources.has(effectValue.resource)) {
+          fail(
+            `scenario.choices[${index}].effects`,
+            `clock resource ${JSON.stringify(effectValue.resource)} cannot be targeted by ${effectValue.type}`,
+          );
+        }
+      }
+      if (effectValue.type === "advanceClock" && !clockIds.has(effectValue.clock)) {
+        fail(`scenario.choices[${index}].effects`, `unknown clock ${JSON.stringify(effectValue.clock)}`);
       }
       if (effectValue.type === "goTo") {
         goToCount += 1;
@@ -295,7 +354,7 @@ function validateScenario(value: unknown): Scenario {
   }
   for (const [index, choiceValue] of choices.entries()) {
     for (const conditionValue of choiceValue.when ?? []) {
-      if (conditionValue.type === "resourceAtLeast" && !(conditionValue.resource in initialResources)) {
+      if ((conditionValue.type === "resourceAtLeast" || conditionValue.type === "resourceAtMost") && !Object.hasOwn(initialResources, conditionValue.resource)) {
         fail(`scenario.choices[${index}].when`, `unknown resource ${JSON.stringify(conditionValue.resource)}`);
       }
       if (conditionValue.type === "flag" && !flags.has(conditionValue.flag)) {
@@ -306,7 +365,7 @@ function validateScenario(value: unknown): Scenario {
   for (const [sceneIndex, sceneValue] of scenes.entries()) {
     for (const [lineIndex, line] of sceneValue.text.entries()) {
       for (const conditionValue of line.when ?? []) {
-        if (conditionValue.type === "resourceAtLeast" && !(conditionValue.resource in initialResources)) {
+        if ((conditionValue.type === "resourceAtLeast" || conditionValue.type === "resourceAtMost") && !Object.hasOwn(initialResources, conditionValue.resource)) {
           fail(`scenario.scenes[${sceneIndex}].text[${lineIndex}].when`, `unknown resource ${JSON.stringify(conditionValue.resource)}`);
         }
         if (conditionValue.type === "flag" && !flags.has(conditionValue.flag)) {
@@ -325,6 +384,7 @@ function validateScenario(value: unknown): Scenario {
     initialScene,
     initialResources: { ...initialResources },
     initialFacts: [...initialFacts],
+    ...(clocks.length === 0 ? {} : { clocks: clocks.map((clockValue) => ({ ...clockValue })) }),
     scenes: scenes.map((sceneValue) => ({
       id: sceneValue.id,
       title: sceneValue.title,
@@ -346,7 +406,7 @@ function validateScenario(value: unknown): Scenario {
   // Ensure that every fact reachable through data remains a plain authored value.
   if ([...facts].some((fact) => typeof fact !== "string" || fact.length === 0)) fail("scenario", "facts must be non-empty strings");
   for (const fact of facts) {
-    if (!(fact in FACT_LABELS)) fail("scenario", `missing player-facing label for fact ${JSON.stringify(fact)}`);
+    if (!Object.hasOwn(FACT_LABELS, fact)) fail("scenario", `missing player-facing label for fact ${JSON.stringify(fact)}`);
   }
   return deepFreeze(parsed);
 }

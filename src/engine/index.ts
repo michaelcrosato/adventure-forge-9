@@ -33,6 +33,8 @@ const KNOWN_FLAGS = new Set<string>();
 const KNOWN_FACTS = new Set(SCENARIO.initialFacts);
 const SCENES = new Map(SCENARIO.scenes.map((scene) => [scene.id, scene]));
 const CHOICES = new Map(SCENARIO.choices.map((choice) => [choice.id, choice]));
+const CLOCKS = new Map((SCENARIO.clocks ?? []).map((clock) => [clock.id, clock] as const));
+const CLOCK_RESOURCES = new Set((SCENARIO.clocks ?? []).map((clock) => clock.resource));
 const ENGINE_PRODUCED_STATES = new WeakSet<object>();
 const choicesByScene = new Map<string, Choice[]>();
 for (const choice of SCENARIO.choices) {
@@ -109,7 +111,7 @@ function exactKeys(value: RecordLike, allowed: readonly string[], path: string):
 }
 
 function required(value: RecordLike, key: string, path: string): unknown {
-  if (!(key in value)) throw new InvalidStateError(`${path}: missing property ${JSON.stringify(key)}`);
+  if (!Object.hasOwn(value, key)) throw new InvalidStateError(`${path}: missing property ${JSON.stringify(key)}`);
   return value[key];
 }
 
@@ -244,12 +246,19 @@ function calculateStateHash(state: GameState): string {
 function requireResourceMap(value: unknown, path: string): Readonly<Record<string, number>> {
   if (!isRecord(value)) throw new InvalidStateError(`${path}: expected an object`);
   for (const key of KNOWN_RESOURCES) {
-    if (!(key in value)) throw new InvalidStateError(`${path}: missing resource ${JSON.stringify(key)}`);
+    if (!Object.hasOwn(value, key)) throw new InvalidStateError(`${path}: missing resource ${JSON.stringify(key)}`);
   }
   exactKeys(value, [...KNOWN_RESOURCES], path);
   const result: Record<string, number> = {};
   for (const [key, resourceValue] of Object.entries(value)) {
     result[key] = requireSafeInteger(resourceValue, `${path}.${key}`, 0);
+  }
+  for (const clock of CLOCKS.values()) {
+    if (result[clock.resource]! > clock.max) {
+      throw new InvalidStateError(
+        `${path}.${clock.resource}: exceeds clock ${JSON.stringify(clock.id)} maximum ${clock.max}`,
+      );
+    }
   }
   return result;
 }
@@ -334,7 +343,7 @@ function assertState(value: unknown, checkReceipt = true, checkHistory = true): 
   requireFacts(required(value, "knownFacts", "state"), "state.knownFacts");
   requireHistory(required(value, "history", "state"), "state.history", revision);
   const status = requireStatus(required(value, "status", "state"), "state.status");
-  const hasReceipt = "receipt" in value;
+  const hasReceipt = Object.hasOwn(value, "receipt");
   if (status === "playing" && hasReceipt) throw new InvalidStateError("state.receipt: playing states cannot have a receipt");
   if (status !== "playing" && !hasReceipt) throw new InvalidStateError("state.receipt: terminal states require a receipt");
   if (hasReceipt) {
@@ -361,8 +370,11 @@ function validateExpectedRevision(expectedRevision: unknown): number {
 }
 
 function conditionMatches(condition: Condition, state: Pick<GameState, "flags" | "resources">): boolean {
-  if (condition.type === "flag") return (state.flags[condition.flag] ?? false) === condition.value;
-  return (state.resources[condition.resource] ?? 0) >= condition.value;
+  if (condition.type === "flag") {
+    return (Object.hasOwn(state.flags, condition.flag) ? state.flags[condition.flag] : false) === condition.value;
+  }
+  if (condition.type === "resourceAtLeast") return (state.resources[condition.resource] ?? 0) >= condition.value;
+  return (state.resources[condition.resource] ?? 0) <= condition.value;
 }
 
 function allConditionsMatch(conditions: readonly Condition[] | undefined, state: Pick<GameState, "flags" | "resources">): boolean {
@@ -371,6 +383,15 @@ function allConditionsMatch(conditions: readonly Condition[] | undefined, state:
 
 function legalChoices(state: GameState): readonly Choice[] {
   return (CHOICES_BY_SCENE.get(state.scene) ?? []).filter((choice) => allConditionsMatch(choice.when, state));
+}
+
+/** Saturate a validated clock advance at its declared maximum. */
+export function advanceClockValue(current: number, max: number, delta: number): number {
+  if (!Number.isSafeInteger(current) || current < 0) throw new InvalidStateError("clock current value must be a non-negative safe integer");
+  if (!Number.isSafeInteger(max) || max < 0) throw new InvalidStateError("clock maximum must be a non-negative safe integer");
+  if (current > max) throw new InvalidStateError("clock current value exceeds its maximum");
+  if (!Number.isSafeInteger(delta) || delta < 1) throw new InvalidStateError("clock delta must be a positive safe integer");
+  return delta >= max - current ? max : current + delta;
 }
 
 function applyEffects(state: GameState, effects: readonly Effect[]): Pick<GameState, "scene" | "resources" | "flags" | "knownFacts"> {
@@ -382,13 +403,25 @@ function applyEffects(state: GameState, effects: readonly Effect[]): Pick<GameSt
     if (effect.type === "setFlag") {
       flags[effect.flag] = effect.value;
     } else if (effect.type === "setResource") {
+      if (CLOCK_RESOURCES.has(effect.resource)) {
+        throw new InvalidStateError(`effect cannot write declared clock resource ${JSON.stringify(effect.resource)}`);
+      }
       resources[effect.resource] = effect.value;
     } else if (effect.type === "adjustResource") {
+      if (CLOCK_RESOURCES.has(effect.resource)) {
+        throw new InvalidStateError(`effect cannot write declared clock resource ${JSON.stringify(effect.resource)}`);
+      }
       const result = (resources[effect.resource] ?? 0) + effect.delta;
       if (!Number.isSafeInteger(result) || result < 0) {
         throw new InvalidStateError(`effect would make resource ${JSON.stringify(effect.resource)} invalid`);
       }
       resources[effect.resource] = result;
+    } else if (effect.type === "advanceClock") {
+      const clock = CLOCKS.get(effect.clock);
+      if (clock === undefined) throw new InvalidStateError(`effect references unknown clock ${JSON.stringify(effect.clock)}`);
+      const current = resources[clock.resource];
+      if (current === undefined) throw new InvalidStateError(`clock resource ${JSON.stringify(clock.resource)} is missing`);
+      resources[clock.resource] = advanceClockValue(current, clock.max, effect.delta);
     } else if (effect.type === "addFact") {
       if (!knownFacts.includes(effect.fact)) knownFacts.push(effect.fact);
     } else if (effect.type === "goTo") {
@@ -545,7 +578,7 @@ export function observe(state: GameState): Observation {
     sceneId: scene.id,
     title: scene.title,
     text: [...text],
-    facts: state.knownFacts.map((fact) => FACT_LABELS_BY_ID[fact] ?? fact),
+    facts: state.knownFacts.map((fact) => Object.hasOwn(FACT_LABELS_BY_ID, fact) ? FACT_LABELS_BY_ID[fact]! : fact),
     journal,
     resources: { ...state.resources },
     choices: choices.map((choice) => ({ ...choice })),

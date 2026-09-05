@@ -14,7 +14,13 @@ export interface ResourceConditionData {
   readonly value: number;
 }
 
-export type ConditionData = FlagConditionData | ResourceConditionData;
+export interface ResourceAtMostConditionData {
+  readonly type: "resourceAtMost";
+  readonly resource: string;
+  readonly value: number;
+}
+
+export type ConditionData = FlagConditionData | ResourceConditionData | ResourceAtMostConditionData;
 
 export interface SetFlagEffectData {
   readonly type: "setFlag";
@@ -34,6 +40,12 @@ export interface AdjustResourceEffectData {
   readonly delta: number;
 }
 
+export interface AdvanceClockEffectData {
+  readonly type: "advanceClock";
+  readonly clock: string;
+  readonly delta: number;
+}
+
 export interface AddFactEffectData {
   readonly type: "addFact";
   readonly fact: string;
@@ -48,6 +60,7 @@ export type EffectData =
   | SetFlagEffectData
   | SetResourceEffectData
   | AdjustResourceEffectData
+  | AdvanceClockEffectData
   | AddFactEffectData
   | GoToEffectData;
 
@@ -77,11 +90,18 @@ export interface ChoiceData {
   readonly outcome?: OutcomeData;
 }
 
+export interface ClockData {
+  readonly id: string;
+  readonly resource: string;
+  readonly max: number;
+}
+
 export interface ScenarioData {
   readonly version: 1;
   readonly initialScene: string;
   readonly initialResources: Readonly<Record<string, number>>;
   readonly initialFacts: readonly string[];
+  readonly clocks?: readonly ClockData[];
   readonly scenes: readonly SceneData[];
   readonly choices: readonly ChoiceData[];
 }

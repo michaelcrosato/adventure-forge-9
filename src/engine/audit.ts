@@ -93,6 +93,7 @@ function staticSceneClosure(
           case "setFlag":
           case "setResource":
           case "adjustResource":
+          case "advanceClock":
           case "addFact":
             break;
           default:
@@ -111,6 +112,7 @@ function addFlagReads(conditions: readonly Condition[] | undefined, target: Set<
         target.add(condition.flag);
         break;
       case "resourceAtLeast":
+      case "resourceAtMost":
         break;
       default:
         throw new Error("Audit cannot analyze an unknown condition type");
@@ -129,6 +131,7 @@ function assertKnownVocabulary(scenario: Scenario): void {
         case "setFlag":
         case "setResource":
         case "adjustResource":
+        case "advanceClock":
         case "addFact":
         case "goTo":
           break;
@@ -144,6 +147,7 @@ function assertKnownConditions(conditions: readonly Condition[] | undefined): vo
     switch (condition.type) {
       case "flag":
       case "resourceAtLeast":
+      case "resourceAtMost":
         break;
       default:
         throw new Error("Audit cannot analyze an unknown condition type");
@@ -153,13 +157,13 @@ function assertKnownConditions(conditions: readonly Condition[] | undefined): vo
 
 /**
  * Canonical key for the future-relevant part of a state. Every resource is
- * retained. Absent and false flags are equivalent to the engine's
- * `state.flags[name] ?? false` condition semantics.
+ * retained. Absent flags are false, with own-property lookup matching the
+ * engine.
  */
 export function futureStateKey(state: AuditStateProjection, retainedFlags: ReadonlySet<string>): string {
   const flags = [...retainedFlags]
     .sort()
-    .map((flag) => [flag, state.flags[flag] === true] as const);
+    .map((flag) => [flag, Object.hasOwn(state.flags, flag) && state.flags[flag] === true] as const);
   return JSON.stringify({
     scene: state.scene,
     resources: Object.entries(state.resources).sort(([a], [b]) => a.localeCompare(b)),
