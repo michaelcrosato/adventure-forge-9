@@ -20,15 +20,17 @@ Forty-five tests and the Vercel production build pass. The full future-read audi
 
 The engine performance correction is integrated: privately constructed frozen states avoid repeated history verification, while external saves/objects still receive full checks. No world-scale performance claim follows from the short-witness benchmark.
 
-The user's hosting request is fulfilled: https://adventure-forge-9.vercel.app is public and connected to GitHub main. Repeated Git-triggered production deployments were verified; the latest inspected small-game deployment is `dpl_Gb3n1y7cAoaDymcieM1AJ3oQbzE7` at `f25d3e7`. Initial hosted play, save/download/load/reload and mobile layout passed, and a checkpoint survived a documentation-only update. Automatic browser checkpoints survive stateless function requests; game-content updates can still require a new journey. Stage 5 publication is being finalized. See HOSTING.md.
+The user's hosting request is fulfilled: https://adventure-forge-9.vercel.app is public and connected to GitHub main. The Archive expansion was pushed as `ad92740` and automatically reached Ready production deployment `dpl_J5rMtKvQQ2epAo12YXi1W1Le7Z5w`; its exact GitHub source SHA and production alias were verified. GitHub's independent verification also passed. Automatic browser checkpoints survive stateless function requests; game-content updates can still require a new journey. See HOSTING.md.
 
 All current live runs are closed and exported. Historical source checkouts remain separate: Cycle 3 at `34af626` in `/tmp/af9-cycle3-verified`; first Archive batch at `59afce4` in `/tmp/af9-stage5-verified`; repaired Archive batch at `dbabc94` in `/tmp/af9-stage5-hearing-verified`. Future live runs require a new source freeze. No final world-scale or interaction-depth acceptance is claimed.
 
 ## Required next work
 
-1. Publish the independently verified Archive expansion to GitHub main and inspect its automatic production update.
+1. Implement and review the next-wave bounded clock and Blackglass branches described below. The published Archive passed a full 23-action public playthrough, including two mid-investigation reloads, save download, completed reload and mobile verification.
 2. Design and implement the next area with an actually new interacting system, such as timed physical hazards or traversal with companion reactions. Avoid another investigation-hub reskin or data wrapper that adds no behavior.
 3. Preserve the strict completion audit as the world grows; address state growth without discarding meaningful future distinctions. A 1,010-action local checkpoint measured 79,097 request bytes and restored in about 32 ms, but the hosted 256 KiB envelope limit remains a finite long-session constraint.
 4. Continue reviewed waves with cross-area consequences, character counterfactuals, long sessions and authentic feedback. Clarify remaining kit/testimony tradeoffs and the distinction between accepting a council seal and actually granting control. The full completion audit remains outstanding.
 
 Manager owns integration, evidence, publication and acceptance. Luna/max remains the primary development benchmark; corrections and observed timing belong in AGENT_BENCHMARK.md. Inspect actual worktrees, agents and process handles at each continuation rather than inferring running work from this document.
+
+Next-wave work is isolated from production: an engine worker is implementing a validated saturating clock and `resourceAtMost`; a content worker is authoring Blackglass Works with timed routes, patrol pressure, Nessa's assistance and reactions to previous choices. No context copy or new evidence-counter hub is planned. Those branches require manager review, strict traversal checks, cross-area/save witnesses and fresh live evidence before publication. Ordinary return navigation must remain possible without unbounded resource farming.

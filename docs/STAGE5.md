@@ -1,6 +1,6 @@
 # Lantern Archive — first connected-area expansion
 
-Status: the repaired expansion meets its declared mechanical, browser and initial live-play gates; publication is being finalized. The full world-scale goal remains outstanding.
+Status: the repaired expansion meets its declared mechanical, browser and initial live-play gates and is published at the normal game link. The full world-scale goal remains outstanding.
 
 The candidate adds one investigation area with seven scenes and four named inhabitants: archivist Sera Vale wants a defensible record; porter Jalen Rook wants amnesty; copyist Mara Venn wants her brother protected; Prefect Oren Vask wants to preserve his authority. Three evidence tracks lead to a hearing and a changed return to Lowsail. The complete game now has 18 authored scenes and 91 choices including exits and navigation; these are authored counts, not a claim of world-scale depth.
 
@@ -70,3 +70,5 @@ The six Stage5 games took 112.962, 100.526, 104.147 seconds (first batch) and 10
 Final mechanical verification has 45 passing tests, including the early-hearing regression. The current exhaustive abstraction contains 76,117 states and 129,874 legal transitions, with zero unreachable content, dead ends or unfinished states lacking a completed route. Removing the obsolete one-time adjournment condition lets previously equivalent navigation histories collapse; no completion invariant was removed. The largest representative projection measured 412 words, explicitly not every possible accumulated fact-list variant. Manager test time was 15.20 seconds in `/tmp/af9-stage5-final-publish-verify.log`; the local Vercel production build also passed.
 
 The stateless browser handler completed a 23-action early-hearing recovery journey on the repaired source. Reloads after the first and second adjournments resumed the Archive hall at revisions 16 and 18. After collecting the counterseal, anonymous publication completed with revision/journal count 23. Save download and completed reload passed. Mobile width was 375 pixels in a 390-pixel viewport, with no browser errors. Inspected screenshots: `/tmp/af9-hearing-initial.png` and `/tmp/af9-hearing-mobile.png`; downloaded checkpoint: `/tmp/af9-hearing-completed.save`. This supplies direct mechanical/browser coverage of the branch not taken by the new blind players.
+
+Published as `ad92740` and automatically deployed to the normal Vercel URL. The exact same 23-action recovery path then passed on the public production site, including both reloads, completed receipt, save download and mobile checks. See HOSTING.md for the deployment/source identifiers and the separate hosted packaging build identity. The release is the first connected-area milestone, not the full breadth/depth target.
