@@ -385,3 +385,35 @@ catalog only after a separate main-engine checker passed every path, raw
 effect, checkpoint and receipt. That check takes 0.78 seconds / 107,956 KiB.
 The bounded 50,000-state search remains incomplete despite complete endpoint
 coverage. See `BACKWARD_PROPERTY_AUDIT.md`.
+
+Failure absorption was again split between implementation and independent
+finite-oracle workers. Root required a true non-completing fault route,
+synthetic failure sources outside the completion cone, and checks specific
+to the new fixed point. One development assertion incorrectly expected all
+residual states to disappear; its failure is preserved and the correction
+checks exact residual membership. Root also clarified that the implementation
+starts `W` from already-computed `C ∪ F`, so its rounds do not start at the
+terminal seed. Independent review accepted the final semantics.
+
+Clean freeze `5904eec` passes build and all 54 BDD/symbolic checks in 20.87
+seconds; the test command takes 19.03 seconds / 991,720 KiB maximum RSS.
+The bounded historical run still reaches two million nodes in the first
+residual cone during round 14, in 46.04 seconds / 1,359,536 KiB. No obligation
+finishes and no current proof or live acceptance follows. The next exact
+scene partition is being implemented with separate raw-oracle checks. These
+results measure verifier work and correction effort, not player experience
+or relative model speed.
+
+The scene partition at clean `2a994f3` passes all 55 checks in 20.60 seconds.
+Root added full nonzero cross-scene oracle coverage, overlapping-predicate
+rejection and exact summary-ID checks. The 120-second diagnostic completes
+14 scene cones; the time-only extension completes all 25 scene cones and
+426/549 total obligations before a resource-bound cone reaches two million
+nodes (576.31 seconds / 1,406,792 KiB). Both results and their identical logical
+prefix are checked and retained. No full proof acceptance follows.
+
+Two workers materialized the accepted current path data and its public-engine
+regression separately. Root corrected validated-content imports, separate
+origin provenance, future-compatible target totals and an omitted public
+resource-value comparison. Independent review accepted the final coverage.
+The worker build and 231-path test pass; root clean-freeze checks are pending.

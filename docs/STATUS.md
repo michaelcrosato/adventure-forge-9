@@ -10,15 +10,15 @@ missed the regional exposure gate at 1/3; Stage 8 has no fresh live acceptance.
 Production remains the accepted Blackglass source `139e48a`, public on Vercel
 and connected to GitHub main automatic deployment.
 
-The release audit remains open. Experimental backward proof `5b2e320` passes
-all 47 BDD/symbolic checks. On the historical campaign its completion predicate
-converges in 1.37 seconds, but the combined safety calculation hits two million
-nodes during round nine (30.23 seconds total). A complete current witness
-catalog independently replays all 231 scene/choice/ending endpoints against
-main. This proves authored endpoint reachability, not universal safety. The separate-obligation implementation `830b29e` also passes all 50 checks,
-but its historical run hits the same node limit in the first non-completion
-obligation (37.64 seconds). Both reviewers accept an exact simplification of that seed as the next
-experiment; it has no implementation or run yet. See
+The release audit remains open. Exact scene-partitioned obligations at
+`2a994f3` pass 55 BDD/symbolic checks. The first historical run finishes 14
+parts before its time limit; a longer run finishes all 25 scene parts and
+426/549 total obligations, then hits two million nodes in one resource-bound
+failure cone. No full symbolic historical or current campaign proof is
+accepted. Periodic exact manager copies are being implemented to discard
+unused intermediate nodes within each obligation. The separate current
+231-endpoint catalog now has a repository regression test; it proves authored
+path and metadata coverage, not universal safety. See
 [BACKWARD_PROPERTY_AUDIT.md](BACKWARD_PROPERTY_AUDIT.md) for scope and evidence.
 
 ## Accepted foundation
@@ -54,13 +54,12 @@ also completes historical comparison/replay, then hits the current two-million
 class guard. See [PACKED_PHASE_AUDIT.md](PACKED_PHASE_AUDIT.md) and
 [SYMBOLIC_REACHABILITY_EXPERIMENT.md](SYMBOLIC_REACHABILITY_EXPERIMENT.md).
 
-The backward property proof now completes the historical completion predicate
-but not its safety closure. Separate obligations are mathematically equivalent
-and use independent BDD managers, but the first non-completion closure alone
-still reaches the node cap. The next reviewed simplification removes states
-already covered by a separate failure closure while preserving the aggregate
-bad set. It has no implementation or campaign result yet. Independent finite
-checks and a bounded historical comparison must pass before current adoption.
+The backward property proof completes historical completion and every scene
+non-completion cone, but an individual resource-bound failure cone still
+reaches the node cap. Periodically copying each current cone and its seed
+into an exact fresh manager is the next implementation; no frontier history
+is needed. Independent finite checks and a complete bounded historical
+comparison must pass before current adoption.
 The complete current endpoint catalog has separate main-engine replay evidence
 in [BACKWARD_PROPERTY_AUDIT.md](BACKWARD_PROPERTY_AUDIT.md). The production audit
 and its guard remain unchanged; full verification and Stage 8 acceptance are

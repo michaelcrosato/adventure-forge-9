@@ -163,3 +163,15 @@ node cap; the process is closed and all source bindings match. The inventory
 now has 42 worktrees and the same two local branches. No prior probe was
 changed or removed. The manager is clean after its 50-check freeze; the next
 simplification is read-only review. Final cleanup and publication remain pending.
+
+Failure absorption and scene partitioning add two detached historical probes,
+`/tmp/af9-symbolic-absorbed-historical-139e48` and
+`/tmp/af9-symbolic-scene-obligations-historical-139e48`. Both have their own
+locked dependencies and the exact three tested modules from their separate
+clean freezes (`5904eec` and `2a994f3`). The longer scene diagnostic reuses its
+unchanged probe with new artifact paths and a bound time-only configuration
+change. All three attempted runs and their closed processes are preserved;
+no earlier overlay or report was overwritten. The inventory is 44 worktrees
+and the same two local branches. The accepted current endpoint paths are also
+materialized as repository test data, with their origin provenance retained.
+Verifier adoption, publication and final reconstructible cleanup remain open.

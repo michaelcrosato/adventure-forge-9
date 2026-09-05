@@ -178,7 +178,7 @@ The worker catalog correction disclosure is preserved separately at
 `/tmp/af9-current-authored-witness-catalog-provenance-note-v1.json`, SHA-256
 `767c886efe12723d7867613ced31315ac6561b74591de1fda0169efa3e101eb0`.
 
-## Next reviewed simplification
+## Failure absorption
 
 Let `F` be the union of all failure source seeds and let
 `W = Pre*(completed ∪ F)`. This means a state can complete **or reach a failure**;
@@ -188,8 +188,159 @@ it must not be called a completion or reachable-state predicate. Since
 closures. Keeping every failure obligation preserves the exact aggregate bad
 set. The strong completion root `C` remains separately computed and returned.
 
-Both independent reviewers accept this exact simplification. It has no
-implementation or run yet. It could reduce bound-induced non-completion states; its own fixed point
-could also be expensive. Independent finite-oracle union equality and bounded
-historical evidence are still required. Full verification, fresh Stage 8
-players, publication, world-scope acceptance and final cleanup remain pending.
+Implementation `5904eec` adds opt-in `nonCompletionMode: "failure-absorbed"`.
+Default direct mode preserves its operation order and result shape. The new
+mode starts the additional fixed point from already-computed `C ∪ F`, which
+has exactly the same closure as `completed ∪ F`. Its reported rounds start
+from that accelerated seed; the original strong completion predicate remains
+separate. Every failure cone still follows every authored choice.
+
+Build and all 54 BDD/symbolic checks pass on an unchanged clean freeze in
+20.87 seconds. The test command takes 19.03 seconds / 991,720 KiB maximum RSS.
+The independent raw DSL oracle checks every seed and closure, exact global
+`W`, and full bad-union equality across finite fixtures and layouts. It includes
+non-completing paths that reach a fault, unrelated non-completing states that
+must remain, and synthetic invalid/uncovered failures outside `C`. Separate
+checks exercise the new fixed-point cap after `C` converges, observer failure,
+mixed current/next bits, option snapshotting, and fresh owner/domain rejection.
+
+Root caught two gaps in the first test draft: a fixture labelled only-fault
+also had completed exits, and synthetic failures already covered by `C` could
+not detect their omission from `W`. The corrected fixtures address both. A
+development assertion then incorrectly expected the entire residual to be
+empty; the preserved failure shows three unrelated parameter states remain.
+The corrected test requires exact residual membership and aggregate parity.
+This is a fixture correction, not an observed game defect. Development logs
+are `/tmp/af9-symbolic-properties-absorption-pre-fix-v1.log`,
+`/tmp/af9-symbolic-properties-absorption-development-v2.log`, and
+`/tmp/af9-symbolic-properties-absorption-focused-v1.log`; acceptance rests on
+the separate clean 54-check freeze below.
+
+Fresh historical probe `/tmp/af9-symbolic-absorbed-historical-139e48` contains
+only the three tested verifier modules and its own locked dependencies.
+Its 14-file source hash is
+`3dbe4f796bc3bf848859bc13a87088200fe84a7af675f95286ec3875af8aed0b`.
+The original variable order, two-million-node guard, cache/heap/round limits,
+120-second checked limit and 150-second external backstop are unchanged.
+The first profile was prepared but not run; preserved profile v2 adds
+same-model absorption consistency checks after the full proof, separately
+labelled from the independent finite oracle.
+
+The run completes strong `C` in 18 rounds at 1,307 ms / 118,895 allocated
+nodes, then `W` in 10 additional rounds at 2,530 ms / 195,044 nodes.
+The first residual non-completion closure completes 13 rounds, reaching
+1,973,267 nodes at 45,141 ms, then hits the node guard during round 14.
+External time is 46.04 seconds / 1,359,536 KiB maximum RSS. No obligation
+finishes; the post-proof consistency checks, static comparison and witness
+work are not reached. This gets farther in that calculation but does not
+complete the historical proof or establish a runtime improvement.
+
+Root independently verified source/artifact bindings and that PID 1319354
+is closed and absent. The report remains incomplete. No current campaign
+run or main verifier adoption follows this result.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `/tmp/af9-symbolic-absorbed-focused-tests-v1.json` | `4006f916f2bfbc095aaf1f8a360d0583fd382c3691074af79c5fd6b2eba2ff6d` |
+| `/tmp/af9-symbolic-absorbed-focused-tests-v1.log` | `8a771182880b86e7ed77d19faaa4f3a6d259324aeebfe8928a65bb04b9279efb` |
+| `/tmp/af9-symbolic-absorbed-historical-manifest-v2.json` | `d3a69578883e1c3512ed82c25afe4f2bcd480823e4184daf6ccac969b809ea88` |
+| `/tmp/af9-symbolic-absorbed-historical-139e48-v2.json` | `6a869cbfdf90591bf00db964bd15017d60c09ec3b38cd7a96fc0830cb8cf991e` |
+| `/tmp/af9-symbolic-absorbed-historical-139e48-v2.finalization.json` | `74fee0075a9e11da890b5052ae2a001dc0769cb2179a99adab9e6e2ae5b0eec7` |
+| `/tmp/af9-symbolic-absorbed-historical-root-check-v2.json` | `c29254343ed86b011d307c16cdfccc146b125e131d0182f971c345b1b81d5830` |
+
+## Scene partitions
+
+Implementation `2a994f3` adds opt-in `nonCompletionPartition: "scene"`, for
+either direct or absorbed mode. It divides the residual seed by every authored
+scene and solves each cone independently. Every cone still follows all
+authored choices across scene boundaries. Current-only scene predicates,
+pairwise disjoint seeds and exact union coverage are checked before solving.
+Distribution of predecessor closure over unions preserves the aggregate bad
+set. All authored scenes emit a summary, including zero seeds; the historical
+obligation catalog has 25 scene seeds plus 524 per-choice failure seeds.
+
+The independent finite oracle checks each scene seed and entire cone against
+raw state membership, plus exact full bad-union equality. A nonzero trap cone
+reaches an initial state in another scene, and all symbolic layouts/modes are
+checked. Missing, overlapping and mixed-phase scene predicates fail closed.
+Exact summary IDs, zero seeds, options and owner metadata are also checked.
+Build and all 55 BDD/symbolic checks pass on an unchanged clean freeze in
+20.60 seconds; the test command takes 18.80 seconds / 959,952 KiB maximum RSS.
+
+Fresh probe `/tmp/af9-symbolic-scene-obligations-historical-139e48` uses the
+same historical engine, its own locked dependencies and only the three
+tested verifier modules. Its 14-file source hash is
+`d62fe4cc540a6927176df8b794e96b8a13f21fa9e24ae098527a1506225f7e85`.
+All initial diagnostic limits remain unchanged.
+
+Strong `C` converges in 18 rounds at 1,304 ms / 118,895 nodes, and `W` in 10
+additional rounds at 2,533 ms / 195,044 nodes. Fourteen scene obligations
+finish, each disjoint from the initial state; two are zero seeds. The largest
+completed cone is `archive-hall`, at 21 rounds / 1,202,254 nodes. The run then
+hits the checked 120-second limit during `seal-workroom` round 19, at 771,115
+nodes. External time is 121.63 seconds / 1,231,892 KiB maximum RSS. No node
+guard is reached in this attempt. No failure obligation, full proof, static
+comparison or witness work completes.
+
+Root verifies the 14 completed IDs against the exact authored 549-ID catalog,
+all source/artifact bindings, and that PID 1324626 is closed and absent.
+These are completed parts of an incomplete diagnostic, not acceptance of
+the full historical or current campaign.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `/tmp/af9-symbolic-scene-obligations-focused-tests-v1.json` | `976f1e13d15cc27379ade87a53cc34c43d1ce24f345dc5cd8ad0b701c6639e81` |
+| `/tmp/af9-symbolic-scene-obligations-focused-tests-v1.log` | `b01aae86d1b8e8f014cb8e2e53b4761cb6bb75d8958ff0a8223a4d9c3c7d90bf` |
+| `/tmp/af9-symbolic-scene-obligations-historical-manifest-v1.json` | `5ee0bef3e0cfa3db9b3fee00f6e0992c6a6601b92737afe550a01f6b55f1101a` |
+| `/tmp/af9-symbolic-scene-obligations-historical-139e48.json` | `b36faf9539f3ba4fff556e0fe3a9c5735258bc10b73b618dcae5313a1682034b` |
+| `/tmp/af9-symbolic-scene-obligations-historical-139e48.finalization.json` | `977db2ad764d7aa4815f5323e1172f0681151846fa1c54702673709e3b8f26f7` |
+| `/tmp/af9-symbolic-scene-obligations-historical-root-check-v2.json` | `b5d66c49009781619b51080dc6a5d885c095ac056b610ed4b0b43986c69420d2` |
+
+Because 14 separate cones completed without a node-limit failure, root
+selected one extended diagnostic on the identical frozen probe: 600 seconds
+checked elapsed time and a 630-second external backstop. Node, cache, heap,
+round limits, variable order and semantics remain unchanged. The original
+timeout evidence is retained and bound as input; the root checker must also
+compare its entire logical progress prefix. Manifest
+`/tmp/af9-symbolic-scene-obligations-historical-600s-manifest-v1.json` has
+SHA-256 `79ef918def6492715ad6ce368a87aa7dd83e6f250092cb7a31c3b916827a25c5`.
+The extended run finishes all 25 scene obligations and 426 of the 549 total
+obligations, including 46 nonzero seeds. Every completed cone is disjoint from
+the initial state. `bound-exit:publish-vask-and-name-mara` finishes in 26 rounds
+at 1,967,065 allocated nodes. The run later hits two million nodes during
+round 18 of `bound-exit:cross-the-flooded-road`; the last completed round is
+17, at 1,681,141 nodes and 566,428 ms. External time is 576.31 seconds /
+1,406,792 KiB maximum RSS. This is a node-limit failure within the longer
+time allowance, not another elapsed-time failure.
+
+Root verifies all bindings, the exact 426-ID authored subset, the entire
+original run's logical progress prefix, and closed/absent PID 1325121.
+The full historical proof, post-proof consistency checks and static comparison
+remain incomplete; no current property run or verifier adoption follows.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `/tmp/af9-symbolic-scene-obligations-historical-139e48-600s.json` | `b408ff3cb5d969869fe30a87e05bb7999f3616907e6d77bc1faab47728fcf016` |
+| `/tmp/af9-symbolic-scene-obligations-historical-139e48-600s.finalization.json` | `20b0661d608dc7c49391ab6734d7843edb3eb2063bd887c899022122e676adea` |
+| `/tmp/af9-symbolic-scene-obligations-historical-600s-root-check-v1.json` | `1b55176b9511ac68e21da622e0d4fe22b31eaba2c2db78776853c81ec5f219b9` |
+
+The next implementation periodically copies only the current bad-set root and
+its seed into another exact fresh manager during each obligation. Unlike the
+earlier forward experiment, this calculation needs no retained frontier history.
+Exact owner/domain/current-only checks, all predecessors and the fixed-point
+cap must survive every copy. Independent finite checks are in progress;
+there is no compacted-obligation campaign result yet. No further node, heap
+or time-limit increase is selected.
+
+## Repository endpoint regression
+
+The accepted current path maps are materialized in
+`tests/authored-witnesses.ts`; `tests/authored-endpoints.test.ts` executes them
+against the actual current engine without runtime `/tmp` inputs or a symbolic
+verifier dependency. It requires exact authored target sets and checks raw
+effects, legal choices, text, facts, public resources, journal, revisions,
+immutability, receipts, save/restore and full replay. Each run reports its actual
+build ID; the fixture's original build ID remains path provenance rather than
+a restriction against compatible future changes. Existing universal campaign
+and reserved-end/player tests remain separate. The worker build and new test
+pass for all 231 paths; root clean-freeze verification is pending.

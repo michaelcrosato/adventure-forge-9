@@ -1221,7 +1221,12 @@ two-million-node limit during round nine. A separate current-engine witness
 catalog independently covers all 231 scene/choice/ending endpoints. Neither
 result establishes the missing universal current safety proof. Exact separate
 obligations at `830b29e` pass 50 focused checks but hit the historical node cap
-in the first non-completion closure. The next seed simplification is under
-read-only review; see
+in the first non-completion closure. Failure absorption at `5904eec` passes
+54 checks and completes its additional `W` predicate, but the historical
+residual closure hits two million nodes during round 14. The next exact
+partition at `2a994f3` passes 55 checks and completes every historical scene
+cone. Its longer run finishes 426/549 obligations before one resource-bound
+cone reaches the node cap; full acceptance remains open. Exact periodic
+copies within each cone are being implemented and tested. See
 [BACKWARD_PROPERTY_AUDIT.md](BACKWARD_PROPERTY_AUDIT.md) for all source/artifact
 bindings, the preserved setup failure, scope limits and next work.
