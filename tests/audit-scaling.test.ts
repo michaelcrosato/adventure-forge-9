@@ -66,6 +66,60 @@ test("future reads follow every authored edge and drop reads from the past", () 
   assert.deepEqual(analysis.retainedFlagsByScene.get("start"), ["early-only", "late-proof", "side-proof"]);
   assert.deepEqual(analysis.retainedFlagsByScene.get("late"), ["late-proof"]);
   assert.deepEqual(analysis.retainedFlagsByScene.get("side"), ["side-proof"]);
+  assert.deepEqual(analysis.terminalTextFlagsByScene.get("start"), []);
+  assert.deepEqual(analysis.terminalTextFlagsByScene.get("late"), ["late-proof"]);
+  assert.deepEqual(analysis.terminalTextFlagsByScene.get("side"), ["side-proof"]);
+});
+
+test("terminal keys keep visible text, resources, and ending identity while dropping choice-only flags", () => {
+  const analysis = analyzeFutureReads(MINI_SCENARIO);
+  const terminalFlags = new Set(analysis.terminalTextFlagsByScene.get("late") ?? []);
+  const playingFlags = new Set(analysis.retainedFlagsByScene.get("start") ?? []);
+  const terminal: AuditStateProjection = {
+    scene: "late",
+    resources: { water: 2 },
+    flags: { "late-proof": false, "early-only": true },
+    status: "completed",
+    receipt: { kind: "completed", summary: "The late branch is complete." },
+  };
+
+  assert.notEqual(
+    futureStateKey(terminal, terminalFlags),
+    futureStateKey({ ...terminal, flags: { "late-proof": true, "early-only": true } }, terminalFlags),
+    "terminal text conditions remain observable",
+  );
+  assert.notEqual(
+    futureStateKey(terminal, terminalFlags),
+    futureStateKey({ ...terminal, resources: { water: 1 } }, terminalFlags),
+    "terminal resource projections remain exact",
+  );
+  assert.notEqual(
+    futureStateKey(terminal, terminalFlags),
+    futureStateKey({ ...terminal, receipt: { kind: "departed", summary: "The late branch was left." } }, terminalFlags),
+    "terminal ending identity remains distinct",
+  );
+  assert.equal(
+    futureStateKey(
+      { ...terminal, scene: "start", flags: { "early-only": true }, receipt: { kind: "completed", summary: "The run is complete." } },
+      new Set(analysis.terminalTextFlagsByScene.get("start") ?? []),
+    ),
+    futureStateKey(
+      { ...terminal, scene: "start", flags: { "early-only": false }, receipt: { kind: "completed", summary: "The run is complete." } },
+      new Set(analysis.terminalTextFlagsByScene.get("start") ?? []),
+    ),
+    "flags used only by a future choice are irrelevant after termination",
+  );
+  assert.notEqual(
+    futureStateKey(
+      { ...terminal, scene: "start", status: "playing", receipt: undefined },
+      playingFlags,
+    ),
+    futureStateKey(
+      { ...terminal, scene: "start", status: "playing", receipt: undefined, flags: { "late-proof": false, "early-only": false } },
+      playingFlags,
+    ),
+    "playing keys retain flags needed to enumerate legal choices",
+  );
 });
 
 test("future keys normalize irrelevant flags while retaining resources and endings", () => {

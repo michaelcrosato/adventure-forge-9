@@ -25,6 +25,8 @@ export interface FutureReadAnalysis {
   readonly reachableScenesByScene: ReadonlyMap<string, readonly string[]>;
   /** The flags that can be read from each scene or any scene after it. */
   readonly retainedFlagsByScene: ReadonlyMap<string, readonly string[]>;
+  /** Flags read by visible scene text when no further choice can be taken. */
+  readonly terminalTextFlagsByScene: ReadonlyMap<string, readonly string[]>;
 }
 
 /**
@@ -44,6 +46,7 @@ export function analyzeFutureReads(scenario: Scenario): FutureReadAnalysis {
   const scenesById = new Map(scenario.scenes.map((scene) => [scene.id, scene] as const));
   const reachableScenesByScene = new Map<string, readonly string[]>();
   const retainedFlagsByScene = new Map<string, readonly string[]>();
+  const terminalTextFlagsByScene = new Map<string, readonly string[]>();
   for (const scene of scenario.scenes) {
     const reachable = staticSceneClosure(scene.id, choicesByScene, scenesById);
     reachableScenesByScene.set(scene.id, [...reachable].sort());
@@ -56,6 +59,10 @@ export function analyzeFutureReads(scenario: Scenario): FutureReadAnalysis {
       for (const choice of choicesByScene.get(sceneId) ?? []) addFlagReads(choice.when, retainedFlags);
     }
     retainedFlagsByScene.set(scene.id, [...retainedFlags].sort());
+
+    const terminalTextFlags = new Set<string>();
+    for (const line of scene.text) addFlagReads(line.when, terminalTextFlags);
+    terminalTextFlagsByScene.set(scene.id, [...terminalTextFlags].sort());
   }
 
   const reachableScenes = reachableScenesByScene.get(scenario.initialScene) ?? [];
@@ -66,6 +73,7 @@ export function analyzeFutureReads(scenario: Scenario): FutureReadAnalysis {
     retainedFlags,
     reachableScenesByScene,
     retainedFlagsByScene,
+    terminalTextFlagsByScene,
   };
 }
 
@@ -207,6 +215,7 @@ function assertCongruent(
   candidate: GameState,
   retainedFlags: ReadonlySet<string>,
   key: string,
+  retainedFor: (state: Pick<GameState, "scene" | "status">) => ReadonlySet<string>,
 ): number {
   if (futureStateKey(representative, retainedFlags) !== key || futureStateKey(candidate, retainedFlags) !== key) {
     throw new Error("Audit internal error: collision key does not describe both states");
@@ -226,7 +235,8 @@ function assertCongruent(
       const representativeNext = choose(representative, choice.id, representativeView.revision);
       const candidateNext = choose(candidate, choice.id, candidateView.revision);
       successors++;
-      if (futureStateKey(representativeNext, retainedFlags) !== futureStateKey(candidateNext, retainedFlags)) {
+      const successorFlags = retainedFor(representativeNext);
+      if (futureStateKey(representativeNext, successorFlags) !== futureStateKey(candidateNext, successorFlags)) {
         throw new Error(`Audit successor key diverged for equivalent choice ${choice.id}`);
       }
     }
@@ -275,8 +285,14 @@ export function auditScenario(maxStates = 100_000): ScenarioAudit {
   const retainedFlagsByScene = new Map(
     [...futureReads.retainedFlagsByScene].map(([scene, flags]) => [scene, new Set(flags)] as const),
   );
-  const retainedFor = (scene: string): ReadonlySet<string> => retainedFlagsByScene.get(scene) ?? new Set<string>();
-  const initialKey = futureStateKey(initial, retainedFor(initial.scene));
+  const terminalTextFlagsByScene = new Map(
+    [...futureReads.terminalTextFlagsByScene].map(([scene, flags]) => [scene, new Set(flags)] as const),
+  );
+  const retainedFor = (state: Pick<GameState, "scene" | "status">): ReadonlySet<string> => {
+    if (state.status !== "playing") return terminalTextFlagsByScene.get(state.scene) ?? new Set<string>();
+    return retainedFlagsByScene.get(state.scene) ?? new Set<string>();
+  };
+  const initialKey = futureStateKey(initial, retainedFor(initial));
   const queue: CanonicalState[] = [{ state: initial, path: [] }];
   const seen = new Set([initialKey]);
   const indices = new Map([[initialKey, 0]]);
@@ -321,7 +337,7 @@ export function auditScenario(maxStates = 100_000): ScenarioAudit {
       }
       choices.set(choice.id, choices.get(choice.id) ?? [...current.path, choice.id]);
 
-      const nextRetainedFlags = retainedFor(next.scene);
+      const nextRetainedFlags = retainedFor(next);
       const key = futureStateKey(next, nextRetainedFlags);
       const successorIndex = indices.get(key);
       if (successorIndex === undefined) {
@@ -337,7 +353,7 @@ export function auditScenario(maxStates = 100_000): ScenarioAudit {
         parents[successorIndex]!.push(index);
         mergedStates++;
         const representative = queue[successorIndex]!.state;
-        congruenceSuccessors += assertCongruent(representative, next, nextRetainedFlags, key);
+        congruenceSuccessors += assertCongruent(representative, next, nextRetainedFlags, key, retainedFor);
       }
     }
   }
