@@ -292,13 +292,12 @@ export class Bdd {
       const highLeft = this.cofactor(left, top, true);
       const highRight = this.cofactor(right, top, true);
       if (quantified.has(top)) {
-        const remaining = new Set(quantified);
-        remaining.delete(top);
-        const remainingKey = [...remaining].join(",");
-        // exists x. F is F[x=0] OR F[x=1]; each branch continues with the
-        // same remaining quantified set, preserving exact ROBDD reduction.
-        const low = this.andExistsInternal(lowLeft, lowRight, remaining, remainingKey);
-        const high = this.andExistsInternal(highLeft, highRight, remaining, remainingKey);
+        // ROBDD order means this variable cannot recur in either cofactor.
+        // Keep the immutable full quantified set/key: its members that have
+        // already been visited are absent from every descendant, so retaining
+        // them preserves cache sharing across skipped quantified paths.
+        const low = this.andExistsInternal(lowLeft, lowRight, quantified, quantifiedKey);
+        const high = this.andExistsInternal(highLeft, highRight, quantified, quantifiedKey);
         result = this.binaryInternal("or", low, high);
       } else {
         const low = this.andExistsInternal(lowLeft, lowRight, quantified, quantifiedKey);
