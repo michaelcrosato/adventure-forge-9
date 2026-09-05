@@ -273,11 +273,12 @@ export interface ScenarioAudit {
 
 /**
  * Exhaustively audit the authored graph over a reduced future-relevant state
- * space. The default is bounded at 100,000 canonical states so a malformed future content graph
- * cannot make CI unbounded; increasing it is a diagnostic choice, not a
- * substitute for the reduction.
+ * space. The default is bounded at 250,000 canonical states so malformed
+ * future content cannot make CI unbounded. The Blackglass workload increase
+ * is measured and documented in docs/STAGE6_BLACKGLASS.md; all semantic
+ * checks remain mandatory regardless of the workload ceiling.
  */
-export function auditScenario(maxStates = 100_000): ScenarioAudit {
+export function auditScenario(maxStates = 250_000): ScenarioAudit {
   if (!Number.isSafeInteger(maxStates) || maxStates < 1) throw new Error("Invalid audit state limit");
 
   const futureReads = analyzeFutureReads(SCENARIO);

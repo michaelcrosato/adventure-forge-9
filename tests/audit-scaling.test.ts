@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { analyzeFutureReads, futureStateKey } from "../src/engine/audit.js";
+import { analyzeFutureReads, auditScenario, futureStateKey } from "../src/engine/audit.js";
 import { SCENARIO, type Scenario } from "../src/engine/content.js";
 import type { AuditStateProjection } from "../src/engine/audit.js";
 
@@ -181,4 +181,11 @@ test("future-read analysis fails closed when the content vocabulary grows", () =
 
   assert.throws(() => analyzeFutureReads(unknownEffectScenario), /unknown effect type/);
   assert.throws(() => analyzeFutureReads(unknownConditionScenario), /unknown condition type/);
+});
+
+test("a diagnostic workload limit fails without claiming exhaustive coverage", () => {
+  assert.throws(() => auditScenario(1), /exceeded 1 future-relevant states; exhaustive coverage is not established/);
+  for (const limit of [0, -1, 1.5, Infinity, Number.MAX_SAFE_INTEGER + 1]) {
+    assert.throws(() => auditScenario(limit), /Invalid audit state limit/);
+  }
 });

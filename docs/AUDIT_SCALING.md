@@ -58,9 +58,10 @@ The archived full traversal for the original Stage 5 source is recorded as
 recorded as 727,927 states with zero no-completion states. This branch did not
 rerun either old implementation and includes the later Archive repair commit,
 so these are raw historical/current measurements rather than an apples-to-
-apples percentage reduction. The CI limit is 100,000 canonical states because
+apples percentage reduction. The Stage 5 CI limit was 100,000 canonical states because
 the reduction is substantive and the measured result fits under that bound;
-the limit remains a failure if future content exceeds it.
+that snapshot fit within the measured workload budget. Blackglass exceeded it;
+the failure and explicit later adjustment are recorded below.
 
 `tests/audit-scaling.test.ts` uses a miniature graph to prove that a flag read
 only in a late branch is retained from its predecessor while a flag read only
@@ -68,3 +69,31 @@ in a past scene is dropped after leaving that scene. It also checks resource,
 status, ending, and absent/false-flag distinctions. The existing scenario audit
 test remains responsible for the full production reachability, transition,
 dead-end, and completion assertions.
+
+## Blackglass terminal projection
+
+The seven-scene expansion initially measured 221,614 states and 332,382
+transitions. The old 100,000 workload ceiling failed, without claiming full
+coverage. Independent larger diagnostics found all 25 scenes and 130 choices
+reachable and no unfinished state without a completed path. Overwrite-aware
+backward flag liveness produced no reduction.
+
+After a journey ends, legal choices and future actions are absent. Terminal
+keys therefore retain only flags read by the current scene's conditional
+text, along with every exact resource balance, scene, status and ending
+kind/summary. Playing keys keep the previous conservative future closure.
+Every collision still checks relevant text, choices and successor keys;
+successor keys use their own scene/status read sets. Facts, history and
+receipt metadata retain their previously documented representative limits.
+
+The reduction yields 169,922 states, 332,382 transitions, 162,461 merges and
+297,171 congruent successor checks. A manager run passes all 69 checks in
+30.8 seconds, with no unreachable content, dead ends or missing completion
+paths. The representative projection maximum is 414 words. Tests distinguish
+terminal text flags, resources and ending identity, preserve playing choice
+flags, and confirm an intentionally low workload limit fails explicitly.
+
+The manager explicitly raised the workload guard to 250,000 after those
+measurements, before new live acceptance. It does not relax functional
+invariants or establish world-scale capacity. See STAGE6_BLACKGLASS.md for
+the failed diagnostic, comparison artifacts and final source references.

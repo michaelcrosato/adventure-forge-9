@@ -281,7 +281,7 @@ test("zero supplies blocks coerced trust repair but still permits an emergency c
   assert.equal(result.flags["blackglass-pressure-scarred"], true);
 });
 
-test("field medic aid makes Risk 5 evacuation clean, unaided and late aid remain scarred", () => {
+test("Nessa's aid stabilizes a Risk 5 evacuation route; unaided and late repairs remain scarred", () => {
   const origin = walk(EVACUATION_ORIGIN);
   assert.equal(origin.resources.risk, 5);
 
