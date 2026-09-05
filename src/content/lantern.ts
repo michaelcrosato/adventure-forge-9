@@ -8,7 +8,7 @@ export const LANTERN_SCENES = [
     title: "Lantern Archive Landing",
     text: [
       {
-        text: "The Lantern Archive stands above the canal in a house of blue glass. Archivist Sera Vale will hear a case only if the order's chain of custody can survive an official challenge.",
+        text: "The Lantern Archive stands above the canal in a house of blue glass. Archivist Sera Vale notices a faded counterseal above Tovan's local mark on the stolen order. She needs two independent pieces of evidence to call a hearing against the upstream authority, Prefect Oren Vask.",
       },
       {
         text: "Nessa's shared repair gives the order a maintenance trail that can be checked.",
@@ -40,8 +40,12 @@ export const LANTERN_SCENES = [
         when: [{ type: "flag", flag: "shared-water", value: true }],
       },
       {
-        text: "The council seal opens the official file. Sera can redeem one mark of existing council debt as the filing fee; the seal remains your receipt for the chain of custody.",
-        when: [{ type: "flag", flag: "council-control", value: true }],
+        text: "Your council seal opens the official file. In return for your cooperation, Sera will assume one of your outstanding obligations. You keep the seal as a custody receipt.",
+        when: [{ type: "flag", flag: "council-control", value: true }, { type: "flag", flag: "council-seal", value: true }],
+      },
+      {
+        text: "Mara knows you installed the council's ration rule and refuses an informal deposition. A professional guarantee can earn her trust; a council summons will compel her at the cost of another debt, with her name unprotected.",
+        when: [{ type: "flag", flag: "council-control", value: true }, { type: "flag", flag: "archive-witness-contacted", value: false }],
       },
       {
         text: "Bram's family manifest gives the case a public face. Mara can be sheltered with the families even if she never signs a deposition.",
@@ -57,7 +61,7 @@ export const LANTERN_SCENES = [
         text: "Jalen Rook keeps the night ledger behind a loose lantern panel. He moved Vask's copy after dark and will open the panel only if Sera promises that his name will not be the first one entered in the record.",
       },
       {
-        text: "The ledger's salt-stained pages show which order was written before the water changed course.",
+        text: "The ledger records a night transfer from Lowsail's intake to Vask's private mill branch. It establishes who benefited, but Vask can still claim the transfer was an emergency measure.",
       },
     ],
   },
@@ -66,10 +70,10 @@ export const LANTERN_SCENES = [
     title: "Seal Workroom",
     text: [
       {
-        text: "A sealwright's bench holds wax impressions, pressure marks, and a brass gauge. One comparison can tie the stolen order to Prefect Oren Vask's office.",
+        text: "A sealwright's bench holds wax impressions, valve tracings, and a brass gauge. The counterseal above Tovan's local mark can establish whether Vask's office authorized the transfer.",
       },
       {
-        text: "A canalwright can read the pressure scars as well as the seal itself, proving the diversion was made at the floodworks rather than copied later.",
+        text: "A canalwright can compare the valve tracings with the order: the private mill branch was opened while the emergency spillway stayed shut. That would contradict an emergency diversion without requiring a witness.",
         when: [{ type: "flag", flag: "background-canalwright", value: true }],
       },
     ],
@@ -80,6 +84,10 @@ export const LANTERN_SCENES = [
     text: [
       {
         text: "Mara Venn sits beside a dead lantern with both hands around a brother's unpaid notice. She copied the order under threat and believes Vask can still reach her family.",
+      },
+      {
+        text: "Mara recognizes the authority you gave the council. She will not put her name on an informal deposition for you. Offer a professional guarantee, protect her silence, or return to the hall for an official summons.",
+        when: [{ type: "flag", flag: "council-control", value: true }],
       },
       {
         text: "Your field-medic training gives Mara a way to breathe through the questioning before she decides what she can say.",
@@ -121,6 +129,10 @@ export const LANTERN_SCENES = [
       {
         text: "Mara's testimony is signed, but no protection covers the name on the page.",
         when: [{ type: "flag", flag: "archive-witness-testimony", value: true }, { type: "flag", flag: "archive-witness-protected", value: false }],
+      },
+      {
+        text: "Mara appeared under your council summons. She confirms the order but will not look at you; the summons has added another claim on your work.",
+        when: [{ type: "flag", flag: "archive-witness-coerced", value: true }],
       },
       {
         text: "No witness has entered the record. The documents can still support a negotiated filing.",
@@ -168,6 +180,10 @@ export const LANTERN_SCENES = [
         when: [{ type: "flag", flag: "archive-field-medic-witness", value: true }],
       },
       {
+        text: "Mara refuses to speak to you outside the record. The hearing used her account, but your summons made her brother's debt into another threat.",
+        when: [{ type: "flag", flag: "archive-witness-coerced", value: true }],
+      },
+      {
         text: "The oathkeeper's writ is discharged in the notice; you made the official answer for the promise you bound.",
         when: [{ type: "flag", flag: "oathkeeper-vow-discharged", value: true }],
       },
@@ -207,6 +223,17 @@ export const LANTERN_CHOICES = [
     ],
   },
   {
+    id: "return-to-night-ledger",
+    scene: "archive-hall",
+    label: "Return to Jalen at the night ledger",
+    description: "Return to the panel you found earlier and reconsider Jalen's amnesty. The search has already drawn attention; returning adds no risk.",
+    when: [
+      { type: "flag", flag: "archive-ledger-evidence", value: false },
+      { type: "flag", flag: "archive-ledger-search-started", value: true },
+    ],
+    effects: [{ type: "goTo", scene: "diversion-ledger-room" }],
+  },
+  {
     id: "read-nessa-maintenance-log",
     scene: "archive-hall",
     label: "File Nessa's maintenance log",
@@ -222,8 +249,8 @@ export const LANTERN_CHOICES = [
   {
     id: "surrender-council-seal-for-ledger",
     scene: "archive-hall",
-    label: "Redeem council debt for the ledger",
-    description: "Let Sera redeem one existing council debt mark for the sealed ration file; the seal remains as your custody receipt.",
+    label: "Open the official file with your council seal",
+    description: "Give Sera access to the sealed ration file and its night ledger. She assumes one of your obligations for cooperating: debt -1. Keep the seal as your custody receipt.",
     when: [
       { type: "flag", flag: "council-control", value: true },
       { type: "flag", flag: "council-seal", value: true },
@@ -242,7 +269,7 @@ export const LANTERN_CHOICES = [
     id: "file-bram-family-manifest",
     scene: "archive-hall",
     label: "File Bram's family manifest",
-    description: "Place the evacuation manifest beside the water order and make the human cost part of the case.",
+    description: "File the families' losses to secure an emergency records request. Sera obtains the night ledger and adds the evacuation manifest to the case, without a public search or added risk.",
     when: [{ type: "flag", flag: "evacuation-plan", value: true }, { type: "flag", flag: "archive-ledger-evidence", value: false }],
     effects: [
       { type: "setFlag", flag: "archive-ledger-evidence", value: true },
@@ -272,7 +299,7 @@ export const LANTERN_CHOICES = [
     id: "ask-nessa-to-vouch-for-mara",
     scene: "archive-hall",
     label: "Ask Nessa to vouch for Mara",
-    description: "Use the shared repair's trust to secure Mara's testimony without a new cost.",
+    description: "Nessa backs your request with the shared channel's repair log. Sera grants Mara and her brother protected lodging, and Mara signs a sealed deposition. No additional resource cost.",
     when: [{ type: "flag", flag: "shared-water", value: true }, { type: "flag", flag: "archive-witness-contacted", value: false }],
     effects: [
       { type: "setFlag", flag: "archive-witness-contacted", value: true },
@@ -287,19 +314,20 @@ export const LANTERN_CHOICES = [
   {
     id: "use-council-debt-to-summon-mara",
     scene: "archive-hall",
-    label: "Spend council debt to summon Mara",
-    description: "Use one debt mark to bring Mara into the official record. Vask's route gets testimony, but no protection.",
+    label: "Order a council summons for Mara",
+    description: "Have Tovan compel Mara to testify by threatening collection of her brother's debt. You owe another council favor: debt +1. Her name receives no protection.",
     when: [
       { type: "flag", flag: "council-control", value: true },
       { type: "flag", flag: "archive-witness-contacted", value: false },
-      { type: "resourceAtLeast", resource: "debt", value: 1 },
     ],
     effects: [
-      { type: "adjustResource", resource: "debt", delta: -1 },
+      { type: "adjustResource", resource: "debt", delta: 1 },
       { type: "setFlag", flag: "archive-witness-contacted", value: true },
       { type: "setFlag", flag: "archive-witness-testimony", value: true },
+      { type: "setFlag", flag: "archive-witness-coerced", value: true },
       { type: "adjustResource", resource: "archive-evidence", delta: 1 },
       { type: "addFact", fact: "archive-witness-heard" },
+      { type: "addFact", fact: "archive-witness-coerced" },
       { type: "goTo", scene: "archive-hall" },
     ],
   },
@@ -364,7 +392,7 @@ export const LANTERN_CHOICES = [
     id: "compare-seal-impressions",
     scene: "seal-workroom",
     label: "Compare the seal impressions",
-    description: "Match the stolen order to the seal used by Vask's office.",
+    description: "Match the counterseal above Tovan's mark to Vask's office. This proves authorization, though Vask can still claim an emergency.",
     when: [{ type: "flag", flag: "archive-seal-evidence", value: false }],
     effects: [
       { type: "setFlag", flag: "archive-seal-evidence", value: true },
@@ -377,7 +405,7 @@ export const LANTERN_CHOICES = [
     id: "reconstruct-seal-pressure",
     scene: "seal-workroom",
     label: "Reconstruct the pressure mark",
-    description: "Read the floodwork pressure scars as a canalwright. The technical proof can stand without Mara's name.",
+    description: "Match Vask's counterseal and reconstruct the valve settings: his private mill branch opened while the emergency spillway stayed shut. With the ledger, this refutes his defense without Mara's testimony.",
     when: [{ type: "flag", flag: "background-canalwright", value: true }, { type: "flag", flag: "archive-seal-evidence", value: false }],
     effects: [
       { type: "setFlag", flag: "archive-seal-evidence", value: true },
@@ -399,8 +427,8 @@ export const LANTERN_CHOICES = [
     id: "record-mara-testimony",
     scene: "witness-cellar",
     label: "Record Mara's testimony",
-    description: "Take Mara's account while she is willing to speak. The hearing will decide whether her name is spent.",
-    when: [{ type: "flag", flag: "archive-witness-contacted", value: false }],
+    description: "Mara agrees to state that Vask ordered water reserved for his mill and threatened her brother over the copy. Her signed account has no protection; the hearing will decide whether to publish or seal it.",
+    when: [{ type: "flag", flag: "archive-witness-contacted", value: false }, { type: "flag", flag: "council-control", value: false }],
     effects: [
       { type: "setFlag", flag: "archive-witness-contacted", value: true },
       { type: "setFlag", flag: "archive-witness-testimony", value: true },
