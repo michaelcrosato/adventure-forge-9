@@ -360,13 +360,19 @@ export interface SymbolicReachability {
   readonly endingWitnesses: Readonly<Record<string, readonly string[]>>;
 }
 
-export function symbolicReachability(model: SymbolicModel, roundLimit = 128): SymbolicReachability {
+/** An observer may throw to stop an incomplete diagnostic; no partial success is returned. */
+export function symbolicReachability(
+  model: SymbolicModel,
+  roundLimit = 128,
+  onProgress?: (phase: "forward" | "backward" | "scenes" | "choices", step: number) => void,
+): SymbolicReachability {
   if (!Number.isSafeInteger(roundLimit) || roundLimit < 1) throw new Error("Invalid symbolic round limit");
   const bdd = model.bdd;
   const frontiers = [model.initial];
   let reachable = model.initial, frontier = model.initial, forwardRounds = 0;
   while (true) {
     if (++forwardRounds > roundLimit) throw new Error("Symbolic forward limit exceeded; coverage incomplete");
+    onProgress?.("forward", forwardRounds);
     for (const choice of model.choices) {
       for (const [reason, predicate] of [["arithmetic-error", choice.arithmeticError], ["bound-exit", choice.boundExit]] as const) {
         const failed = bdd.and(frontier, predicate);
@@ -380,6 +386,7 @@ export function symbolicReachability(model: SymbolicModel, roundLimit = 128): Sy
   let completable = bdd.and(reachable, model.completed), backwardRounds = 0;
   while (true) {
     if (++backwardRounds > roundLimit) throw new Error("Symbolic backward limit exceeded; coverage incomplete");
+    onProgress?.("backward", backwardRounds);
     const more = bdd.and(bdd.and(model.preimage(completable), reachable), bdd.not(completable));
     if (more === 0) break;
     completable = bdd.or(completable, more);
@@ -389,13 +396,15 @@ export function symbolicReachability(model: SymbolicModel, roundLimit = 128): Sy
   const choiceWitnesses: Record<string, readonly string[]> = Object.create(null);
   const endingWitnesses: Record<string, readonly string[]> = Object.create(null);
   const unreachableScenes: string[] = [];
-  for (const scene of model.scenario.scenes) {
+  for (const [index, scene] of model.scenario.scenes.entries()) {
+    onProgress?.("scenes", index);
     const predicate = model.atScene(scene.id);
     if (bdd.and(reachable, predicate) === 0) unreachableScenes.push(scene.id);
     else sceneWitnesses[scene.id] = model.witness(predicate, frontiers);
   }
   const unreachableChoices: string[] = [];
-  for (const choice of model.choices) {
+  for (const [index, choice] of model.choices.entries()) {
+    onProgress?.("choices", index);
     legal = bdd.or(legal, choice.enabled);
     if (bdd.and(reachable, choice.enabled) === 0) { unreachableChoices.push(choice.id); continue; }
     const path = Object.freeze([...model.witness(choice.enabled, frontiers), choice.id]);
