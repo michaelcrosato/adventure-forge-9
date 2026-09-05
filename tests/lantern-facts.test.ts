@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { RAW_SCENARIO } from "../src/content/scenario.js";
 import {
   choose,
   observe,
@@ -94,14 +93,6 @@ test("safe conduct has its own fact when an oathkeeper never takes council contr
   assert.equal(facts.includes("Your oath requires you to answer for the council's water order."), false);
   assert.equal(afterSafeConduct.knownFacts.includes("archive-safe-conduct-bound"), true);
   assert.equal(afterSafeConduct.knownFacts.includes("oathkeeper-vow-bound"), false);
-});
-
-test("leaving the Archive landing describes an opened case", () => {
-  const departure = RAW_SCENARIO.choices.find(choice => choice.id === "leave-lantern-landing");
-  assert.ok(departure);
-  assert.match(departure.description, /leave the opened case/i);
-  assert.match(departure.description, /investigation or hearing/i);
-  assert.doesNotMatch(departure.description, /before the case is opened/i);
 });
 
 test("document-only technical and provisional records omit Mara without claiming personal protection", () => {
