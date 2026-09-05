@@ -164,6 +164,17 @@ function oldStableOutcome(state: GameState): Record<string, unknown> {
   };
 }
 
+function activityProjection(state: GameState): Record<string, unknown> {
+  return {
+    scene: state.scene,
+    status: state.status,
+    resources: { ...state.resources },
+    flags: { ...state.flags },
+    knownFacts: [...state.knownFacts],
+    receipt: state.receipt === undefined ? undefined : { ...state.receipt },
+  };
+}
+
 function assertChoice(state: GameState, choiceId: string): void {
   assert.ok(observe(state).choices.some((choice) => choice.id === choiceId), `expected ${choiceId} at ${state.scene}`);
 }
@@ -265,6 +276,29 @@ const UNTRAINED_SUPPLY_ORIGIN = [
   "use-council-debt-to-summon-mara",
   "call-lantern-hearing",
   "seal-mara-testimony",
+  "continue-to-blackglass",
+  "begin-blackglass-crossing",
+  "take-council-catwalk",
+  "run-the-watchline",
+  "hold-valve-under-watch",
+] as const;
+
+const COUNCIL_DEBT2_ORIGIN = [
+  "hear-council",
+  "take-council-seal",
+  "work-without-tools",
+  "follow-canal",
+  "read-stolen-order",
+  "give-red-sluice-to-council",
+  "release-council-water",
+  "report-council-rationing",
+  "sign-charter-and-open-archive",
+  "enter-lantern-hall",
+  "surrender-council-seal-for-ledger",
+  "trace-seal-chain",
+  "compare-seal-impressions",
+  "call-lantern-hearing",
+  "negotiate-provisional-record",
   "continue-to-blackglass",
   "begin-blackglass-crossing",
   "take-council-catwalk",
@@ -437,6 +471,19 @@ test("the kit recovery works at inherited debt four, while credit boundaries rem
   const debtFourAfterOrder = step(debtTwoClinic, "order-reedway-clinic-treatment");
   assert.equal(debtFourAfterOrder.resources.debt, 4);
   assertNoChoice(debtFourAfterOrder, "order-reedway-clinic-treatment");
+
+  const debtTwoOrigin = walk(COUNCIL_DEBT2_ORIGIN);
+  assert.equal(debtTwoOrigin.resources.debt, 2);
+  const debtTwoHostile = install(
+    step(visit(debtTwoOrigin, "visit-reedway-barge"), "force-reedway-regulator"),
+    "visit-reedway-workers",
+    "install-reedway-regulator-at-workers",
+  );
+  const debtTwoPorterOffer = visit(debtTwoHostile, "visit-reedway-workers");
+  assertChoice(debtTwoPorterOffer, "commission-reedway-relief-with-porters");
+  const debtFourFromPorters = step(debtTwoPorterOffer, "commission-reedway-relief-with-porters");
+  assert.equal(debtFourFromPorters.resources.debt, 4);
+  assertNoChoice(debtFourFromPorters, "commission-reedway-relief-with-porters");
 });
 
 test("clinic and worker rewards fund distinct one-time services, including a non-medic supply route", () => {
@@ -494,6 +541,65 @@ test("clinic and worker rewards fund distinct one-time services, including a non
   const triage = step(visit(medicClinic, "visit-reedway-clinic"), "triage-reedway-patients-as-medic");
   assert.equal(triage.resources.supplies, 0);
   assert.equal(triage.flags["reedway-patients-treated"], true);
+});
+
+test("revisiting every site after multiple services preserves the full activity state and updates the old hub text", () => {
+  let serviced = step(visit(sharedLowResolved(), "visit-reedway-barge"), "accept-reedway-work-lien");
+  serviced = install(serviced, "visit-reedway-clinic", "install-reedway-regulator-at-clinic");
+  serviced = step(visit(serviced, "visit-reedway-clinic"), "treat-reedway-patients-with-medicine");
+  serviced = step(visit(toCommons(serviced), "visit-reedway-barge"), "treat-reedway-deckhand");
+  serviced = step(visit(toCommons(serviced), "visit-reedway-workers"), "commission-reedway-relief-with-sera");
+  serviced = toCommons(serviced);
+  assert.equal(serviced.scene, "reedway-commons");
+  assert.equal(serviced.resources.medicine, 0);
+  assert.equal(serviced.resources.debt, 2);
+  assert.equal(serviced.flags["reedway-clinic-powered"], true);
+  assert.equal(serviced.flags["reedway-patients-treated"], true);
+  assert.equal(serviced.flags["reedway-crew-treated"], true);
+  assert.equal(serviced.flags["reedway-relief-sent"], true);
+
+  const beforeLoops = activityProjection(serviced);
+  const blackglass = step(serviced, "return-to-blackglass-from-reedway");
+  assert.match(observe(blackglass).text.join(" "), /received the relief/i);
+  const lowsail = step(serviced, "return-to-lowsail-from-reedway");
+  const oldHubText = observe(lowsail).text.join(" ");
+  assert.match(oldHubText, /working sterilizer/i);
+  assert.match(oldHubText, /received the care/i);
+  const reentered = step(lowsail, "explore-reedway-from-lowsail");
+  const mid = visit(reentered, "visit-reedway-barge");
+  const restored = restore(save(mid));
+  assert.deepEqual(observe(restored), observe(mid));
+  const replayed = replay(mid.seed, mid.history.map((record) => ({ choiceId: record.choiceId, expectedRevision: record.fromRevision })));
+  assert.equal(stateHash(replayed), stateHash(mid));
+
+  const looped = travelAllSites(serviced);
+  assert.deepEqual(activityProjection(looped), beforeLoops, "regional travel changed an allocated or completed activity result");
+});
+
+test("revisiting the barge preserves the order-sensitive care and seizure relationship", () => {
+  const fieldOrigin = evacuationPublicProtectedResolved();
+
+  let treatedFirst = step(visit(fieldOrigin, "visit-reedway-barge"), "splint-reedway-deckhand-as-medic");
+  treatedFirst = step(toCommons(treatedFirst), "return-to-blackglass-from-reedway");
+  treatedFirst = step(treatedFirst, "explore-reedway-from-blackglass");
+  treatedFirst = visit(treatedFirst, "visit-reedway-barge");
+  const seizedAfterCare = step(treatedFirst, "force-reedway-regulator");
+  assert.equal(seizedAfterCare.flags["reedway-crew-treated"], true);
+  assert.equal(seizedAfterCare.flags["reedway-salvager-hostile"], true);
+  assert.ok(seizedAfterCare.knownFacts.includes("reedway-regulator-forced"));
+  const hostileAfterCare = visit(seizedAfterCare, "visit-reedway-workers");
+  assertNoChoice(hostileAfterCare, "send-reedway-relief-with-sera");
+  assertNoChoice(hostileAfterCare, "commission-reedway-relief-with-sera");
+
+  let seizedFirst = step(visit(fieldOrigin, "visit-reedway-barge"), "force-reedway-regulator");
+  seizedFirst = step(toCommons(seizedFirst), "return-to-blackglass-from-reedway");
+  seizedFirst = step(seizedFirst, "explore-reedway-from-blackglass");
+  seizedFirst = visit(seizedFirst, "visit-reedway-barge");
+  const caredAfterSeizure = step(seizedFirst, "splint-reedway-deckhand-as-medic");
+  assert.equal(caredAfterSeizure.flags["reedway-crew-treated"], true);
+  assert.equal(caredAfterSeizure.flags["reedway-salvager-hostile"], false);
+  assert.ok(caredAfterSeizure.knownFacts.includes("reedway-regulator-forced"));
+  assertChoice(visit(caredAfterSeizure, "visit-reedway-workers"), "commission-reedway-relief-with-sera");
 });
 
 test("deckhand medicine and medic treatment cost one unit, restore cooperation, and preserve seizure order", () => {
