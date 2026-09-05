@@ -23,6 +23,10 @@ export const BLACKGLASS_SCENES = [
         when: [{ type: "flag", flag: "blackglass-resolved", value: false }],
       },
       {
+        text: "For an undamaged repair, reach the controls at Tide 2 or lower and Risk 2 or lower. At Risk 3 or higher, Varo's watch forces a hurried setting that damages the line unless Nessa has agreed to help. At Tide 3, even her help cannot prevent pressure damage.",
+        when: [{ type: "flag", flag: "blackglass-resolved", value: false }],
+      },
+      {
         text: "The shared-water marks give Nessa a maintenance line through the works.",
         when: [{ type: "flag", flag: "blackglass-resolved", value: false }, { type: "flag", flag: "shared-water", value: true }],
       },
@@ -437,7 +441,7 @@ export const BLACKGLASS_CHOICES = [
     id: "move-before-lantern-patrol",
     scene: "conduit-gallery",
     label: "Move before the lantern patrol",
-    description: "Use the short ledge while the public notice has the patrol looking outward. Tide +1 and Risk +1.",
+    description: "Use the short ledge while the patrol looks outward. Tide +1 and Risk +1; reaching Risk 3 forces a scarred repair without Nessa's aid.",
     when: [{ type: "flag", flag: "archive-verdict-exposed", value: true }, { type: "resourceAtMost", resource: "tide", value: 2 }],
     effects: [
       { type: "advanceClock", clock: "blackglass-tide", delta: 1 },
@@ -482,7 +486,7 @@ export const BLACKGLASS_CHOICES = [
     id: "ride-the-rising-conduit",
     scene: "conduit-gallery",
     label: "Ride the rising conduit",
-    description: "Take the wet ladder while the current is moving. Tide +2 and Risk +1; the rush can cross the Risk 2 clean-setting threshold.",
+    description: "Take the wet ladder while the current is moving. Tide +2 and Risk +1; reaching Tide 3 means an emergency release and pressure damage.",
     effects: [
       { type: "advanceClock", clock: "blackglass-tide", delta: 2 },
       { type: "adjustResource", resource: "risk", delta: 1 },

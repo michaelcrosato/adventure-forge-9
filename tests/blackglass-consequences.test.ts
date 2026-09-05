@@ -247,6 +247,47 @@ test("waiting at the council watch reaches the emergency window while running re
   assertNoChoice(running, "open-emergency-bypass");
 });
 
+test("a saved supply offers a quiet public-verdict crossing at the pressure risk threshold", () => {
+  const gallery = walk(["begin-blackglass-crossing", "take-shared-maintenance-line"], sharedOrigin("public"));
+  assert.equal(gallery.resources.risk, 2);
+  assert.equal(gallery.resources.supplies, 1);
+  assert.equal(gallery.resources.tide, 1);
+
+  const braced = step(gallery, "brace-the-conduit-ledge");
+  assert.equal(braced.resources.supplies, 0);
+  assert.equal(braced.resources.risk, 2);
+  assert.equal(braced.resources.tide, 2);
+  assert.equal(braced.flags["archive-verdict-exposed"], true);
+  assertChoice(braced, "set-pressure-before-next-surge");
+  const clean = finishBlackglass(step(braced, "set-pressure-before-next-surge"), "close-blackglass-chapter-clean");
+  assert.equal(clean.status, "completed");
+  assert.equal(clean.flags["blackglass-pressure-scarred"], undefined);
+
+  const rushed = step(gallery, "move-before-lantern-patrol");
+  assert.equal(rushed.resources.supplies, 1);
+  assert.equal(rushed.resources.risk, 3);
+  assert.equal(rushed.resources.tide, 2);
+  assertNoChoice(rushed, "set-pressure-before-next-surge");
+  assertChoice(rushed, "hold-valve-under-watch");
+});
+
+test("the ledge brace cannot spend a missing supply and an exhausted route still completes", () => {
+  const gallery = walk([
+    "visit-clinic", "make-clinic-promise", "refuse-council-control", "borrow-repair-tools", "follow-canal",
+    "read-stolen-order", "repair-and-share-water", "release-shared-water", "bring-shared-water-to-clinic",
+    "close-clinic-and-open-archive", "enter-lantern-hall", "inspect-diversion-ledger", "secure-jalen-amnesty",
+    "trace-seal-chain", "compare-seal-impressions", "ask-nessa-to-vouch-for-mara", "call-lantern-hearing",
+    "publish-vask-anonymously", "continue-to-blackglass", "begin-blackglass-crossing", "take-shared-maintenance-line",
+  ]);
+  assert.equal(gallery.resources.supplies, 0);
+  assert.equal(gallery.resources.risk, 2);
+  assertNoChoice(gallery, "brace-the-conduit-ledge");
+  const pressure = step(gallery, "move-before-lantern-patrol");
+  const result = finishBlackglass(step(pressure, "hold-valve-under-watch"), "close-blackglass-chapter-scarred");
+  assert.equal(result.status, "completed");
+  assert.equal(result.resources.supplies, 0);
+});
+
 test("coerced council barracks refuse free aid, while paid trust repair costs one supply", () => {
   const barracks = walk(["begin-blackglass-crossing", "take-coerced-worker-line"], walk(COUNCIL_ORIGIN));
   assertNoChoice(barracks, "ask-nessa-to-hold-rope");
