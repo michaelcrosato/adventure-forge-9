@@ -151,29 +151,66 @@ test("tide gates are inclusive at each authored <= boundary", () => {
 
   state = step(state, "take-shared-maintenance-line");
   assert.equal(state.resources.tide, 1);
-  assertChoice(state, "follow-shared-repair-marks");
+  state = step(state, "return-to-reedway-from-conduit");
+  assert.equal(state.resources.tide, 1);
+  assertChoice(state, "take-shared-maintenance-line");
 
-  state = step(state, "follow-shared-repair-marks");
+  state = step(state, "take-shared-maintenance-line");
   assert.equal(state.resources.tide, 2);
-  assertChoice(state, "set-pressure-before-next-surge");
+  state = step(state, "return-to-reedway-from-conduit");
+  assert.equal(state.resources.tide, 2);
+  assert.equal(
+    observe(state).choices.some(choice => choice.id === "take-shared-maintenance-line"),
+    false,
+    "the shared line closes after the inclusive Tide 1 boundary",
+  );
+
+  let pressure = sharedBlackglassStart(8);
+  pressure = step(pressure, "begin-blackglass-crossing");
+  pressure = step(pressure, "take-shared-maintenance-line");
+  assert.equal(pressure.resources.tide, 1);
+  assertChoice(pressure, "follow-shared-repair-marks");
+
+  pressure = step(pressure, "follow-shared-repair-marks");
+  assert.equal(pressure.resources.tide, 2);
+  assertChoice(pressure, "set-pressure-before-next-surge");
 });
 
 test("repeated permitted navigation saturates tide and still reaches the scarred return", () => {
-  let watchline = blackglassStart(11);
-  watchline = step(watchline, "begin-blackglass-crossing");
-  watchline = step(watchline, "cross-the-flooded-road");
-  assert.equal(watchline.resources.tide, 1);
-  watchline = step(watchline, "run-the-watchline");
-  assert.equal(watchline.resources.tide, 2, "the delivered watchline advances tide by one");
-  assert.equal(watchline.resources.risk, 4, "the delivered watchline also adds one risk");
-
   let state = blackglassStart(11);
   state = step(state, "begin-blackglass-crossing");
   state = step(state, "cross-the-flooded-road");
   assert.equal(state.resources.tide, 1);
-  state = step(state, "wait-for-watch-to-turn");
-  assert.equal(state.resources.tide, 3, "waiting advances tide by two and reaches the clock maximum");
+  const riskAfterFirstCrossing = state.resources.risk;
+  const debtAfterFirstCrossing = state.resources.debt;
 
+  state = step(state, "return-to-reedway-from-watch");
+  state = step(state, "cross-after-open-road");
+  assert.equal(state.resources.tide, 2);
+  assert.equal(state.resources.risk, riskAfterFirstCrossing, "reusing the opened road adds no risk");
+  assert.equal(state.resources.debt, debtAfterFirstCrossing, "returning and re-crossing adds no debt");
+
+  state = step(state, "return-to-reedway-from-watch");
+  state = step(state, "cross-after-open-road");
+  assert.equal(state.resources.tide, 3);
+  assert.equal(state.resources.risk, riskAfterFirstCrossing, "the tide cap does not create repeat risk");
+  assert.equal(state.resources.debt, debtAfterFirstCrossing, "the tide cap does not create repeat debt");
+
+  state = step(state, "return-to-reedway-from-watch");
+  assertChoice(state, "return-to-blackglass-quay");
+  state = step(state, "return-to-blackglass-quay");
+  assert.equal(state.resources.tide, 3);
+  assert.equal(state.resources.risk, riskAfterFirstCrossing);
+  assert.equal(state.resources.debt, debtAfterFirstCrossing);
+
+  state = step(state, "begin-blackglass-crossing");
+  state = step(state, "cross-after-open-road");
+  assert.equal(state.resources.tide, 3, "repeated crossing saturates at the declared maximum");
+  assert.equal(state.resources.risk, riskAfterFirstCrossing);
+  assert.equal(state.resources.debt, debtAfterFirstCrossing);
+
+  state = step(state, "run-the-watchline");
+  assert.equal(state.resources.tide, 3, "the watchline remains saturated");
   state = step(state, "open-emergency-bypass");
   assert.equal(state.resources.tide, 3, "the final advance saturates at the declared maximum");
   assert.equal(state.flags["blackglass-pressure-scarred"], true);
@@ -209,7 +246,11 @@ test("a rehashed external checkpoint cannot raise tide above its clock maximum",
     payload: GameState;
     hash: string;
   };
+  assert.equal(rehashState(envelope.payload), envelope.hash, "the untouched save envelope hashes its original payload");
   (envelope.payload.resources as Record<string, number>).tide = 4;
   envelope.hash = rehashState(envelope.payload);
-  assert.throws(() => restore(JSON.stringify(envelope)), SaveFormatError);
+  assert.throws(
+    () => restore(JSON.stringify(envelope)),
+    error => error instanceof SaveFormatError && /exceeds clock "blackglass-tide" maximum 3/.test(error.message),
+  );
 });
