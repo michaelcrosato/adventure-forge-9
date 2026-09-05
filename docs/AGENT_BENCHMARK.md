@@ -12,6 +12,8 @@ Reference: `gpt-5.6-luna`, reasoning `max`, as requested. These are development 
 
 No other model has yet been measured on equivalent tasks, so there is no defensible cost or speed ranking.
 
+Stage 2 follow-ups retained Luna/max. The browser worker reported roughly 4.5 minutes for durable journal rendering, disclosure and session resume; the manager corrected same-place wording, numbering, focus and scroll. The source-matched archive verification worker delivered a safe workflow and two tests; the manager replayed the original live game from its trusted commit. The content worker delivered 11 scenes and three resolution witnesses, but review required substantial repairs: scout costs without benefit, invisible tools, a trapped clinic detour, premature evacuation counts, stale outcomes, and medicine with no coherent use. Reachability alone did not catch those quality failures. Short read-only peer audits were useful; elapsed authoring time was not instrumented precisely.
+
 ## Workflow adjustment
 
 The subscription research task ran too long without a usable handoff. Its worker reported that interim commentary did not reach the manager and direct collaboration messaging was unavailable on its tool surface. Future critical-path tasks should be one bounded module or one decisive probe, return a final handoff promptly, and continue under a follow-up assignment. Write interfaces first so integration can proceed while implementation continues. Measure task start/finish explicitly in future assignments instead of reconstructing timing.

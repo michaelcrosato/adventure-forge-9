@@ -52,7 +52,7 @@ test("server starts, observes, chooses, and surfaces stale revisions", async () 
   assert.equal(typeof created.body.sessionId, "string");
   assert.ok(created.body.observation);
 
-  const allowed = ["revision", "sceneId", "title", "text", "facts", "resources", "choices", "status", "receipt"];
+  const allowed = ["revision", "sceneId", "title", "text", "facts", "journal", "resources", "choices", "status", "receipt"];
   assert.deepEqual(Object.keys(created.body.observation).sort(), allowed.filter((key) => key in created.body.observation).sort());
   assert.equal("state" in created.body, false);
   assert.equal("seed" in created.body.observation, false);
@@ -66,7 +66,7 @@ test("server starts, observes, chooses, and surfaces stale revisions", async () 
   assert.deepEqual(observed.body.observation, created.body.observation);
 
   const firstChoice = created.body.observation.choices[0];
-  assert.ok(firstChoice, "the Stage 1 scene should offer a legal choice");
+  assert.ok(firstChoice, "the opening scene should offer a legal choice");
   const chosen = await request(
     url,
     "/api/choose",
@@ -83,6 +83,20 @@ test("server starts, observes, chooses, and surfaces stale revisions", async () 
   assert.equal(stale.status, 409);
   assert.equal(stale.body.error.code, "stale_revision");
   assert.equal(stale.body.observation.revision, chosen.body.observation.revision);
+
+  const saved = await request(url, '/api/save', json({ sessionId: created.body.sessionId }));
+  assert.equal(saved.status, 200);
+  const loaded = await request(url, '/api/restore', json({ serialized: saved.body.serialized }));
+  assert.equal(loaded.status, 201);
+  assert.notEqual(loaded.body.sessionId, created.body.sessionId);
+  assert.deepEqual(loaded.body.observation, chosen.body.observation);
+  assert.equal(loaded.body.observation.journal.length, 1);
+
+  const closed = await request(url, '/api/end', json({ sessionId: loaded.body.sessionId, expectedRevision: loaded.body.observation.revision }));
+  assert.equal(closed.status, 200);
+  assert.equal(closed.body.observation.status, 'departed');
+  const original = await request(url, '/api/observe?sessionId=' + encodeURIComponent(created.body.sessionId));
+  assert.deepEqual(original.body.observation, chosen.body.observation, 'restored session must evolve independently');
 });
 
 test("server rejects malformed requests and never reads arbitrary static paths", async () => {

@@ -22,6 +22,7 @@ export function publicObservation(observation: Observation): Observation {
     title: observation.title,
     text: [...observation.text],
     facts: [...observation.facts],
+    journal: observation.journal.map(entry => ({ choice: entry.choice, from: entry.from, to: entry.to })),
     resources: { ...observation.resources },
     choices: observation.choices.map((choice) => ({
       id: choice.id,
@@ -47,7 +48,7 @@ function statusLabel(status: Observation["status"]): string {
 export function renderTerminalObservation(observation: Observation): string {
   const lines: string[] = [];
   lines.push("");
-  lines.push(`${observation.title}  [${observation.sceneId}]`);
+  lines.push(observation.title);
   lines.push("─".repeat(Math.max(24, Math.min(72, observation.title.length + 12))));
 
   for (const paragraph of observation.text) {
@@ -73,7 +74,13 @@ export function renderTerminalObservation(observation: Observation): string {
     lines.push("");
   }
 
-  lines.push(`Status: ${statusLabel(observation.status)}  ·  Revision ${observation.revision}`);
+  if (observation.journal.length > 0) {
+    lines.push('Recent decisions (use :journal for all):');
+    for (const entry of observation.journal.slice(-3)) lines.push(`  • ${entry.choice} → ${entry.to}`);
+    lines.push('');
+  }
+
+  lines.push(`Status: ${statusLabel(observation.status)}  ·  Decisions: ${observation.journal.length}`);
 
   if (observation.receipt) {
     lines.push(`Receipt: ${observation.receipt.summary}`);
@@ -87,7 +94,7 @@ export function renderTerminalObservation(observation: Observation): string {
       lines.push(`     ${choice.description}`);
     });
   } else if (observation.status === "playing") {
-    lines.push("No choices are available. Use :quit to leave the crossing.");
+    lines.push("No choices are available. Use :quit to leave the journey.");
   }
 
   return lines.join("\n");

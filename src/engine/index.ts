@@ -7,6 +7,7 @@ import type {
   ChoiceOption,
   GameState,
   GameStatus,
+  JournalEntry,
   Observation,
   Receipt,
   ReplayAction,
@@ -17,6 +18,7 @@ export type {
   ChoiceOption,
   GameState,
   GameStatus,
+  JournalEntry,
   Observation,
   Receipt,
   ReplayAction,
@@ -515,12 +517,21 @@ export function observe(state: GameState): Observation {
     ? legalChoices(state).map((choice) => ({ id: choice.id, label: choice.label, description: choice.description }))
     : [];
   const receipt = state.receipt === undefined ? undefined : { ...state.receipt };
+  let journalScene = SCENARIO.initialScene;
+  const journal: JournalEntry[] = state.history.map(action => {
+    const authored = CHOICES.get(action.choiceId);
+    const from = SCENES.get(journalScene)!.title;
+    const destination = authored?.effects.find(effect => effect.type === 'goTo');
+    if (destination?.type === 'goTo') journalScene = destination.scene;
+    return { choice: authored?.label ?? 'End journey', from, to: SCENES.get(journalScene)!.title };
+  });
   return {
     revision: state.revision,
     sceneId: scene.id,
     title: scene.title,
     text: [...text],
     facts: state.knownFacts.map((fact) => FACT_LABELS_BY_ID[fact] ?? fact),
+    journal,
     resources: { ...state.resources },
     choices: choices.map((choice) => ({ ...choice })),
     status: state.status,

@@ -19,6 +19,13 @@ export interface ChoiceOption {
   description: string;
 }
 
+/** Authored public labels for decisions already made, never hidden state. */
+export interface JournalEntry {
+  choice: string;
+  from: string;
+  to: string;
+}
+
 /** The only state sent to a player-facing adapter. */
 export interface Observation {
   revision: number;
@@ -26,6 +33,7 @@ export interface Observation {
   title: string;
   text: string[];
   facts: string[];
+  journal: JournalEntry[];
   resources: Record<string, number>;
   choices: ChoiceOption[];
   status: GameStatus;

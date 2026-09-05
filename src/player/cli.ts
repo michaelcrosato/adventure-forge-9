@@ -45,7 +45,7 @@ async function finish(
     write(output, `${renderTerminalObservation(observe(finished))}\n`);
     return finished;
   } catch {
-    write(output, "\nUnable to end this crossing because the view is out of date.\n");
+    write(output, "\nUnable to end this journey because the view is out of date.\n");
     return state;
   }
 }
@@ -58,13 +58,18 @@ export async function runCli(options: CliOptions = {}): Promise<PlayerState> {
   let observation = observe(state);
   let leftThroughCommand = false;
 
-  write(output, "\nTHE SPLIT TIDE · A Veyra Basin crossing\n");
+  write(output, "\nTHE SPLIT TIDE · A Veyra Basin journey\nChoose a number or choice ID. Commands: :journal, :save path, :load path, :quit\n");
   write(output, `${renderTerminalObservation(observation)}\n`);
 
   const readline = createInterface({ input, output });
   try {
     for await (const rawLine of readline) {
       const line = rawLine.trim();
+
+      if (line === ':journal') {
+        write(output, observation.journal.length === 0 ? 'No decisions recorded yet.\n' : observation.journal.map((entry, index) => `${index + 1}. ${entry.choice} (${entry.from} → ${entry.to})`).join('\n') + '\n');
+        continue;
+      }
 
       if (line === ":quit") {
         if (observation.status === "playing") {
@@ -78,7 +83,7 @@ export async function runCli(options: CliOptions = {}): Promise<PlayerState> {
       if (saveMatch) {
         const target = saveMatch[1]?.trim();
         if (!target) {
-          write(output, "Save where? Use :save path/to/crossing.save\n");
+          write(output, "Save where? Use :save path/to/journey.save\n");
           continue;
         }
         try {
@@ -94,7 +99,7 @@ export async function runCli(options: CliOptions = {}): Promise<PlayerState> {
       if (loadMatch) {
         const target = loadMatch[1]?.trim();
         if (!target) {
-          write(output, "Load what? Use :load path/to/crossing.save\n");
+          write(output, "Load what? Use :load path/to/journey.save\n");
           continue;
         }
         try {
@@ -108,13 +113,13 @@ export async function runCli(options: CliOptions = {}): Promise<PlayerState> {
       }
 
       if (observation.status !== "playing") {
-        write(output, "This crossing has ended. Use :load or start a new game.\n");
+        write(output, "This journey has ended. Use :load or start a new game.\n");
         continue;
       }
 
       const id = choiceIdForInput(line, observation);
       if (!id) {
-        write(output, "Choose a listed number or choice ID. Commands: :save, :load, :quit\n");
+        write(output, "Choose a listed number or choice ID. Commands: :journal, :save, :load, :quit\n");
         continue;
       }
 
@@ -150,7 +155,7 @@ function isMainModule(): boolean {
 
 if (isMainModule()) {
   runCli().catch((error: unknown) => {
-    process.stderr.write(`Unable to start the crossing: ${safeErrorMessage(error)}\n`);
+    process.stderr.write(`Unable to start the journey: ${safeErrorMessage(error)}\n`);
     process.exitCode = 1;
   });
 }

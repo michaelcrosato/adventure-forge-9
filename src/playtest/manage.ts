@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { homedir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { digest } from './evidence.js';
-import { validateRun } from './validate.js';
+import { validateRecordedRun, validateRun } from './validate.js';
 
 const [command = 'list', path, destination] = process.argv.slice(2);
 const defaultRoot = join(homedir(), '.local/share/adventure-forge-9/runs');
@@ -19,6 +19,9 @@ if (command === 'list') {
   console.log(JSON.stringify({ attempted: rows.length, completed, note: 'Counts include all attempts. Completed does not imply validation on the current build.', runs: rows }, null, 2));
 } else if (command === 'verify' && path) {
   console.log(JSON.stringify(validateRun(resolve(path)), null, 2));
+} else if (command === 'verify-recorded' && path) {
+  const trustedRoot = destination ? resolve(destination) : process.cwd();
+  console.log(JSON.stringify(validateRecordedRun(resolve(path), trustedRoot), null, 2));
 } else if (command === 'export' && path && destination) {
   const source = resolve(path);
   const target = resolve(destination);
@@ -29,6 +32,6 @@ if (command === 'list') {
   writeFileSync(target + '.sha256', `${digest(readFileSync(target))}  ${basename(target)}\n`, { flag: 'wx' });
   console.log(JSON.stringify({ export: target, checksum: target + '.sha256', validation }, null, 2));
 } else {
-  console.error('Usage: npm run evidence -- list [root] | verify <run-directory> | export <run-directory> <archive.tar.gz>');
+  console.error('Usage: npm run evidence -- list [root] | verify <run-directory> | verify-recorded <run-directory> [trusted-checkout] | export <run-directory> <archive.tar.gz>');
   process.exitCode = 1;
 }

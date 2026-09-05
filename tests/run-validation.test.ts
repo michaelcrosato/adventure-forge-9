@@ -1,19 +1,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { join } from 'node:path';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { BUILD_ID, start, end, observe, stateHash } from '../src/engine/index.js';
 import { EvidenceWriter, sourceSnapshot, snapshotIdentity } from '../src/playtest/evidence.js';
-import { validateRun } from '../src/playtest/validate.js';
+import { validateRecordedRun, validateRun } from '../src/playtest/validate.js';
 
 /** Synthetic protocol fixtures are deleted after each test and never count as live play. */
-function fixture(mode: 'valid' | 'wrong-player' | 'wrong-action' | 'interrupted' | 'duplicate-player') {
+function fixture(mode: 'valid' | 'wrong-player' | 'wrong-action' | 'interrupted' | 'duplicate-player', buildId = BUILD_ID) {
   const root = mkdtempSync(join(tmpdir(), 'af9-protocol-fixture-'));
   const writer = new EvidenceWriter(process.cwd(), root);
   const state = start(1);
   const snapshot = sourceSnapshot(process.cwd());
-  writer.write('setup.json', { kind: 'mechanical-fixture', seed: 1, buildId: BUILD_ID, sourceId: snapshotIdentity(snapshot), initialStateHash: stateHash(state) });
+  writer.write('setup.json', { kind: 'mechanical-fixture', seed: 1, buildId, sourceId: snapshotIdentity(snapshot), initialStateHash: stateHash(state) });
   writer.write('source.json', snapshot);
   writer.append('player_initialized', { threadId: 'synthetic-player' });
   writer.append('observation', { threadId: 'synthetic-player', observation: observe(state), stateHash: stateHash(state) });
@@ -53,5 +53,40 @@ test('substituted interview, action, or conversation cannot pass validation', ()
     const record = fixture(mode);
     try { assert.throws(() => validateRun(record.directory), /session mismatch|original player response|Duplicate/); }
     finally { record.cleanup(); }
+  }
+});
+
+test('recorded verification matches a trusted checkout without executing the snapshot', () => {
+  const record = fixture('valid', 'af9-recorded-build');
+  try {
+    const result = validateRecordedRun(record.directory, process.cwd());
+    assert.equal(result.integrity, true);
+    assert.equal(result.sourceMatch, true);
+    assert.equal(result.sourceExecution, 'none');
+    assert.equal(result.replay, 'requires recorded build; source matches trusted checkout');
+    assert.equal(result.liveAccepted, false);
+    assert.equal(result.recordedSourceId, result.trustedSourceId);
+  } finally { record.cleanup(); }
+});
+
+test('recorded verification refuses a source snapshot that differs from the trusted checkout', () => {
+  const record = fixture('valid', 'af9-recorded-build');
+  const trustedRoot = mkdtempSync(join(tmpdir(), 'af9-trusted-checkout-'));
+  try {
+    const snapshot = sourceSnapshot(process.cwd());
+    for (const [name, content] of Object.entries(snapshot)) {
+      const target = join(trustedRoot, name);
+      mkdirSync(dirname(target), { recursive: true });
+      writeFileSync(target, content);
+    }
+    const enginePath = join(trustedRoot, 'src/engine/index.ts');
+    writeFileSync(enginePath, `${readFileSync(enginePath, 'utf8')}\n// deliberate checkout mismatch\n`);
+    assert.throws(
+      () => validateRecordedRun(record.directory, trustedRoot),
+      /does not match the trusted checkout; refusing to execute archived source/,
+    );
+  } finally {
+    rmSync(record.directory, { recursive: true, force: true });
+    rmSync(trustedRoot, { recursive: true, force: true });
   }
 });

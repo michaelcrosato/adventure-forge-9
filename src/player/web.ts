@@ -15,40 +15,43 @@ export const PAGE_HTML = String.raw`<!doctype html>
         <div class="brand-lockup">
           <p class="kicker">ADVENTURE FORGE 09 <span>/</span> FIELD LOG</p>
           <h1>The Split Tide</h1>
-          <p class="dek">A short crossing through the flood-dark reaches of Veyra Basin.</p>
+          <p class="dek">Water, work, and promises in the towns of Veyra Basin.</p>
         </div>
         <div class="session-status" aria-live="polite">
           <span id="status-dot" class="status-dot"></span>
-          <span id="status-label">Preparing a crossing</span>
+          <span id="status-label">Preparing an expedition</span>
         </div>
       </header>
 
       <main class="page-grid">
         <section class="story-card panel" aria-labelledby="scene-title">
           <div class="scene-bar">
-            <span class="scene-label" id="scene-id">RIVER LOG</span>
+            <span class="scene-label" id="scene-id">FIELD LOG</span>
             <span class="scene-rule"></span>
             <span class="scene-label" id="scene-status">LIVE</span>
           </div>
-          <h2 id="scene-title">The river is holding its breath.</h2>
+          <h2 id="scene-title">The town is waiting.</h2>
           <div id="story-text" class="story-text">
-            <p>Loading the next crossing…</p>
+            <p>Loading the next expedition…</p>
           </div>
           <div id="receipt" class="receipt" hidden>
             <p class="eyebrow">Ending recorded</p>
             <p id="receipt-summary"></p>
           </div>
-          <div id="facts" class="facts" hidden>
-            <p class="eyebrow">What you know</p>
+          <details id="facts" class="facts" hidden>
+            <summary>
+              <span class="eyebrow">What you know</span>
+              <span id="facts-count" class="muted"></span>
+            </summary>
             <ul id="facts-list"></ul>
-          </div>
+          </details>
           <div class="choice-heading">
-            <p class="eyebrow">Choose your bearing</p>
+            <p class="eyebrow">Choose your path</p>
             <span id="choice-count" class="muted">—</span>
           </div>
           <div id="choices" class="choices" aria-live="polite"></div>
           <div class="story-footer">
-            <button id="leave-button" class="text-button" type="button">End crossing</button>
+            <button id="leave-button" class="text-button" type="button">End journey</button>
             <p id="notice" class="notice" role="status" aria-live="polite"></p>
           </div>
         </section>
@@ -65,10 +68,13 @@ export const PAGE_HTML = String.raw`<!doctype html>
           <section class="panel log-panel" aria-labelledby="log-title">
             <div class="panel-heading panel-heading-row">
               <div>
-                <p class="eyebrow">Along the water</p>
+                <p class="eyebrow">Along the road</p>
                 <h2 id="log-title">Journey log</h2>
               </div>
-              <span id="log-count" class="log-count">0</span>
+              <div class="log-actions">
+                <span id="log-count" class="log-count">0</span>
+                <button id="log-toggle" class="text-button log-toggle" type="button" hidden>Show all</button>
+              </div>
             </div>
             <ol id="journey-log" class="journey-log">
               <li class="log-empty">Your decisions will leave a trace here.</li>
@@ -78,7 +84,7 @@ export const PAGE_HTML = String.raw`<!doctype html>
           <section class="panel tools-panel" aria-labelledby="tools-title">
             <div class="panel-heading">
               <p class="eyebrow">Keep the thread</p>
-              <h2 id="tools-title">Crossing tools</h2>
+              <h2 id="tools-title">Journey tools</h2>
             </div>
             <div class="tool-grid">
               <button id="new-button" class="tool-button primary" type="button">New journey</button>
@@ -87,14 +93,14 @@ export const PAGE_HTML = String.raw`<!doctype html>
               <button id="export-button" class="tool-button" type="button">Export ending</button>
             </div>
             <input id="load-input" type="file" accept=".save,.json,application/json,text/plain" hidden />
-            <p class="tool-caption">Keep a save file nearby if you want to return to this crossing.</p>
+            <p class="tool-caption">Keep a save file nearby if you want to return to this journey.</p>
           </section>
         </aside>
       </main>
 
       <footer class="site-footer">
-        <span>Local play · your browser holds only the visible log</span>
-        <span>Local session</span>
+        <span>Local play · your browser holds the visible journal</span>
+        <span>Local expedition</span>
       </footer>
     </div>
     <script src="/app.js"></script>
@@ -178,6 +184,11 @@ h2 { margin-bottom: 0; color: #eff4ee; font-size: clamp(1.55rem, 2.6vw, 2.25rem)
 .receipt .eyebrow { color: var(--rust); }
 .receipt p:last-child { margin: 7px 0 0; color: #d6dfd8; font-family: Georgia, "Times New Roman", serif; font-size: 0.98rem; line-height: 1.5; }
 .facts { margin-top: 18px; padding: 13px 16px; border-left: 2px solid var(--rust); background: rgba(8, 18, 26, 0.34); }
+.facts summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; list-style: none; }
+.facts summary::-webkit-details-marker { display: none; }
+.facts summary::after { color: var(--rust); content: "+"; font-size: 1.05rem; line-height: 1; }
+.facts[open] summary::after { content: "−"; }
+.facts summary:focus-visible { outline: 1px solid var(--teal-strong); outline-offset: 4px; }
 .facts .eyebrow { color: var(--rust); }
 .facts ul { margin: 7px 0 0; padding-left: 18px; color: #b7c8c5; font-size: 0.82rem; line-height: 1.45; }
 .choice-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 24px; padding-top: 0; }
@@ -201,7 +212,9 @@ h2 { margin-bottom: 0; color: #eff4ee; font-size: clamp(1.55rem, 2.6vw, 2.25rem)
 .panel-heading { margin-bottom: 20px; }
 .panel-heading h2 { margin-top: 7px; font-size: 1.7rem; }
 .panel-heading-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.log-actions { display: flex; align-items: center; gap: 10px; }
 .log-count { min-width: 28px; padding: 5px 8px; color: var(--teal); font-size: 0.75rem; text-align: center; border: 1px solid rgba(142, 208, 194, 0.3); border-radius: 999px; }
+.log-toggle { font-size: 0.7rem; white-space: nowrap; }
 .resources-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
 .resource { padding: 12px 13px; background: rgba(6, 15, 22, 0.34); border: 1px solid var(--line); border-radius: 9px; }
 .resource-name { display: block; overflow: hidden; color: var(--muted); font-size: 0.67rem; letter-spacing: 0.08em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
@@ -246,9 +259,12 @@ code { color: #8ea9a9; font-family: ui-monospace, SFMono-Regular, Menlo, monospa
 export const APP_JS = String.raw`(() => {
   'use strict';
 
+  const SESSION_STORAGE_KEY = 'adventure-forge-session';
+  const RECENT_LOG_LIMIT = 5;
   let sessionId = null;
   let observation = null;
-  let journey = [];
+  let journal = [];
+  let logExpanded = false;
   let busy = false;
   let nextSeed = 1;
 
@@ -261,12 +277,14 @@ export const APP_JS = String.raw`(() => {
   const receipt = byId('receipt');
   const receiptSummary = byId('receipt-summary');
   const facts = byId('facts');
+  const factsCount = byId('facts-count');
   const factsList = byId('facts-list');
   const choices = byId('choices');
   const choiceCount = byId('choice-count');
   const resources = byId('resources');
   const journeyLog = byId('journey-log');
   const logCount = byId('log-count');
+  const logToggle = byId('log-toggle');
   const notice = byId('notice');
   const leaveButton = byId('leave-button');
   const newButton = byId('new-button');
@@ -292,6 +310,44 @@ export const APP_JS = String.raw`(() => {
       element.textContent = value;
       node.append(element);
     });
+  }
+
+  function rememberSession(id) {
+    try {
+      sessionStorage.setItem(SESSION_STORAGE_KEY, id);
+    } catch (_) {
+      // Storage can be disabled by the browser; the live session still works.
+    }
+  }
+
+  function rememberedSession() {
+    try {
+      const value = sessionStorage.getItem(SESSION_STORAGE_KEY);
+      return value && value.length <= 128 ? value : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function forgetSession() {
+    try {
+      sessionStorage.removeItem(SESSION_STORAGE_KEY);
+    } catch (_) {
+      // Storage can be disabled by the browser.
+    }
+  }
+
+  function publicJournal(values) {
+    if (!Array.isArray(values)) return [];
+    return values.filter((entry) => entry && typeof entry.choice === 'string'
+      && typeof entry.from === 'string' && typeof entry.to === 'string')
+      .map((entry) => ({ choice: entry.choice, from: entry.from, to: entry.to }));
+  }
+
+  function journalDetail(entry) {
+    return entry.from === entry.to
+      ? 'At ' + entry.to
+      : entry.from + ' → ' + entry.to;
   }
 
   function renderResources(values) {
@@ -320,33 +376,38 @@ export const APP_JS = String.raw`(() => {
 
   function renderLog() {
     journeyLog.replaceChildren();
-    logCount.textContent = String(journey.length);
-    if (journey.length === 0) {
+    journeyLog.reversed = true;
+    journeyLog.start = journal.length;
+    logCount.textContent = String(journal.length);
+    logCount.setAttribute('aria-label', journal.length + (journal.length === 1 ? ' decision' : ' decisions'));
+    logToggle.hidden = journal.length <= RECENT_LOG_LIMIT;
+    logToggle.textContent = logExpanded ? 'Show recent' : 'Show all (' + journal.length + ')';
+    logToggle.setAttribute('aria-expanded', String(logExpanded));
+    if (journal.length === 0) {
       const empty = document.createElement('li');
       empty.className = 'log-empty';
       empty.textContent = 'Your decisions will leave a trace here.';
       journeyLog.append(empty);
       return;
     }
-    journey.forEach((entry) => {
+    const entries = (logExpanded ? journal : journal.slice(-RECENT_LOG_LIMIT)).slice().reverse();
+    entries.forEach((entry) => {
       const item = document.createElement('li');
       const title = document.createElement('strong');
-      title.textContent = entry.title;
+      title.textContent = entry.choice;
       const detail = document.createElement('span');
-      detail.textContent = entry.detail;
+      detail.textContent = journalDetail(entry);
       item.append(title, detail);
       journeyLog.append(item);
     });
-    journeyLog.scrollTop = journeyLog.scrollHeight;
-  }
-
-  function addLog(title, detail) {
-    journey.push({ title, detail });
-    renderLog();
+    journeyLog.scrollTop = 0;
   }
 
   function render(nextObservation) {
+    const previousObservation = observation;
     observation = nextObservation;
+    journal = publicJournal(observation.journal);
+    renderLog();
     const ended = observation.status !== 'playing';
     const status = observation.status.charAt(0).toUpperCase() + observation.status.slice(1);
     statusLabel.textContent = status;
@@ -367,11 +428,13 @@ export const APP_JS = String.raw`(() => {
       item.textContent = fact;
       factsList.append(item);
     });
+    factsCount.textContent = (observation.facts || []).length + ((observation.facts || []).length === 1 ? ' fact' : ' facts');
     facts.hidden = !(observation.facts && observation.facts.length);
+    if (!previousObservation || previousObservation.revision !== observation.revision) facts.open = false;
 
     choices.replaceChildren();
     const availableChoices = observation.choices || [];
-    choiceCount.textContent = ended ? 'Crossing closed' : availableChoices.length + (availableChoices.length === 1 ? ' bearing' : ' bearings');
+    choiceCount.textContent = ended ? 'Journey closed' : availableChoices.length + (availableChoices.length === 1 ? ' path' : ' paths');
     availableChoices.forEach((choice, index) => {
       const button = document.createElement('button');
       button.className = 'choice';
@@ -398,6 +461,11 @@ export const APP_JS = String.raw`(() => {
     statusDot.classList.toggle('ended', ended);
     leaveButton.disabled = busy || ended;
     exportButton.disabled = busy || !observation.receipt;
+    if (previousObservation && previousObservation.revision !== observation.revision) {
+      sceneTitle.tabIndex = -1;
+      sceneTitle.focus({ preventScroll: true });
+      sceneTitle.scrollIntoView({ block: 'start' });
+    }
   }
 
   function setBusy(value) {
@@ -410,7 +478,7 @@ export const APP_JS = String.raw`(() => {
     let payload = null;
     try { payload = await response.json(); } catch (_) { payload = {}; }
     if (!response.ok) {
-      const error = new Error((payload.error && payload.error.message) || 'The crossing could not complete that request.');
+      const error = new Error((payload.error && payload.error.message) || 'The journey could not complete that request.');
       error.status = response.status;
       error.payload = payload;
       throw error;
@@ -425,10 +493,11 @@ export const APP_JS = String.raw`(() => {
     try {
       const payload = await request('/api/start', { method: 'POST', body: jsonBody({ seed: nextSeed++ }) });
       sessionId = payload.sessionId;
-      journey = [];
+      rememberSession(sessionId);
+      logExpanded = false;
+      facts.open = false;
       render(payload.observation);
-      renderLog();
-      showNotice('A fresh crossing begins.', 'success');
+      showNotice('A fresh journey begins.', 'success');
     } catch (error) {
       showNotice(error.message, 'error');
     } finally {
@@ -449,13 +518,11 @@ export const APP_JS = String.raw`(() => {
   async function choose(id) {
     if (!observation || observation.status !== 'playing' || busy) return;
     const previous = observation;
-    const choice = previous.choices.find((item) => item.id === id);
     setBusy(true);
     try {
       const payload = await request('/api/choose', { method: 'POST', body: jsonBody({ sessionId, id, expectedRevision: previous.revision }) });
-      addLog(choice ? choice.label : id, payload.observation.title);
       render(payload.observation);
-      showNotice(payload.observation.status === 'playing' ? 'The river answers.' : 'The crossing has reached its ending.', 'success');
+      showNotice(payload.observation.status === 'playing' ? 'The path responds.' : 'The journey has reached its ending.', 'success');
     } catch (error) {
       if (error.status === 409 && error.payload && error.payload.observation) {
         render(error.payload.observation);
@@ -473,7 +540,6 @@ export const APP_JS = String.raw`(() => {
     setBusy(true);
     try {
       const payload = await request('/api/end', { method: 'POST', body: jsonBody({ sessionId, expectedRevision: observation.revision }) });
-      addLog('Crossing ended', payload.observation.receipt ? payload.observation.receipt.summary : payload.observation.status);
       render(payload.observation);
       showNotice('Your ending has been recorded.', 'success');
     } catch (error) {
@@ -506,7 +572,7 @@ export const APP_JS = String.raw`(() => {
     try {
       const payload = await request('/api/save', { method: 'POST', body: jsonBody({ sessionId }) });
       download('the-split-tide.save', payload.serialized, 'application/octet-stream');
-      showNotice('Opaque save downloaded.', 'success');
+      showNotice('Saved at ' + (observation ? observation.title : 'your current place') + '.', 'success');
     } catch (error) {
       showNotice(error.message, 'error');
     } finally {
@@ -517,8 +583,8 @@ export const APP_JS = String.raw`(() => {
   function exportEnding() {
     if (!observation) return;
     const lines = ['THE SPLIT TIDE', '', observation.title, '', ...(observation.text || [])];
-    if (journey.length) {
-      lines.push('', 'JOURNEY LOG', ...journey.map((entry) => '- ' + entry.title + ': ' + entry.detail));
+    if (journal.length) {
+      lines.push('', 'JOURNEY LOG', ...journal.map((entry) => '- ' + entry.choice + ': ' + journalDetail(entry)));
     }
     if (observation.receipt) lines.push('', 'ENDING', observation.receipt.summary);
     download('the-split-tide-ending.txt', lines.join('\n'), 'text/plain;charset=utf-8');
@@ -536,10 +602,11 @@ export const APP_JS = String.raw`(() => {
       const serialized = await file.text();
       const payload = await request('/api/restore', { method: 'POST', body: jsonBody({ serialized }) });
       sessionId = payload.sessionId;
-      journey = [{ title: 'Save loaded', detail: 'The river remembers where you left it.' }];
+      rememberSession(sessionId);
+      logExpanded = false;
+      facts.open = false;
       render(payload.observation);
-      renderLog();
-      showNotice('Save loaded into a new local session.', 'success');
+      showNotice('Loaded ' + payload.observation.title + '.', 'success');
     } catch (error) {
       showNotice('Load refused: ' + error.message, 'error');
     } finally {
@@ -553,6 +620,34 @@ export const APP_JS = String.raw`(() => {
   saveButton.addEventListener('click', saveJourney);
   exportButton.addEventListener('click', exportEnding);
   leaveButton.addEventListener('click', leave);
+  logToggle.addEventListener('click', () => {
+    logExpanded = !logExpanded;
+    renderLog();
+  });
 
-  newJourney();
+  async function restoreSession() {
+    const savedSession = rememberedSession();
+    if (!savedSession) return newJourney();
+    sessionId = savedSession;
+    setBusy(true);
+    try {
+      const payload = await request('/api/observe?sessionId=' + encodeURIComponent(sessionId), { method: 'GET', headers: {} });
+      render(payload.observation);
+      showNotice('Resumed ' + payload.observation.title + '.', 'success');
+    } catch (error) {
+      if (error.status === 404) {
+        forgetSession();
+        sessionId = null;
+        await newJourney();
+      } else {
+        showNotice('Unable to resume this journey. Load a save or start a new one.', 'error');
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  restoreSession().catch((error) => {
+    showNotice(error.message || 'Unable to start the journey.', 'error');
+  });
 })();`;

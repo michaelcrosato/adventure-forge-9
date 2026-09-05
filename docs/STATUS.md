@@ -16,6 +16,8 @@ Stage 1 accepted on frozen commit `04b492b`: live specialist capability audit pa
 
 Stage 2 now active: complete Lowsail/Red Sluice small game with three resolutions, meaningful resource or obligation costs, and a changed return. The first player understood the rescue choice but was uncertain about the downstream medicine loss; authored clinic consequences are an explicit requirement for the next game. This is not yet an improvement comparison.
 
+The Stage 2 candidate is implemented: 11 scenes, 44 authored choices (including exits), three resolution families, and four named inhabitants. `npm run verify` passes 20 tests. Exhaustive traversal covers 2,429 semantic states and 2,428 transitions; every unfinished state can reach a completed resolution. Browser ten-decision shared-water route, reload, save/load with journal, and mobile width pass. Terminal reaches the same ending. Fresh live feedback is the next gate.
+
 Assignments: Luna/max engine and mechanical proofs; Luna/max human player surfaces; Luna/max subscription boundary probe and adapter. Manager owns integration, evidence runner, publication, and quality decisions.
 
 ## Acceptance still required
