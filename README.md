@@ -4,9 +4,11 @@ A deterministic text RPG in one persistent world, built through authored stories
 
 The full target is the exploration breadth of Skyrim and the local choice depth of Baldur's Gate 3. The current game is a small Lowsail–Red Sluice expedition: repair and share the water, accept council control, or evacuate the market. Preparation, medicine, supplies and obligations change the return. It is not yet a large world.
 
+**[Play in your browser](https://adventure-forge-9.vercel.app).** Vercel deploys successful pushes to `main` automatically. Progress saves in this browser, and Save journey downloads a separate copy. Saves are tied to the game version; after a content update, keep the old save and start a new journey if it cannot resume. See [hosting details](docs/HOSTING.md).
+
 ## Run locally
 
-Requires Node.js 22 or later.
+Requires Node.js 22.
 
 ```sh
 npm ci
@@ -47,4 +49,4 @@ For an older build, follow [the trusted-checkout replay procedure](docs/REPLAY.m
 - [Agent benchmark](docs/AGENT_BENCHMARK.md): Luna/max as the first development baseline.
 - Original briefs: preserved in Git commit `15ada58`, removed from the active tree.
 
-The subscription pipeline has an accepted live game/interview. The town expedition is undergoing live testing, followed by two feedback-led improvement cycles and authored world expansion. The full scale and depth goal stays active throughout.
+The subscription pipeline and town expedition have accepted live evidence. Cycles 1 and 3 support two limited presentation improvements; Cycle 2's failed broader comparisons remain documented. Connected-area development is underway. The full scale and depth goal stays active throughout.
