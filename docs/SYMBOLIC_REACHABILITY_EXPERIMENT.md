@@ -856,3 +856,19 @@ does not identify the specific failing choice operation or provide a new
 exact root inventory. Read-only reviews are assessing lossless frontier
 storage and a compact exhaustive explicit-state representation before the
 next implementation is chosen; no automatic capacity/order fallback is run.
+The prepared independent checker was hardened separately as
+`/tmp/af9-check-symbolic-historical-v5.mts` (SHA-256
+`4eba183a351365ed6bb096e99252c0619d9c5c6c7f96c746fe026b19c1d40cad`).
+It requires masked/relational/interleaved configuration and binds the exact
+ordered field artifact and strategy hash to the manifest, while retaining
+the separate trusted historical engine and all 190 replay paths. Its help
+path passed; it was not run against the incomplete campaign report.
+
+Read-only frontier review found that external snapshots conflict with the
+current result contract: `frontiers` are numeric roots owned by the final
+model, and shortest-witness reconstruction intersects them in that manager.
+Reimporting every snapshot before returning recreates their shared closure;
+streaming them requires a new archive/witness API and separate decoder,
+cross-owner and shortest-path proofs. The measured 303,954-node saving is
+only one boundary, not a guaranteed capacity improvement. This alternative
+is not selected under the current API.
