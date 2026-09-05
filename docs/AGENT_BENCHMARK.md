@@ -72,3 +72,16 @@ replaced implementation language about reversible travel with explicit
 cost/return wording, and preserved the scarred line's working result. The
 revised candidate retains every choice and transition. Independent review,
 full verification and fresh player evidence remain separate acceptance steps.
+
+The Stage 8 content author reported about twenty minutes for earlier regional
+access, Archive phases and Sera's personal-credit consequence, followed by
+explicit whole-journey ending labels. Manager review corrected false
+installation-at-commons wording, stale first-visit language and travel costs.
+The independent test draft initially visited the barge without doing the
+claimed work, checked the wrong hub-bypass choice and demonstrated a ferry
+reward without proving it was needed. Follow-ups add actual allocation in
+both orders, the real hub guards, a depleted common prefix, both
+favor/seizure orders and regional work during partial Archive investigation.
+Eight strengthened tests pass; reported 142–217 ms figures are test runtimes,
+not authoring durations. Full integration still exceeds the audit workload
+guard. No new cost or model-ranking claim follows from these tasks.

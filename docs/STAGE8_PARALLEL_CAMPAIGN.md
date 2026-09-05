@@ -1,6 +1,9 @@
 # Parallel campaign activity — prospective contract
 
-Status: selected for implementation, before source changes or live dispatch.
+Status: implemented locally at `c64c47c`; focused behavior and a 52-action
+browser journey pass. Full verification fails at the existing workload guard
+and one older future-read assertion. No Stage 8 live players or publication.
+The prospective contract below was recorded before implementation.
 Behavior baseline is `8b2be2c`; its wording comparison is complete, but both
 Stage 7 regional exposure batches failed at 1/3. Preserve those failures and
 the limited clarity observation in `STAGE7_REEDWAY.md`. This is a structural
@@ -152,3 +155,62 @@ and `blackglass.ts` in an isolated checkout. Independent reviewer owns a
 new parallel-campaign regression file; manager owns the small own-kit copy
 change in `scenario.ts`. No worker may change the audit guard or remove a
 source condition to make a test pass.
+
+## Integration and retained verification failure
+
+Author commits `1f53679` and `bda1d81` were integrated as `fb49220` and
+`f792935`. Independent regression commit `a1c6518` was integrated as
+`1c41b2a`, with the partial-case regional-work follow-up `bb43e0f` integrated
+as `c64c47c`. Manager copy correction `5a8218d` identifies the actual
+installation sites, removes first-visit language on returns, states free
+travel plainly and preserves the open case's evidence. The game now has
+29 scenes and 166 authored choices; this is not whole-world acceptance.
+
+The eight new regressions exercise all three local origins with actual
+regional recovery/allocation in both quest orders, partial evidence followed
+by regional work, all six verdicts, closed-record revisits, real free loops,
+save/restore/replay, Sera's cooperation/refusal and both favor/seizure orders.
+From one depleted recovery prefix, clinic allocation leaves Supplies 0 and
+the later brace unavailable; ferry allocation supplies 2, making that same
+Risk 2 / Tide 1 brace available and spending one supply when used.
+
+The full `npm run verify` attempt on exact source
+`c64c47c6a8b37e9728430fd943b3e6dbc840b6c3` passed 114 of 116 checks and
+failed two. The production future-read assertion at
+`tests/audit-scaling.test.ts:355` expected a flag to be absent but found it
+retained; its topology assumption is under independent review. The full
+family traversal exceeded the unchanged 250,000-family limit, so exhaustive
+coverage is not established. Wall time was 3:20.68, maximum RSS 2,371,860 KiB.
+Browser work ran concurrently; this is not a controlled timing comparison.
+
+Retain `/tmp/af9-parallel-release-verify.log` and the source/checksum report
+`/tmp/af9-parallel-release-failure.json`. Source snapshot identity is
+`e4f4f8ee0e91240287288f19854cec18be664c8656de4c3e52ca0e7e60e89f95`
+(30 files); game build is `af9-359dea2113f434d17d8ce2cb`.
+A separately bounded size-only diagnostic is assigned; it cannot replace
+the failed safety, congruence, witness and completion gate.
+
+## Browser verification at c64c47c
+
+The stateless local Vercel handler completed 52 actual browser actions:
+council water, partial Archive seal evidence, a pause, visits to both
+claimants, regulator seizure, Sera's refusal with public evidence still
+available, clinic installation, Milo care, restored personal credit,
+sealed verdict, Blackglass pressure damage, a decided-record revisit and
+final clinic care/completion. Evidence and regional outcomes survived the
+pauses; the later free loop preserved resources, flags and facts without
+reopening the closed Archive or Blackglass continuation.
+
+Mid-journey reload and save download passed. Clearing the browser's session,
+starting a new game and uploading that save restored the exact checkpoint.
+Completed save download and reload also matched. At a 390-pixel viewport,
+document width was 375 pixels and the browser reported no errors. Start,
+open landing, Sera refusal, closed record and completed mobile screenshots
+were inspected. This is a deliberate developer witness, not blind play.
+
+Artifacts are `/tmp/af9-parallel-browser.{mjs,log}`,
+`/tmp/af9-parallel-{mid,completed}.save` and the associated screenshots.
+The actual final choose request measured 6,264 bytes; the handler returned
+200 with exact expected checkpoint and public observation. See
+`/tmp/af9-parallel-envelope.{mts,json}`. This finite witness does not establish
+long-session capacity. Browser and local server are closed.

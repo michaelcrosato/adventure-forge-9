@@ -2,6 +2,13 @@
 
 Production: https://adventure-forge-9.vercel.app
 
+Read-only check on 2026-09-05: the public page responds 200 and
+`POST /api/start` responds 201 with a playing observation. Authenticated
+project inspection confirms GitHub `michaelcrosato/adventure-forge-9`,
+production branch `main`, automatic deployments enabled and build command
+`npm run verify`. Production is Ready/Promoted at `139e48a`. Local unpushed
+development does not change that deployed game.
+
 Vercel project `adventure-forge-9` (`prj_UYbkjlrz9qAedkYG01HJ2d2t9NkY`) is linked to `michaelcrosato/adventure-forge-9`, production branch `main`, in the owner's Vercel team. The hosting implementation is `ba35ead`; its first Git-triggered production deployment is `dpl_4UR6dYYeWb7DSforKULM6bmCcLQc`. It reached Ready in 17 seconds. No paid service, database, API key or gameplay model calls are needed by this deployment.
 
 The project runs Node 22. Vercel installs with `npm ci` and builds with `npm run verify`; a failed check stops that deployment. GitHub has an independent mechanical-verification workflow. Further pushes to `main` automatically build and update the production URL; branch previews do not replace production.
