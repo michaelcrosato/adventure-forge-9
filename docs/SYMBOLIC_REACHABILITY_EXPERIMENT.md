@@ -214,9 +214,244 @@ records every engine/content/verification file hash and source hash
 The profiler is `/tmp/af9-symbolic-profile.mjs`; its complete flag remains
 false on a limit, and it never acts as the release audit.
 
-The next bounded experiment changes only conjunction order: build output
-and frame constraints before conjoining the pre-state enabled predicate.
-Boolean associativity preserves the relation, but smaller construction cost
-must be measured under the same limits and bounds. No field, condition,
-effect, failure check or existing release gate is removed. The original
-failed checkout remains separate.
+## Exact construction and relational-product revisions
+
+The clean experimental branch now reaches `e81a2c3`. All changes remain
+outside main's source and the release audit. Build and all 20 focused checks
+pass in 5.15 seconds / 310,660 KiB maximum RSS; preserve
+`/tmp/af9-symbolic-cachekey-combined-tests.log` and its companion
+`/tmp/af9-symbolic-cachekey-combined-test-provenance.json`. These are test
+execution measurements, not controlled campaign-performance comparisons.
+
+Three reviewed changes preserve the same exact relation. First, build all
+output/frame constraints before conjoining the enabled predicate. Second,
+conjoin those fields in reverse declaration order so immutable BDD suffixes
+can be shared during construction. Every field remains required, including
+a legitimate false handle of zero; the new zero-relation fixture proves an
+enabled, wholly out-of-bound resource update cannot lose its constraint.
+Third, `andExists` computes conjunction and existential quantification in
+one Shannon recursion. Quantified levels combine the low and high results
+with OR; other levels rebuild the ordered node. Image and preimage use this
+exact operation. No resources, flags, guards, effects or failure predicates
+are omitted.
+
+The quantifier cache retains the full normalized immutable set throughout
+each call. Descendants of a node cannot contain that node's variable under
+the fixed ROBDD order, so retaining already-visited variables has no effect
+on the Boolean result. Full-set keys distinguish different operations;
+commutative operand normalization and bounded cache eviction remain intact.
+Independent truth-table, composition, cache-isolation and node-limit tests
+cover the fused operation. The complete small-model and actual-engine
+witness checks still run under both variable orders.
+
+All following historical runs keep published `139e48a` engine/content,
+interleaved order and the same conjectured nine-resource bounds. They use
+250,000 non-terminal BDD nodes, 100,000 cache entries, 128 rounds, a checked
+45-second limit and an external 60-second timeout. **Every run is incomplete
+and fails the node guard.** A reported round is the last round entered,
+not a completed fixed point. Constructor counts include the two terminals.
+
+| Experimental source | Construction | Last phase entered | Reported elapsed / maximum RSS |
+| --- | --- | --- | --- |
+| `dcbce08`, original | Node guard reached | Construction | 3.21 s wall / 187,928 KiB |
+| `55c498d`, enabled last | 194,621 nodes, 2,730 ms | Forward 6 | 5.927 s internal / 193,712 KiB |
+| `b739bd4`, reverse fields | 44,422 nodes, 77 ms | Forward 9 | 15.01 s wall / 262,440 KiB |
+| `12efa12`, fused product | 44,422 nodes, 75 ms | Forward 12 | 29.19 s wall / 293,632 KiB |
+| `e81a2c3`, constant quantifier key | 44,422 nodes, 84 ms | Forward 12 | 29.437 s internal / 239,104 KiB |
+
+Artifacts, all preserved separately:
+
+- Original: `/tmp/af9-symbolic-historical-250k-interleaved.{json,log}`.
+- Enabled last: `/tmp/af9-symbolic-reassoc-historical-250k-interleaved.json`.
+  No redirected log exists for this attempt; its JSON preserves progress.
+  The worker ran traversal beyond the requested constructor-only scope.
+- Reverse fields: `/tmp/af9-symbolic-historical-suffix-250k.{json,log}`.
+- Fused product: `/tmp/af9-symbolic-historical-relprod-250k.{json,log}`.
+- Constant key: `/tmp/af9-symbolic-historical-relprod-cachekey-250k.{json,log}`.
+  Its log has no external timing footer; the table uses the JSON's internal
+  timer and process maximum RSS, not a claimed external wall measurement.
+  This copy predates the final explanatory-comment wording in `e81a2c3`.
+  Root compared both files: only that comment differs, with the executable
+  correction identical. The JSON's file hash remains the probe's identity.
+
+The constant-key revision produces the same node counts and reaches the
+same limit as its predecessor. No count reduction or speed improvement is
+claimed. Each JSON records the exact historical engine/content and copied
+verification source hashes, independently of the historical Git HEAD.
+Some worker checkouts have an untracked dependency symlink; that is recorded
+in their status rather than misreported as a clean historical source tree.
+
+A separate read-only inventory of the enabled-last constructor found
+194,619 allocated non-terminal nodes but 25,615 reachable from permanent
+model roots, 25,781 with literal-cache roots and 110,542 with operation-cache
+values too. Preserve `/tmp/af9-symbolic-node-diagnostic.{mjs,json,log}`. These
+are structural reachability counts: the manager still retains every node,
+and clearing caches does not reclaim its node table. No handle-reusing
+garbage collector has been introduced.
+
+## Corrected independent finite oracle
+
+The accepted standalone oracle is `/tmp/af9-symbolic-oracle-v3.mts`, with
+result `/tmp/af9-symbolic-oracle-v3.out`. It derives and checks source commit,
+status and module hashes before and after execution: clean `55c498d` in both
+snapshots. On the two-scene fixture with `x=0..3`, `y=0..2`, `tide=0..2`, a
+Boolean flag and valid lifecycle/receipt combinations, it independently
+generates all 288 valid tuples. Every tuple must encode successfully.
+All 864 state/choice pairs have exact expected images: 732 disabled cases,
+124 successful transitions and eight enabled bound failures, with zero
+mismatches. All eight failure predicates are checked. The intentional
+negative fixture has four reachable states, one playing dead end and one
+playing state without a completed route; both fixed points take three rounds.
+
+The original oracle failed to count some exact-image mismatches and used
+encode rejection to filter its presumed valid domain. Those defects were
+corrected in v2, but v2 hardcoded the wrong source commit. Its recorded
+module hashes are retained; its commit label is not accepted as provenance.
+V3 fixes that provenance problem and preserves both prior versions. This
+fixture result is tied to `55c498d`, not retroactively relabeled as the latest
+compiler. Subsequent changes have their own focused checks and code review.
+
+Larger diagnostic capacities do not change the production family guard or
+grant coverage from a partial result. Resource bounds remain conjectures until exact correspondence,
+initial inclusion, a complete forward fixed point and absence of reachable
+bound exits establish containment.
+
+The historical comparison target is
+`/tmp/af9-symbolic-historical-expected-v2.json`, SHA-256
+`019c3fd34655606b0783930413cd4eb6c8841d05cddecd74b3983264297fcbcc`.
+It verifies exact coverage-ID agreement across the original audit, first
+family audit and refined family audit: 25 reachable scenes, 131 reachable
+authored choices, 34 terminal witness choices, and no unreachable content,
+playing dead ends or playing states without a completed route. Their counts
+remain separate: 169,922 original canonical states / 332,402 transitions;
+33,004 first families / 94,556 transitions; and 27,304 refined families /
+76,920 transitions. These counters cannot be equated to a symbolic state
+count. The symbolic model retains all 54 historical authored flags, including
+nine writer-only markers omitted from the old audit's read-based key.
+
+The derivative preserves `/tmp/af9-symbolic-historical-expected.json` and
+records each verifier's own source and evidence hashes. It corrects the
+earlier artifact's ambiguous grouping of the incomplete symbolic probe's
+source hash with copied family metadata. The known terminal paths, revisions
+and hashes describe those representative real replays; a different valid
+symbolic witness must satisfy the authored choice and outcome semantics,
+not reproduce another path's length or hash.
+
+## Larger-capacity attempt and timeout correction
+
+A separate historical checkout with exact `e81a2c3` modules measured larger
+diagnostic capacities: one million non-terminal nodes, one million operation
+cache entries, 128 rounds, 120,000 ms checked elapsed and a 1,536 MiB Node
+old-space limit. This changes two capacities and is not a controlled speed
+comparison. The pre-run manifest is `/tmp/af9-symbolic-capacity-manifest.json`;
+the separate script is `/tmp/af9-symbolic-capacity-profile.mjs`. The original
+250,000-node profiler and all earlier artifacts remain unchanged.
+
+The run is **incomplete**. It entered forward round 14 at 114,766 ms with
+400,404 total nodes and one million cache entries. It never reached a forward
+fixed point, backward completion or witness replay. The intended external
+150-second timeout did not stop it: this new profiler installed a JavaScript
+SIGTERM handler, which could not execute while synchronous BDD work blocked
+the event loop. Root found the child still running after 263 seconds and
+sent SIGKILL to that exact child PID. The external footer records 271.02
+seconds / 501,752 KiB maximum RSS / exit 124. This is an overrun and must not
+be described as a run that respected the intended 120/150-second limits.
+
+Preserve the last flushed incomplete report and log at
+`/tmp/af9-symbolic-capacity-139e48.{json,log}` and the separate
+`/tmp/af9-symbolic-capacity-139e48-finalization.json`. The last report's
+478,724 KiB process maximum RSS is a checkpoint measurement, not the final
+external peak. The finalization confirms the child is absent and every
+source hash still matches the pre-run manifest, aggregate hash
+`624477e0092c26fb678c3bd49347272a3af3d748dfc14cc46f2a2124ee63e253`.
+The run did not report a node-limit failure; it was stopped before coverage.
+
+The next runner removes that signal handler, adds an external SIGKILL grace
+period, and fails completion on any source/profiler/bounds/config provenance
+mismatch. A separate cache-churn investigation checks whether repeatedly
+starting a Map iterator to locate the oldest LRU entry accounts for the
+measured slowdown. Neither a cache microbenchmark nor a partial forward
+traversal can establish campaign coverage.
+
+## Linked cache recency
+
+`4985daa` replaces repeated insertion-order Map iteration with explicit
+oldest/newest links for the operation cache. It preserves the deterministic
+LRU policy: hits and updates move their existing entry to newest, insertion
+evicts exactly the oldest when full, zero capacity stores nothing, and
+clearing resets both endpoints. The list contains exactly the cache's
+entries; there is no additional unbounded history. Boolean operations,
+canonical nodes, lifetime-valid handles and the configured limits are
+unchanged. Entry objects add memory overhead, so a speed result does not
+imply reduced memory.
+
+Independent review found no material defect. Build and the 20 focused checks
+pass with the cache-parity cases expanded to capacities 0, 1, 2 and 7. The
+final expanded run took 3.09 seconds / 317,996 KiB maximum RSS. Preserve
+`/tmp/af9-symbolic-linked-lru-expanded-tests.log` and
+`/tmp/af9-symbolic-linked-lru-test-provenance.json`. The tested working
+changes were subsequently committed as `4985daa`; the provenance records
+that sequence rather than claiming a clean committed checkout at test start.
+
+The standalone paired cache benchmark is
+`/tmp/af9-cache-churn-v2.{mjs,log}`. It compares returned values, eviction keys
+and final ordered contents on identical deterministic operations, with
+separate clear/zero/tiny-cache checks. The original benchmark is preserved:
+its small letter-key eviction check converted keys to NaN, and its reported
+two-sample median selected the upper sample. V2 fixes both. The generated
+numeric-key benchmark's original exact comparisons were unaffected. Each
+capacity has its own operation count, so compare the two implementations
+within a row rather than inferring scaling from times across rows.
+
+A separate historical run at the original 250,000-node / 100,000-cache
+capacities reaches the same round-12 node guard, with the same node count at
+every forward checkpoint as the constant-key predecessor. It takes 1.746
+seconds internally / 2.00 seconds externally, with 331,772 KiB maximum RSS.
+The prior constant-key run took 29.437 seconds internally / 239,104 KiB
+maximum RSS. This is an observed faster execution of the same incomplete
+work with higher peak memory, not complete coverage or a general speed ratio.
+Preserve `/tmp/af9-symbolic-historical-linked-lru-250k.{json,log}`; source hash
+`317ac79d7bda08535cb8daa8c6dc9134a4661a2ef55c67ad3f710bb874ceb729`.
+
+The corrected larger-capacity profiler and runner are
+`/tmp/af9-symbolic-capacity-profile-v2.mjs` and
+`/tmp/af9-symbolic-capacity-runner-v2.mjs`. They use separate progress,
+output and finalization files, reject provenance changes on completion, and
+run under `timeout --signal=TERM --kill-after=5s 150s` without a JavaScript
+signal handler. A new manifest records exact `4985daa` verification modules
+in the historical engine checkout and the runner policy before execution.
+
+That single corrected run also remains **incomplete**. It enters forward
+round 16 with 765,036 nodes and then hits the one-million non-terminal node
+guard (1,000,002 total nodes). Internal elapsed is 11,227 ms; external elapsed
+is 11.51 seconds, with 797,476 KiB maximum RSS. Backward completion and
+witness replay are not reached. The process closes with exit 1 and no signal;
+all source, profiler, bounds, config and manifest provenance checks pass
+after failure. Preserve `/tmp/af9-symbolic-capacity-linked-lru-139e48.json`,
+its `.progress.json`, `.finalization.json` and `.log` companions, and
+`/tmp/af9-symbolic-capacity-linked-lru-manifest.json`.
+
+A separate instrumented inventory stops intentionally at the start of
+round 16. Of 765,034 allocated non-terminal nodes, 25,615 are reachable from
+permanent model roots and 214,532 from those plus the actual complete
+frontier array, reachable set and current frontier. Including literal and
+operation caches raises the count to 468,075; 296,959 allocated nodes are
+unreachable even from that larger root set. These are structural counts;
+the original manager still retains every node. Inventory completion is
+explicitly distinct from coverage completion. The run takes 19.33 seconds /
+768,980 KiB maximum RSS, including instrumentation; it is not a performance
+comparison with the uninstrumented run.
+
+Preserve `/tmp/af9-symbolic-live-roots-139e48.json` and its `.progress.json`,
+`.finalization.json` and `.log` companions, plus
+`/tmp/af9-symbolic-live-roots-manifest.json`. The separate instrumented source,
+profiler and runner hashes match after the run; the child is closed with exit
+zero for the completed inventory and `coverageComplete=false`.
+
+The selected next experiment copies exact forests into fresh internal model
+instances. Existing managers and their handles remain valid; numeric roots
+must always be used with their owning model. It must retain every historical
+frontier, reachable/completable/current set and accumulated legal predicate,
+with atomic ownership changes between completed operations. This compaction
+is under implementation and independent regression review; it is not adopted
+by the release audit. Current Stage 8 acceptance remains open.

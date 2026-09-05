@@ -115,3 +115,58 @@ All 14 focused checks pass in 3.16 seconds / 181,496 KiB maximum RSS. The first
 historical constructor diagnostic still hits its 250,000-node limit before
 any graph traversal (3.21 seconds / 187,928 KiB); no campaign-scale success or
 model ranking follows from the small fixture results.
+
+The next bounded worker change reassociates the enabled predicate after all
+field constraints. It was assigned as constructor-only, but the worker ran
+the full bounded profiler: construction succeeded and traversal hit its
+node guard in round six. Root preserves the JSON as an additional incomplete
+diagnostic; no redirected log exists for that attempt. Root then built fields
+in reverse order, reducing construction from 194,621 to 44,422 total nodes on
+the same historical scenario. The fused-product implementation and five
+independent operation tests reached round twelve before the same limit.
+Independent review confirmed the exact recurrence and field coverage; root
+added a fixture where an enabled resource's entire transition relation is
+false to protect zero-handle handling.
+
+The constant quantifier-set follow-up (`7bffbcd`, integrated as `e81a2c3`)
+is independently reviewed and passes the combined 20 focused checks. Its
+historical run has the same node counts and limit as its predecessor, so
+there is no measured count or speed improvement. Root's combined build/test
+run took 5.15 seconds / 310,660 KiB maximum RSS. Historical profiler timings
+and source hashes are recorded separately in
+`SYMBOLIC_REACHABILITY_EXPERIMENT.md`; internal timers are distinguished from
+external wall measurements. The worker clarified that the earlier roughly
+23-second single-action real-engine smoke used one million BDD nodes and
+ten resource bounds, produced 926,877 nodes, and had no redirected log. It
+was not the controlled 250,000-node historical experiment.
+
+The standalone finite oracle's first correction still hardcoded an obsolete
+commit label. Root caught the provenance mismatch; v3 derives and checks
+actual source identities before and after execution. That accepted fixture
+checks all 288 valid tuples and 864 state/choice pairs with zero mismatches,
+while retaining the original two flawed attempts. Authoring time, tokens
+and cost remain unavailable; test runtime and one-off diagnostic memory do
+not support a worker model ranking.
+
+Root found a likely cause of the larger-capacity slowdown in restarting a
+Map iterator for every LRU eviction. Independent paired cache-churn results
+support that narrow concern, and peer review accepted root's explicit linked
+recency draft. Root corrected the standalone benchmark's letter-key eviction
+comparison (NaN coercion) and two-sample median labeling in a preserved v2.
+The accepted source is `4985daa`, with all 20 focused checks passing and
+cache-parity cases expanded to capacities 0, 1, 2 and 7.
+
+The original larger-capacity runner installed a SIGTERM handler that could
+not execute during synchronous BDD work. Its intended 150-second timeout
+overran; root killed the exact child and preserved the 271.02-second external
+failure and post-run source checks. A separate worker runner removes the
+handler, adds a five-second KILL grace and gates completion on provenance
+and process success. Root reviewed it before the single corrected attempt.
+The linked cache executes the same 250,000-node capped work in 1.746 seconds
+internally versus 29.437 in the earlier constant-key run, with higher peak
+RSS. At larger capacities it hits one million nodes in 11.51 seconds; full
+historical coverage still does not pass. A separate round-16 inventory finds
+214,532 nodes reachable from permanent model and complete traversal roots,
+against 765,034 allocated non-terminal nodes. This supports a bounded exact
+forest-copy experiment. None of these measurements establish acceptance,
+authoring elapsed time or a model ranking.
