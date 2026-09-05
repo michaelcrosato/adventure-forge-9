@@ -734,12 +734,13 @@ function replayThroughRealEngine(
   order: "interleaved" | "blocked",
   fieldOrder?: readonly string[],
   transitionMode: "relational" | "partitioned" = "relational",
+  accumulationMode: "unmasked" | "masked" = "unmasked",
 ): Record<string, EngineReplay> {
   const fixture = materializeEngineFixture(scenario);
   try {
     const inputPath = join(fixture.root, "paths.json");
     const probePath = join(fixture.root, "probe.mjs");
-    writeFileSync(inputPath, JSON.stringify({ paths, bounds, order, fieldOrder, transitionMode }));
+    writeFileSync(inputPath, JSON.stringify({ paths, bounds, order, fieldOrder, transitionMode, accumulationMode }));
     writeFileSync(probePath, `
 import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
@@ -747,9 +748,9 @@ import { SCENARIO } from "./src/engine/content.ts";
 import { observe, replay, restore, save, stateHash } from "./src/engine/index.ts";
 import { SymbolicModel, symbolicReachability } from "./src/verification/symbolic-model.ts";
 import { replaySymbolicPath, verifySymbolicWitnesses } from "./src/verification/symbolic-replay.ts";
-const { paths, bounds, order, fieldOrder, transitionMode } = JSON.parse(readFileSync(process.argv[2], "utf8"));
+const { paths, bounds, order, fieldOrder, transitionMode, accumulationMode } = JSON.parse(readFileSync(process.argv[2], "utf8"));
 const model = new SymbolicModel(SCENARIO, bounds, { order, fieldOrder, transitionMode, nodeLimit: 200_000, cacheLimit: 20_000 });
-const graph = symbolicReachability(model, 64);
+const graph = symbolicReachability(model, 64, undefined, { accumulationMode });
 const verified = verifySymbolicWitnesses(model, graph);
 for (const kind of ["scene", "choice", "ending"]) {
   assert.equal(verified[kind + "Witnesses"], Object.keys(paths).filter(key => key.startsWith(kind + ":")).length);
@@ -884,10 +885,10 @@ function assertSymbolicMatchesOracle(rawScenario: RawScenario, bounds: Readonly<
   const graph = buildOracle(validated, bounds);
   const graphStates = [...graph.states.values()];
   const domainStates = allValidStates(validated, bounds);
-  for (const order of ["interleaved", "blocked"] as const) for (const fieldOrder of [undefined, reversedFieldOrder(rawScenario)]) for (const transitionMode of ["relational", "partitioned"] as const) {
+  for (const order of ["interleaved", "blocked"] as const) for (const fieldOrder of [undefined, reversedFieldOrder(rawScenario)]) for (const transitionMode of ["relational", "partitioned"] as const) for (const accumulationMode of ["unmasked", "masked"] as const) {
     const model = new SymbolicModel(rawScenario, bounds, { order, fieldOrder, transitionMode, nodeLimit: 200_000, cacheLimit: 20_000 });
     if (fieldOrder !== undefined) assert.deepEqual(model.fieldOrder, fieldOrder, "the requested layout is used");
-    const result = symbolicReachability(model, 64);
+    const result = symbolicReachability(model, 64, undefined, { accumulationMode });
     const reachable = formulaForStates(model, graphStates);
     const completable = formulaForStates(model, expectedStateSet(graph, graph.completable));
     const deadEnds = formulaForStates(model, expectedStateSet(graph, graph.deadEnds));
@@ -944,7 +945,7 @@ function assertSymbolicMatchesOracle(rawScenario: RawScenario, bounds: Readonly<
       if (key.startsWith("scene:")) assert.equal(expected.scene, key.slice("scene:".length));
       if (key.startsWith("choice:") || key.startsWith("ending:")) assert.equal(path.at(-1), key.slice(key.indexOf(":") + 1));
     }
-    assertEngineReplayMatches(validated, graph, paths, replayThroughRealEngine(rawScenario, paths, bounds, order, fieldOrder, transitionMode), bounds);
+    assertEngineReplayMatches(validated, graph, paths, replayThroughRealEngine(rawScenario, paths, bounds, order, fieldOrder, transitionMode, accumulationMode), bounds);
 
     for (const choice of model.choices) {
       const choiceEdges = graph.edges.filter((edge) => edge.choiceId === choice.id);
@@ -985,9 +986,9 @@ test("unreachable unsafe arithmetic is ignored, while a reachable intermediate f
   assert.deepEqual(safeResult.unreachableChoices, ["unreachable-overflow"]);
   assert.ok(Object.hasOwn(safeResult.choiceWitnesses, "finish-route"));
 
-  for (const [order, expectedReason] of [["bound-first", "bound-exit"], ["arithmetic-first", "arithmetic-error"]] as const) {
+  for (const [order, expectedReason] of [["bound-first", "bound-exit"], ["arithmetic-first", "arithmetic-error"]] as const) for (const accumulationMode of ["unmasked", "masked"] as const) {
     const model = new SymbolicModel(faultScenario(order), { stock: 1, water: 2 }, { order: "blocked", nodeLimit: 100_000, cacheLimit: 10_000 });
-    assert.throws(() => symbolicReachability(model, 32), (error: unknown) => {
+    assert.throws(() => symbolicReachability(model, 32, undefined, { accumulationMode }), (error: unknown) => {
       return error instanceof SymbolicTransitionError
         && error.reason === expectedReason
         && error.choiceId === "fault"
@@ -1083,6 +1084,7 @@ function compactFixtureResult(
   order: "interleaved" | "blocked",
   fieldOrder?: readonly string[],
   transitionMode: "relational" | "partitioned" = "relational",
+  accumulationMode: "unmasked" | "masked" = "unmasked",
 ): { readonly input: SymbolicModel; readonly result: CompactReachabilityResult; readonly progress: readonly CompactProgressEvent[] } {
   const input = new SymbolicModel(scenario, bounds, { order, fieldOrder, transitionMode, nodeLimit: 100_000, cacheLimit: 20_000 });
   const inputStats = input.bdd.stats();
@@ -1090,7 +1092,7 @@ function compactFixtureResult(
   const progress: CompactProgressEvent[] = [];
   const result = symbolicReachability(input, 64, (phase, step, owner) => {
     progress.push(Object.freeze({ phase, step, owner }));
-  }, { compactAtNodes: 1 });
+  }, { compactAtNodes: 1, accumulationMode });
   assert.deepEqual(input.bdd.stats(), inputStats, "private generations leave the caller's node and cache tables unchanged");
   assert.deepEqual(input.bdd.satisfyingAssignment(input.initial), initialAssignment, "the original initial handle preserves its meaning");
   assert.deepEqual(result.model.fieldOrder, input.fieldOrder, "every copied generation preserves the field layout");
@@ -1183,10 +1185,10 @@ test("forced compaction preserves complete finite reachability, frontiers, and w
     { label: "unreachable-unsafe-branch", scenario: UNREACHABLE_INVALID_SCENARIO, bounds: { stock: 2 } },
   ];
   for (const fixture of fixtures) {
-    for (const order of ["interleaved", "blocked"] as const) for (const fieldOrder of [undefined, reversedFieldOrder(fixture.scenario)]) for (const transitionMode of ["relational", "partitioned"] as const) {
+    for (const order of ["interleaved", "blocked"] as const) for (const fieldOrder of [undefined, reversedFieldOrder(fixture.scenario)]) for (const transitionMode of ["relational", "partitioned"] as const) for (const accumulationMode of ["unmasked", "masked"] as const) {
       const baselineModel = new SymbolicModel(fixture.scenario, fixture.bounds, { order, nodeLimit: 100_000, cacheLimit: 20_000 });
       const baseline = symbolicReachability(baselineModel, 64);
-      const { input, result, progress } = compactFixtureResult(fixture.scenario, fixture.bounds, order, fieldOrder, transitionMode);
+      const { input, result, progress } = compactFixtureResult(fixture.scenario, fixture.bounds, order, fieldOrder, transitionMode, accumulationMode);
       assert.equal(result.exhaustive, true, `${fixture.label}/${order} compact traversal is exhaustive`);
       assert.notStrictEqual(result.model, input, `${fixture.label}/${order} threshold compaction creates a result owner`);
       assert.ok(result.compactions > 0, `${fixture.label}/${order} threshold 1 performs compaction`);
@@ -1229,14 +1231,14 @@ import { SymbolicModel, symbolicReachability } from "./src/verification/symbolic
 import { replaySymbolicPath, verifySymbolicWitnesses } from "./src/verification/symbolic-replay.ts";
 const { bounds, reversedFields } = JSON.parse(readFileSync(process.argv[2], "utf8"));
 const reports = [];
-for (const order of ["interleaved", "blocked"]) for (const fieldOrder of [undefined, reversedFields]) for (const transitionMode of ["relational", "partitioned"]) {
+for (const order of ["interleaved", "blocked"]) for (const fieldOrder of [undefined, reversedFields]) for (const transitionMode of ["relational", "partitioned"]) for (const accumulationMode of ["unmasked", "masked"]) {
 const input = new SymbolicModel(SCENARIO, bounds, { order, fieldOrder, transitionMode, nodeLimit: 100_000, cacheLimit: 20_000 });
 const phases = [];
 const result = symbolicReachability(input, 64, (phase, step, owner) => {
   assert.equal(typeof step, "number");
   assert.ok(owner && owner.bdd);
   phases.push(phase);
-}, { compactAtNodes: 1 });
+}, { compactAtNodes: 1, accumulationMode });
 assert.notStrictEqual(result.model, input);
 assert.ok(result.compactions > 0);
 assert.ok(phases.includes("compact"));
@@ -1258,7 +1260,7 @@ console.log(JSON.stringify(reports));
       maxBuffer: 16 * 1024 * 1024,
     });
     const reports = JSON.parse(stdout.trim()) as { order: string; compactions: number; summary: { choiceWitnesses: number }; path: readonly string[]; phases: readonly string[] }[];
-    assert.deepEqual(reports.map(report => report.order), ["interleaved", "interleaved", "interleaved", "interleaved", "blocked", "blocked", "blocked", "blocked"]);
+    assert.deepEqual(reports.map(report => report.order), [...Array(8).fill("interleaved"), ...Array(8).fill("blocked")]);
     for (const report of reports) {
       assert.ok(report.compactions > 0);
       assert.equal(report.summary.choiceWitnesses, 11);

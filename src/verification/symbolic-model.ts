@@ -525,6 +525,11 @@ export interface SymbolicReachabilityOptions {
    * the post-copy size plus this allocation interval. No default compaction.
    */
   readonly compactAtNodes?: number;
+  /**
+   * Opt-in distribution of each round's fixed masks over its choice union.
+   * Retains exactly the same next frontier and newly completable states.
+   */
+  readonly accumulationMode?: "unmasked" | "masked";
 }
 
 export type SymbolicProgressObserver = (
@@ -548,6 +553,12 @@ export function symbolicReachability(
   if (compactAtNodes !== undefined && (!Number.isSafeInteger(compactAtNodes) || compactAtNodes < 1)) {
     throw new Error("Invalid symbolic compaction threshold");
   }
+  const requestedAccumulationMode = options.accumulationMode;
+  const accumulationMode = requestedAccumulationMode === undefined ? "unmasked" : requestedAccumulationMode;
+  if (accumulationMode !== "unmasked" && accumulationMode !== "masked") {
+    throw new Error("Invalid symbolic accumulation mode");
+  }
+  const maskContributions = accumulationMode === "masked";
   // Start an opt-in traversal in a private generation, so the caller's model
   // does not accumulate its first round of temporary nodes or lose cache data.
   if (compactAtNodes !== undefined) model = model.fresh();
@@ -615,10 +626,13 @@ export function symbolicReachability(
     for (let choiceIndex = 0; choiceIndex < model.choices.length; choiceIndex++) {
       compactIfNeeded();
       const choice = model.choices[choiceIndex]!;
-      pending = bdd.or(pending, model.image(frontier, choice));
+      const image = model.image(frontier, choice);
+      // reachable is fixed throughout this round. ITE applies the difference
+      // without first materializing the complement of the entire reachable set.
+      pending = bdd.or(pending, maskContributions ? bdd.ite(reachable, 0, image) : image);
     }
     compactIfNeeded();
-    const next = bdd.and(pending, bdd.not(reachable));
+    const next = maskContributions ? pending : bdd.and(pending, bdd.not(reachable));
     pending = 0;
     if (next === 0) break;
     reachable = bdd.or(reachable, next); frontier = next; frontiers.push(next);
@@ -636,10 +650,16 @@ export function symbolicReachability(
     for (let choiceIndex = 0; choiceIndex < model.choices.length; choiceIndex++) {
       compactIfNeeded();
       const choice = model.choices[choiceIndex]!;
-      pending = bdd.or(pending, model.preimage(completable, choice));
+      const preimage = model.preimage(completable, choice);
+      // Both masks are fixed until every choice has contributed. Distributing
+      // them keeps the exact union while removing known/unreachable states early.
+      const contribution = maskContributions
+        ? bdd.ite(completable, 0, bdd.and(reachable, preimage))
+        : preimage;
+      pending = bdd.or(pending, contribution);
     }
     compactIfNeeded();
-    const more = bdd.and(bdd.and(pending, reachable), bdd.not(completable));
+    const more = maskContributions ? pending : bdd.and(bdd.and(pending, reachable), bdd.not(completable));
     pending = 0;
     if (more === 0) break;
     completable = bdd.or(completable, more);
