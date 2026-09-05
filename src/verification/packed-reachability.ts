@@ -1,4 +1,5 @@
 import { PackedModel, type PackedChoice } from "./packed-model.js";
+import { PackedControlProjection } from "./packed-projection.js";
 
 const NONE = 0xffff_ffff;
 const CHUNK_SIZE = 16_384;
@@ -34,6 +35,7 @@ class Words {
 export interface PackedReachabilityOptions {
   readonly stateLimit?: number;
   readonly edgeLimit?: number;
+  readonly stateScope?: "all-flags" | "static-future-flags";
 }
 
 export interface PackedProgress {
@@ -67,7 +69,9 @@ export class PackedReachabilityError extends Error {
 
 export interface PackedReachability {
   readonly exhaustive: true;
+  readonly stateScope: "all-flags" | "static-future-flags";
   readonly model: PackedModel;
+  /** One genuine full-code representative per key in the declared stateScope. */
   readonly states: readonly bigint[];
   /** Half-open ranges of state IDs at successive shortest-path distances. */
   readonly frontiers: readonly (readonly [number, number])[];
@@ -83,6 +87,7 @@ export interface PackedReachability {
   readonly endingWitnesses: Readonly<Record<string, readonly string[]>>;
   readonly deadEndWitness?: readonly string[];
   readonly noCompletionWitness?: readonly string[];
+  /** Membership of the declared control class; not full-history equivalence. */
   readonly isReachable: (code: bigint) => boolean;
   readonly isCompletable: (code: bigint) => boolean;
   readonly isDeadEnd: (code: bigint) => boolean;
@@ -98,8 +103,9 @@ function checkedLimit(value: unknown, fallback: number, name: string): number {
 }
 
 /**
- * Exhaust the exact authored-choice control graph, retaining every legal
- * authored edge. The separate global end() operation keeps its existing
+ * Exhaust the authored-choice control graph in the declared state scope,
+ * retaining every legal authored edge from each representative. The separate
+ * global end() operation keeps its existing
  * focused engine coverage. Metadata outside the packed tuple still requires
  * actual-engine witness replay. A thrown observer or resource guard never
  * returns partial coverage as success.
@@ -113,13 +119,21 @@ export function packedReachability(
   if (options === null || typeof options !== "object" || Array.isArray(options)) throw new Error("Invalid packed reachability options");
   const stateLimit = checkedLimit(options.stateLimit, 250_000, "state");
   const edgeLimit = checkedLimit(options.edgeLimit, 1_000_000, "edge");
+  const stateScopeInput = options.stateScope;
+  const stateScope = stateScopeInput === undefined ? "all-flags" : stateScopeInput;
+  if (stateScope !== "all-flags" && stateScope !== "static-future-flags") {
+    throw new Error("Invalid packed state scope");
+  }
   if (onProgress !== undefined && typeof onProgress !== "function") throw new Error("Invalid packed progress observer");
 
+  const projection = stateScope === "static-future-flags" ? new PackedControlProjection(model) : undefined;
+  const keyOf = (code: bigint): string => projection === undefined ? code.toString(16) : projection.key(code);
+
   const codes = [model.initial];
-  // Hexadecimal is an injective encoding of a bigint, not a truncated hash.
+  // Hexadecimal is an injective encoding of the chosen key, not a hash.
   // Node's bigint Map lookups can degrade when many keys share low limbs;
-  // retain the exact packed state while indexing all its bits as a string.
-  const indices = new Map<string, number>([[model.initial.toString(16), 0]]);
+  // retain the full packed representative while indexing the declared scope.
+  const indices = new Map<string, number>([[keyOf(model.initial), 0]]);
   const parents = new Words(), parentChoices = new Words(), heads = new Words();
   // Reverse edges prove completion reachability; they do not reconstruct a
   // completion path for each state. Authored witness paths use parent choices.
@@ -173,7 +187,7 @@ export function packedReachability(
         // Capture every authored choice before interning its successor. Two
         // choices may reach the same tuple and still need distinct witnesses.
         if (!choiceSources.has(choice.id)) choiceSources.set(choice.id, source);
-        const key = transition.state.toString(16);
+        const key = keyOf(transition.state);
         let target = indices.get(key);
         if (target === undefined) {
           if (codes.length >= stateLimit) throw new PackedGraphLimitError("state", stateLimit);
@@ -248,8 +262,12 @@ export function packedReachability(
   // result set; isReachable distinguishes absence from a reached negative case.
   // Preserve exact Map key typing at the public boundary: a number, string or
   // boxed bigint must not alias a bigint through string conversion.
-  const indexOf = (code: bigint): number | undefined =>
-    typeof code === "bigint" ? indices.get(code.toString(16)) : undefined;
+  const indexOf = (code: bigint): number | undefined => {
+    if (typeof code !== "bigint") return undefined;
+    // Invalid full codes must not alias a valid class after flags are masked.
+    // Graph construction uses keyOf directly and still fails on invalid codes.
+    try { return indices.get(keyOf(code)); } catch { return undefined; }
+  };
   const isReachable = (code: bigint): boolean => indexOf(code) !== undefined;
   const isCompletable = (code: bigint): boolean => {
     const id = indexOf(code);
@@ -263,7 +281,7 @@ export function packedReachability(
     const id = indexOf(code);
     return id !== undefined && (kinds.get(id) === 0 || kinds.get(id) === 3) && completable[id] !== 1;
   };
-  return Object.freeze({ exhaustive: true, model, states: Object.freeze(codes),
+  return Object.freeze({ exhaustive: true, stateScope, model, states: Object.freeze(codes),
     frontiers: Object.freeze(frontiers), stateCount: codes.length, transitionCount: edgeSources.length,
     completableCount: queueEnd, deadEndCount, noCompletionCount,
     unreachableScenes: Object.freeze(unreachableScenes), unreachableChoices: Object.freeze(unreachableChoices),
