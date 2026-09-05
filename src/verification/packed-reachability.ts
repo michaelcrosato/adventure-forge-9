@@ -1,5 +1,6 @@
 import { PackedModel, type PackedChoice } from "./packed-model.js";
 import { PackedControlProjection } from "./packed-projection.js";
+import { PackedPhaseProjection } from "./packed-phase-projection.js";
 
 const NONE = 0xffff_ffff;
 const CHUNK_SIZE = 16_384;
@@ -35,7 +36,7 @@ class Words {
 export interface PackedReachabilityOptions {
   readonly stateLimit?: number;
   readonly edgeLimit?: number;
-  readonly stateScope?: "all-flags" | "static-future-flags";
+  readonly stateScope?: "all-flags" | "static-future-flags" | "phase-future-flags";
 }
 
 export interface PackedProgress {
@@ -69,7 +70,7 @@ export class PackedReachabilityError extends Error {
 
 export interface PackedReachability {
   readonly exhaustive: true;
-  readonly stateScope: "all-flags" | "static-future-flags";
+  readonly stateScope: "all-flags" | "static-future-flags" | "phase-future-flags";
   readonly model: PackedModel;
   /** One genuine full-code representative per key in the declared stateScope. */
   readonly states: readonly bigint[];
@@ -77,6 +78,12 @@ export interface PackedReachability {
   readonly frontiers: readonly (readonly [number, number])[];
   readonly stateCount: number;
   readonly transitionCount: number;
+  /** Phase-scope collisions, including identical full codes. Zero in other scopes. */
+  readonly collisionCount: number;
+  /** Nonidentical phase collisions checked for control congruence. */
+  readonly congruenceCheckCount: number;
+  /** Authored choice pairs checked, including disabled choices and faults. */
+  readonly congruenceTransitionCount: number;
   readonly completableCount: number;
   readonly deadEndCount: number;
   readonly noCompletionCount: number;
@@ -121,13 +128,73 @@ export function packedReachability(
   const edgeLimit = checkedLimit(options.edgeLimit, 1_000_000, "edge");
   const stateScopeInput = options.stateScope;
   const stateScope = stateScopeInput === undefined ? "all-flags" : stateScopeInput;
-  if (stateScope !== "all-flags" && stateScope !== "static-future-flags") {
+  if (stateScope !== "all-flags" && stateScope !== "static-future-flags" && stateScope !== "phase-future-flags") {
     throw new Error("Invalid packed state scope");
   }
   if (onProgress !== undefined && typeof onProgress !== "function") throw new Error("Invalid packed progress observer");
 
-  const projection = stateScope === "static-future-flags" ? new PackedControlProjection(model) : undefined;
+  const phaseProjection = stateScope === "phase-future-flags" ? new PackedPhaseProjection(model) : undefined;
+  const projection = phaseProjection ?? (stateScope === "static-future-flags" ? new PackedControlProjection(model) : undefined);
   const keyOf = (code: bigint): string => projection === undefined ? code.toString(16) : projection.key(code);
+  const nonFlagMask = (1n << BigInt(model.bitCount - model.flags.length)) - 1n;
+
+  // Equal class keys retain every resource and lifecycle bit. Equality of all
+  // current text flag inputs then implies equality of every selected text line,
+  // including resource-guarded lines, without reconstructing engine metadata.
+  const textReadMasks = new Map<string, bigint>();
+  if (phaseProjection !== undefined) {
+    const offset = model.bitCount - model.flags.length;
+    const flagBits = new Map(model.flags.map((flag, i) => [flag, 1n << BigInt(offset + i)]));
+    for (const scene of model.scenario.scenes) {
+      let mask = 0n;
+      for (const line of scene.text) for (const condition of line.when ?? []) {
+        if (condition.type !== "flag") continue;
+        const bit = flagBits.get(condition.flag);
+        if (bit === undefined) throw new Error("Unknown packed text flag");
+        mask |= bit;
+      }
+      textReadMasks.set(scene.id, mask);
+    }
+  }
+  let collisionCount = 0, congruenceCheckCount = 0, congruenceTransitionCount = 0;
+
+  function assertPhaseCongruent(left: bigint, right: bigint, key: string): void {
+    if (phaseProjection === undefined) throw new Error("Missing packed phase projection");
+    collisionCount++;
+    // Identical validated full codes have identical deterministic behavior.
+    if (left === right) return;
+    congruenceCheckCount++;
+    if (keyOf(left) !== key || keyOf(right) !== key) throw new Error("Packed collision key mismatch");
+    const location = model.location(left);
+    const rightLocation = model.location(right);
+    const textMask = textReadMasks.get(location.scene);
+    if (location.scene !== rightLocation.scene || location.status !== rightLocation.status
+      || location.ending !== rightLocation.ending || textMask === undefined
+      || ((left ^ right) & (nonFlagMask | textMask)) !== 0n) {
+      throw new Error("Packed phase collision has divergent resources, lifecycle or conditional text");
+    }
+    const leftChoices = model.choicesAt(left), rightChoices = model.choicesAt(right);
+    if (leftChoices.length !== rightChoices.length) throw new Error("Packed phase collision has divergent choices");
+    for (let i = 0; i < leftChoices.length; i++) {
+      const choice = leftChoices[i]!, other = rightChoices[i]!;
+      if (choice.id !== other.id) throw new Error("Packed phase collision has divergent choice IDs");
+      const a = model.transition(left, choice), b = model.transition(right, other);
+      congruenceTransitionCount++;
+      if (a.kind !== b.kind) throw new Error(`Packed phase collision has divergent legality or fault: ${choice.id}`);
+      if (a.kind === "fault" && (b.kind !== "fault" || a.reason !== b.reason
+        || a.effectIndex !== b.effectIndex || a.resource !== b.resource)) {
+        throw new Error(`Packed phase collision has divergent arithmetic fault: ${choice.id}`);
+      }
+      if (a.kind === "success") {
+        if (b.kind !== "success") throw new Error("Packed phase collision has divergent transition kind");
+        phaseProjection.assertHandoff(left, a.state);
+        phaseProjection.assertHandoff(right, b.state);
+        if (keyOf(a.state) !== keyOf(b.state)) {
+          throw new Error(`Packed phase collision has divergent successor: ${choice.id}`);
+        }
+      }
+    }
+  }
 
   const codes = [model.initial];
   // Hexadecimal is an injective encoding of the chosen key, not a hash.
@@ -187,6 +254,7 @@ export function packedReachability(
         // Capture every authored choice before interning its successor. Two
         // choices may reach the same tuple and still need distinct witnesses.
         if (!choiceSources.has(choice.id)) choiceSources.set(choice.id, source);
+        phaseProjection?.assertHandoff(code, transition.state);
         const key = keyOf(transition.state);
         let target = indices.get(key);
         if (target === undefined) {
@@ -199,6 +267,8 @@ export function packedReachability(
           if (choiceIndex === undefined) throw new Error("Foreign packed choice in traversal");
           parentChoices.push(choiceIndex);
           heads.push(NONE);
+        } else if (phaseProjection !== undefined) {
+          assertPhaseCongruent(codes[target]!, transition.state, key);
         }
         const edge = edgeSources.push(source);
         edgeNext.push(heads.get(target));
@@ -283,6 +353,7 @@ export function packedReachability(
   };
   return Object.freeze({ exhaustive: true, stateScope, model, states: Object.freeze(codes),
     frontiers: Object.freeze(frontiers), stateCount: codes.length, transitionCount: edgeSources.length,
+    collisionCount, congruenceCheckCount, congruenceTransitionCount,
     completableCount: queueEnd, deadEndCount, noCompletionCount,
     unreachableScenes: Object.freeze(unreachableScenes), unreachableChoices: Object.freeze(unreachableChoices),
     sceneWitnesses: Object.freeze(sceneWitnesses), choiceWitnesses: Object.freeze(choiceWitnesses),
