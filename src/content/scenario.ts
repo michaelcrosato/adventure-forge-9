@@ -1191,4 +1191,4 @@ export const RAW_SCENARIO = {
     ...LANTERN_CHOICES,
     ...BLACKGLASS_CHOICES,
   ],
-} as const as unknown as ScenarioData & { readonly clocks: typeof BLACKGLASS_CLOCKS };
+} as const satisfies ScenarioData;

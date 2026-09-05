@@ -1,3 +1,5 @@
+import type { ChoiceData, ClockData, SceneData } from "./scenario.js";
+
 /**
  * Blackglass Works is a short continuation after the Lantern Archive.  The
  * tide is an authored clock rather than a second copy of any water outcome:
@@ -9,7 +11,7 @@
  */
 export const BLACKGLASS_CLOCKS = [
   { id: "blackglass-tide", resource: "tide", max: 3 },
-] as const;
+] as const satisfies readonly ClockData[];
 
 export const BLACKGLASS_SCENES = [
   {
@@ -17,7 +19,7 @@ export const BLACKGLASS_SCENES = [
     title: "Blackglass Quay",
     text: [
       {
-        text: "Blackglass Works rises over the upriver channel. Orin Pell, a shift foreman, points to the pressure line; Captain Varo Dey holds the watch roster; Nessa Quill reads the tide marks.",
+        text: "Blackglass Works rises over the upriver channel. Orin Pell, a shift foreman, points to the pressure line; Captain Varo Dey holds the watch roster; Nessa Quill reads the tide marks. The lower shutters will fail unless someone reaches the control room. Tide starts at 0; at 3 the surge arrives. Crossing choices show how much time they take.",
         when: [{ type: "flag", flag: "blackglass-resolved", value: false }],
       },
       {
@@ -119,7 +121,7 @@ export const BLACKGLASS_SCENES = [
         when: [{ type: "flag", flag: "blackglass-council-favor", value: true }],
       },
       {
-        text: "The public Archive notice has made the watch more alert. You can move with the notice or wait for a gap.",
+        text: "The public Archive notice has made the watch more alert. Running saves time but draws attention; waiting lets the tide rise.",
         when: [{ type: "flag", flag: "archive-verdict-exposed", value: true }],
       },
     ],
@@ -179,7 +181,7 @@ export const BLACKGLASS_SCENES = [
       },
       {
         text: "The tide has reached the warning marks. A clean setting is still possible if you act before the next beat.",
-        when: [{ type: "resourceAtLeast", resource: "tide", value: 2 }, { type: "resourceAtMost", resource: "tide", value: 2 }],
+        when: [{ type: "resourceAtLeast", resource: "tide", value: 2 }, { type: "resourceAtMost", resource: "tide", value: 2 }, { type: "resourceAtMost", resource: "risk", value: 2 }],
       },
       {
         text: "The tide has filled the warning marks. Only an emergency release or Nessa's practiced hand can hold the line now.",
@@ -190,7 +192,7 @@ export const BLACKGLASS_SCENES = [
         when: [{ type: "resourceAtLeast", resource: "risk", value: 3 }],
       },
       {
-        text: "Nessa knows the balance point from the shared repair. She can take the last wheel if you let her.",
+        text: "Nessa has worked these governors for years. Before the surge she can set the line cleanly even under watch; afterward she can hold an emergency release without drawing more attention, but the pressure will still damage the line.",
         when: [{ type: "flag", flag: "blackglass-nessa-aid", value: true }],
       },
     ],
@@ -215,7 +217,7 @@ export const BLACKGLASS_SCENES = [
         when: [{ type: "flag", flag: "council-control", value: true }, { type: "flag", flag: "blackglass-council-favor", value: false }],
       },
       {
-        text: "Orin's workers carry the high-ground line into their next shift. The evacuation plan now has a working pressure route.",
+        text: "Orin can extend the high-ground evacuation line toward the repaired works. The families now have another working route upriver.",
         when: [{ type: "flag", flag: "evacuation-plan", value: true }],
       },
       {
@@ -250,7 +252,7 @@ export const BLACKGLASS_SCENES = [
       },
     ],
   },
-] as const;
+] as const satisfies readonly SceneData[];
 
 export const BLACKGLASS_CHOICES = [
   {
@@ -351,7 +353,7 @@ export const BLACKGLASS_CHOICES = [
     id: "cross-after-open-road",
     scene: "reedway-crossing",
     label: "Cross by the road already opened",
-    description: "Use the exposed road a second time after its first patrol pass. Tide +1 with no new Risk; the earlier attention remains.",
+    description: "Use the exposed road again. Tide +1; the watch already knows you are here, so this adds no new Risk.",
     when: [{ type: "flag", flag: "blackglass-open-road-used", value: true }],
     effects: [{ type: "advanceClock", clock: "blackglass-tide", delta: 1 }, { type: "goTo", scene: "council-watchpost" }],
   },
@@ -379,10 +381,10 @@ export const BLACKGLASS_CHOICES = [
     id: "wait-for-watch-to-turn",
     scene: "council-watchpost",
     label: "Wait for the watch to turn",
-    description: "Hold under the rain cover for a clean opening. Tide +1; you lose time but add no Risk.",
+    description: "Wait beneath the rain cover until the lamps turn away. Tide +2 with no added Risk; the surge will arrive before you reach the controls.",
     when: [{ type: "resourceAtMost", resource: "tide", value: 1 }],
     effects: [
-      { type: "advanceClock", clock: "blackglass-tide", delta: 1 },
+      { type: "advanceClock", clock: "blackglass-tide", delta: 2 },
       { type: "goTo", scene: "pressure-control" },
     ],
   },
@@ -390,9 +392,9 @@ export const BLACKGLASS_CHOICES = [
     id: "run-the-watchline",
     scene: "council-watchpost",
     label: "Run the watchline",
-    description: "Cross while the lamps are moving. Tide +2 and Risk +1; Varo will hear the gate chain shake.",
+    description: "Run straight through the gate before the next sweep. Tide +1 and Risk +1; you save time, but Varo hears the gate chain shake.",
     effects: [
-      { type: "advanceClock", clock: "blackglass-tide", delta: 2 },
+      { type: "advanceClock", clock: "blackglass-tide", delta: 1 },
       { type: "adjustResource", resource: "risk", delta: 1 },
       { type: "goTo", scene: "pressure-control" },
     ],
@@ -640,7 +642,7 @@ export const BLACKGLASS_CHOICES = [
     description: "Record the settled pressure line and carry the clean account into the next journey.",
     when: [{ type: "flag", flag: "blackglass-pressure-scarred", value: false }, { type: "resourceAtMost", resource: "risk", value: 2 }],
     effects: [{ type: "addFact", fact: "blackglass-chapter-closed" }],
-    outcome: { status: "completed", summary: "You close the Blackglass account with the pressure line steady. Nessa, Orin, and Lowsail share a route that can be defended." },
+    outcome: { status: "completed", summary: "You close the Blackglass account with the pressure line steady. The works are ready for another shift, and Lowsail has your report." },
   },
   {
     id: "close-blackglass-chapter-watched",
@@ -668,4 +670,4 @@ export const BLACKGLASS_CHOICES = [
     effects: [],
     outcome: { status: "departed", summary: "You leave Lowsail after Blackglass without closing the new account. The pressure line holds, and its consequences wait." },
   },
-] as const;
+] as const satisfies readonly ChoiceData[];
