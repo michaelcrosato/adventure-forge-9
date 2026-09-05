@@ -97,3 +97,8 @@ The manager explicitly raised the workload guard to 250,000 after those
 measurements, before new live acceptance. It does not relax functional
 invariants or establish world-scale capacity. See STAGE6_BLACKGLASS.md for
 the failed diagnostic, comparison artifacts and final source references.
+
+The graph enumerates authored choices. The separate exported `end()` action
+has focused engine coverage but is not added to this graph's witnesses or
+transition count. Full-observation equivalence is not claimed: facts, journal,
+receipt revision and receipt hash remain representative metadata as above.
