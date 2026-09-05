@@ -20,15 +20,27 @@ export interface ObligationSummary {
   readonly nodes: number;
   readonly seedZero: boolean;
   readonly initialInBad: boolean;
+  /** Present only when obligation-local compaction was enabled. */
+  readonly compactions?: number;
 }
 
-export interface ObligationProgress {
-  readonly phase: "completion" | "completion-or-failure" | "obligation";
-  readonly id?: string;
-  readonly round: number;
-  readonly nodes: number;
-  readonly fixed: boolean;
-}
+export type ObligationProgress =
+  | {
+      readonly phase: "completion" | "completion-or-failure" | "obligation";
+      readonly id?: string;
+      readonly round: number;
+      readonly nodes: number;
+      readonly fixed: boolean;
+    }
+  | {
+      readonly phase: "obligation-compact";
+      readonly id: string;
+      readonly round: number;
+      readonly nodes: number;
+      /** Node count owned by the previous obligation manager during compaction. */
+      readonly previousNodes: number;
+      readonly fixed: false;
+    };
 
 export interface SymbolicObligationOptions {
   /** Maximum number of predecessor applications for every fixed point. */
@@ -40,6 +52,11 @@ export interface SymbolicObligationOptions {
    * default and preserves the original single-obligation shape.
    */
   readonly nonCompletionPartition?: "global" | "scene";
+  /**
+   * Replace each nonzero obligation manager every N nonfixed rounds. Zero
+   * disables obligation-local compaction and preserves the default shape.
+   */
+  readonly obligationCompactEvery?: number;
   readonly onProgress?: (progress: ObligationProgress) => void;
   /** Observe each obligation while its roots still belong to its fresh model. */
   readonly onObligation?: (value: {
@@ -73,6 +90,13 @@ type CurrentRoot = number;
 interface FixedPoint {
   readonly root: CurrentRoot;
   readonly rounds: number;
+}
+
+interface StaticAnchors {
+  readonly validDomain: CurrentRoot;
+  readonly initial: CurrentRoot;
+  readonly playing: CurrentRoot;
+  readonly completed: CurrentRoot;
 }
 
 interface SeedSpec {
@@ -111,6 +135,7 @@ function snapshotOptions(options: SymbolicObligationOptions | undefined): {
   readonly roundLimit: number;
   readonly nonCompletionMode: "direct" | "failure-absorbed";
   readonly nonCompletionPartition: "global" | "scene";
+  readonly obligationCompactEvery: number;
   readonly onProgress: ((progress: ObligationProgress) => void) | undefined;
   readonly onObligation: ((value: {
     readonly model: SymbolicModel;
@@ -124,6 +149,7 @@ function snapshotOptions(options: SymbolicObligationOptions | undefined): {
       roundLimit: DEFAULT_ROUND_LIMIT,
       nonCompletionMode: "direct" as const,
       nonCompletionPartition: "global" as const,
+      obligationCompactEvery: 0,
       onProgress: undefined,
       onObligation: undefined,
     });
@@ -136,11 +162,13 @@ function snapshotOptions(options: SymbolicObligationOptions | undefined): {
   const requestedRoundLimit = options.roundLimit;
   const requestedNonCompletionMode = options.nonCompletionMode;
   const requestedNonCompletionPartition = options.nonCompletionPartition;
+  const requestedObligationCompactEvery = options.obligationCompactEvery;
   const onProgress = options.onProgress;
   const onObligation = options.onObligation;
   const roundLimit = requestedRoundLimit === undefined ? DEFAULT_ROUND_LIMIT : requestedRoundLimit;
   const nonCompletionMode = requestedNonCompletionMode === undefined ? "direct" : requestedNonCompletionMode;
   const nonCompletionPartition = requestedNonCompletionPartition === undefined ? "global" : requestedNonCompletionPartition;
+  const obligationCompactEvery = requestedObligationCompactEvery === undefined ? 0 : requestedObligationCompactEvery;
   if (!Number.isSafeInteger(roundLimit) || roundLimit < 1) {
     throw new RangeError("roundLimit must be a positive safe integer");
   }
@@ -150,13 +178,16 @@ function snapshotOptions(options: SymbolicObligationOptions | undefined): {
   if (nonCompletionPartition !== "global" && nonCompletionPartition !== "scene") {
     throw new RangeError("nonCompletionPartition must be \"global\" or \"scene\"");
   }
+  if (!Number.isSafeInteger(obligationCompactEvery) || obligationCompactEvery < 0) {
+    throw new RangeError("obligationCompactEvery must be a non-negative safe integer");
+  }
   if (onProgress !== undefined && typeof onProgress !== "function") {
     throw new TypeError("onProgress must be a function");
   }
   if (onObligation !== undefined && typeof onObligation !== "function") {
     throw new TypeError("onObligation must be a function");
   }
-  return Object.freeze({ roundLimit, nonCompletionMode, nonCompletionPartition, onProgress, onObligation });
+  return Object.freeze({ roundLimit, nonCompletionMode, nonCompletionPartition, obligationCompactEvery, onProgress, onObligation });
 }
 
 /**
@@ -176,6 +207,12 @@ function snapshotOptions(options: SymbolicObligationOptions | undefined): {
  * authored choices as predecessors. The exact distributive identity
  * Pre*(union_s N_s) = union_s Pre*(N_s) makes this equivalent to one global
  * non-completion obligation; the partition is only a workload decomposition.
+ *
+ * When obligation-local compaction is enabled, only a nonzero obligation's
+ * current closure, seed, and static identity anchors are copied into a fresh
+ * equivalent manager after each configured number of nonfixed rounds. The
+ * canonical fixed-point comparison happens before that copy; compaction
+ * changes ownership and allocation history, never the predecessor relation.
  */
 export function proveCompletionSafetyByObligation(
   model: SymbolicModel,
@@ -185,17 +222,19 @@ export function proveCompletionSafetyByObligation(
   const snapshot = snapshotOptions(options);
   const bdd = model.bdd;
 
-  const current = (root: number, label: string): CurrentRoot => {
-    if (bdd.exists(root, model.nextVariables) !== root) {
+  const currentFor = (owner: SymbolicModel, root: number, label: string): CurrentRoot => {
+    if (owner.bdd.exists(root, owner.nextVariables) !== root) {
       throw new Error(`${label} must be a current-only symbolic root`);
     }
     return root;
   };
+  const current = (root: number, label: string): CurrentRoot => currentFor(model, root, label);
 
   const validDomain = current(model.validDomain, "model.validDomain");
   const playing = current(model.playing, "model.playing");
   const completed = current(model.completed, "model.completed");
   const initial = current(model.initial, "model.initial");
+  const staticAnchors: StaticAnchors = Object.freeze({ validDomain, initial, playing, completed });
   const invalidDomain = current(bdd.not(validDomain), "invalidDomain");
   if (bdd.and(initial, invalidDomain) !== 0) {
     throw new Error("Symbolic initial state is outside the valid domain");
@@ -342,6 +381,70 @@ export function proveCompletionSafetyByObligation(
   }
 
   const solveObligation = (spec: SeedSpec): ObligationSummary => {
+    const compactionEnabled = snapshot.obligationCompactEvery > 0;
+    const copyToFresh = (
+      source: SymbolicModel,
+      bad: CurrentRoot,
+      seed: CurrentRoot,
+      anchors: StaticAnchors,
+      label: string,
+    ): {
+      readonly model: SymbolicModel;
+      readonly bad: CurrentRoot;
+      readonly seed: CurrentRoot;
+      readonly anchors: StaticAnchors;
+    } => {
+      const sourceBad = currentFor(source, bad, `${label} source bad`);
+      const sourceSeed = currentFor(source, seed, `${label} source seed`);
+      const sourceAnchors: StaticAnchors = {
+        validDomain: currentFor(source, anchors.validDomain, `${label} source validDomain`),
+        initial: currentFor(source, anchors.initial, `${label} source initial`),
+        playing: currentFor(source, anchors.playing, `${label} source playing`),
+        completed: currentFor(source, anchors.completed, `${label} source completed`),
+      };
+      if (sourceAnchors.validDomain !== source.validDomain
+        || sourceAnchors.initial !== source.initial
+        || sourceAnchors.playing !== source.playing
+        || sourceAnchors.completed !== source.completed) {
+        throw new Error(`${label} source static roots do not match its model`);
+      }
+
+      const fresh = source.fresh();
+      assertEquivalentFreshModel(source, fresh);
+      const copied = source.bdd.copyForestTo(fresh.bdd, [
+        sourceBad,
+        sourceSeed,
+        sourceAnchors.validDomain,
+        sourceAnchors.initial,
+        sourceAnchors.playing,
+        sourceAnchors.completed,
+      ]);
+      if (copied.length !== 6 || copied.some(root => root === undefined)) {
+        throw new Error(`${label} failed to copy the complete obligation root bundle`);
+      }
+      const copiedBad = currentFor(fresh, copied[0]!, `${label} copied bad`);
+      const copiedSeed = currentFor(fresh, copied[1]!, `${label} copied seed`);
+      const freshAnchors: StaticAnchors = {
+        validDomain: currentFor(fresh, copied[2]!, `${label} copied validDomain`),
+        initial: currentFor(fresh, copied[3]!, `${label} copied initial`),
+        playing: currentFor(fresh, copied[4]!, `${label} copied playing`),
+        completed: currentFor(fresh, copied[5]!, `${label} copied completed`),
+      };
+      const modelAnchors: StaticAnchors = {
+        validDomain: currentFor(fresh, fresh.validDomain, `${label} fresh validDomain`),
+        initial: currentFor(fresh, fresh.initial, `${label} fresh initial`),
+        playing: currentFor(fresh, fresh.playing, `${label} fresh playing`),
+        completed: currentFor(fresh, fresh.completed, `${label} fresh completed`),
+      };
+      if (freshAnchors.validDomain !== modelAnchors.validDomain
+        || freshAnchors.initial !== modelAnchors.initial
+        || freshAnchors.playing !== modelAnchors.playing
+        || freshAnchors.completed !== modelAnchors.completed) {
+        throw new Error(`${label} fresh static roots do not match its model`);
+      }
+      return { model: fresh, bad: copiedBad, seed: copiedSeed, anchors: freshAnchors };
+    };
+
     if (spec.seed === 0) {
       const summary = Object.freeze({
         id: spec.id,
@@ -352,74 +455,74 @@ export function proveCompletionSafetyByObligation(
         nodes: bdd.stats().nodes,
         seedZero: true,
         initialInBad: false,
+        ...(compactionEnabled ? { compactions: 0 } : {}),
       });
       progress({ phase: "obligation", id: spec.id, round: 1, nodes: summary.nodes, fixed: true }, snapshot.onProgress);
       snapshot.onObligation?.(Object.freeze({ model, seed: 0, bad: 0, summary }));
       return summary;
     }
 
-    const fresh = model.fresh();
-    assertEquivalentFreshModel(model, fresh);
-    // The seed is the only obligation-specific root copied into this fresh
-    // manager. These four static roots are copied as identity anchors so a
-    // fresh implementation with the same field layout cannot silently carry
-    // different bounds or lifecycle encoding.
-    const copied = bdd.copyForestTo(fresh.bdd, [
-      spec.seed,
-      validDomain,
-      initial,
-      playing,
-      completed,
-    ]);
-    const seed = copied[0];
-    if (seed === undefined) throw new Error(`Failed to copy obligation seed ${spec.id}`);
-    const freshCurrent = (root: number, label: string): CurrentRoot => {
-      if (fresh.bdd.exists(root, fresh.nextVariables) !== root) {
-        throw new Error(`${label} must be a current-only symbolic root`);
-      }
-      return root;
-    };
-    freshCurrent(fresh.initial, `fresh model initial`);
-    const copiedValidDomain = copied[1];
-    const copiedInitial = copied[2];
-    const copiedPlaying = copied[3];
-    const copiedCompleted = copied[4];
-    if (copiedValidDomain !== fresh.validDomain
-      || copiedInitial !== fresh.initial
-      || copiedPlaying !== fresh.playing
-      || copiedCompleted !== fresh.completed) {
-      throw new Error(`Fresh symbolic model static roots do not match obligation ${spec.id}`);
-    }
-    let bad = freshCurrent(seed, `obligation ${spec.id} seed`);
+    let owner = model;
+    let bad: CurrentRoot = spec.seed;
+    let seed: CurrentRoot = spec.seed;
+    let anchors = staticAnchors;
+    ({ model: owner, bad, seed, anchors } = copyToFresh(
+      owner, bad, seed, anchors, `obligation ${spec.id} initial copy`,
+    ));
     let rounds = 0;
     let fixed = false;
+    let compactions = 0;
     for (let round = 1; round <= snapshot.roundLimit; round++) {
-      const predecessor = freshCurrent(fresh.preimage(bad), `obligation ${spec.id} predecessor`);
-      const next = freshCurrent(fresh.bdd.or(bad, predecessor), `obligation ${spec.id} fixed-point candidate`);
+      const predecessor = currentFor(owner, owner.preimage(bad), `obligation ${spec.id} predecessor`);
+      const next = currentFor(owner, owner.bdd.or(bad, predecessor), `obligation ${spec.id} fixed-point candidate`);
       fixed = next === bad;
       rounds = round;
-      progress({ phase: "obligation", id: spec.id, round, nodes: fresh.bdd.stats().nodes, fixed }, snapshot.onProgress);
+      progress({ phase: "obligation", id: spec.id, round, nodes: owner.bdd.stats().nodes, fixed }, snapshot.onProgress);
       if (fixed) {
         bad = next;
         break;
       }
       bad = next;
+      if (compactionEnabled && round % snapshot.obligationCompactEvery === 0) {
+        const previousNodes = owner.bdd.stats().nodes;
+        const compacted = copyToFresh(
+          owner,
+          bad,
+          seed,
+          anchors,
+          `obligation ${spec.id} compaction after round ${round}`,
+        );
+        owner = compacted.model;
+        bad = compacted.bad;
+        seed = compacted.seed;
+        anchors = compacted.anchors;
+        compactions++;
+        progress({
+          phase: "obligation-compact",
+          id: spec.id,
+          round,
+          nodes: owner.bdd.stats().nodes,
+          previousNodes,
+          fixed: false,
+        }, snapshot.onProgress);
+      }
     }
     if (!fixed) {
       throw new Error(`obligation ${spec.id} fixed point not reached within round limit ${snapshot.roundLimit}`);
     }
-    const initialInBad = fresh.bdd.and(fresh.initial, bad) !== 0;
+    const initialInBad = owner.bdd.and(owner.initial, bad) !== 0;
     const summary = Object.freeze({
       id: spec.id,
       kind: spec.kind,
       ...(spec.sceneId === undefined ? {} : { sceneId: spec.sceneId }),
       ...(spec.choiceId === undefined ? {} : { choiceId: spec.choiceId }),
       rounds,
-      nodes: fresh.bdd.stats().nodes,
+      nodes: owner.bdd.stats().nodes,
       seedZero: false,
       initialInBad,
+      ...(compactionEnabled ? { compactions } : {}),
     });
-    snapshot.onObligation?.(Object.freeze({ model: fresh, seed, bad, summary }));
+    snapshot.onObligation?.(Object.freeze({ model: owner, seed, bad, summary }));
     return summary;
   };
 

@@ -10,6 +10,7 @@ import {
   SymbolicModel,
   type SemanticState,
   type SymbolicChoice,
+  type SymbolicOptions,
 } from "../src/verification/symbolic-model.js";
 import { proveCompletionSafety } from "../src/verification/symbolic-properties.js";
 import { proveCompletionSafetyByObligation } from "../src/verification/symbolic-obligations.js";
@@ -950,6 +951,7 @@ function checkObligationScenario(
   allLayouts = false,
   nonCompletionMode: NonCompletionMode = "direct",
   nonCompletionPartition: NonCompletionPartition = "global",
+  obligationCompactEvery = 0,
 ): void {
   const graph = buildRawGraph(raw, bounds);
   const expected = expectedObligations(graph, nonCompletionMode, nonCompletionPartition);
@@ -975,22 +977,39 @@ function checkObligationScenario(
     const nonzeroOwners = new Set<SymbolicModel>();
     let copiedBad = 0;
     const progress: {
-      readonly phase: "completion" | "completion-or-failure" | "obligation";
+      readonly phase: "completion" | "completion-or-failure" | "obligation" | "obligation-compact";
       readonly id?: string;
       readonly round: number;
       readonly nodes: number;
+      readonly previousNodes?: number;
       readonly fixed: boolean;
     }[] = [];
+    const compactionProgress: typeof progress = [];
     const split = proveCompletionSafetyByObligation(model, {
       roundLimit: 64,
       nonCompletionMode,
       nonCompletionPartition,
+      ...(obligationCompactEvery === 0 ? {} : { obligationCompactEvery }),
       onProgress: event => {
         progress.push(event);
-        assert.ok(event.phase === "completion" || event.phase === "completion-or-failure" || event.phase === "obligation");
+        assert.ok(event.phase === "completion"
+          || event.phase === "completion-or-failure"
+          || event.phase === "obligation"
+          || event.phase === "obligation-compact");
         assert.ok(Number.isSafeInteger(event.round) && event.round >= 1);
         assert.ok(Number.isSafeInteger(event.nodes) && event.nodes >= 2);
         if (event.phase === "obligation") assert.equal(typeof event.id, "string");
+        if (event.phase === "obligation-compact") {
+          assert.equal(typeof event.id, "string");
+          assert.equal(event.fixed, false, label + " compaction is emitted only for a nonfixed round");
+          assert.ok(Number.isSafeInteger(event.previousNodes) && event.previousNodes! >= 2,
+            label + " compaction reports the previous owner node count");
+          assert.ok(event.id !== undefined && expectedByKey.get(event.id) !== undefined,
+            label + " compaction identifies an authored obligation");
+          assert.ok(expectedByKey.get(event.id!)!.seed.size > 0,
+            label + " zero-seed obligations are never compacted");
+          compactionProgress.push(event);
+        }
       },
       onObligation: payload => {
         const summary = payload.summary;
@@ -1015,6 +1034,14 @@ function checkObligationScenario(
         assert.ok(Number.isSafeInteger(summary.nodes) && summary.nodes >= 2);
         assert.equal(summary.seedZero, fixture!.seed.size === 0, label + " " + key + " seed emptiness");
         assert.equal(summary.initialInBad, fixture!.bad.has(graph.initialKey), label + " " + key + " initial membership");
+        if (obligationCompactEvery > 0) {
+          assert.ok(Object.hasOwn(summary, "compactions"), label + " " + key + " reports compactions when enabled");
+          assert.ok(Number.isSafeInteger(summary.compactions) && summary.compactions! >= 0,
+            label + " " + key + " reports a bounded compaction count");
+        } else {
+          assert.equal(Object.hasOwn(summary, "compactions"), false,
+            label + " " + key + " keeps the default summary shape");
+        }
         assert.ok(payload.model instanceof SymbolicModel);
         assert.equal(
           payload.model.bdd.exists(payload.seed, payload.model.nextVariables),
@@ -1088,6 +1115,15 @@ function checkObligationScenario(
     if (expected.some(obligation => obligation.seed.size > 0)) {
       assert.ok(progress.some(event => event.phase === "obligation"), label + " reports obligation progress");
     }
+    if (obligationCompactEvery > 0) {
+      assert.ok(compactionProgress.length > 0, label + " performs a real obligation-owner compaction");
+      const summaryCompactions = split.obligations.reduce(
+        (count, summary) => count + (summary.compactions ?? 0),
+        0,
+      );
+      assert.equal(summaryCompactions, compactionProgress.length,
+        label + " progress and final summary agree on owner changes");
+    }
 
     const nonCompletionCount = nonCompletionPartition === "scene" ? graph.scenario.scenes.length : 1;
     assert.equal(split.obligations.length, nonCompletionCount + 4 * model.choices.length, label + " retains every obligation");
@@ -1104,6 +1140,14 @@ function checkObligationScenario(
       assert.equal(summary.sceneId, fixture!.sceneId, label + " returned " + key + " scene metadata");
       assert.equal(summary.seedZero, fixture!.seed.size === 0, label + " returned " + key + " seed emptiness");
       assert.equal(summary.initialInBad, fixture!.bad.has(graph.initialKey), label + " returned " + key + " initial membership");
+      if (obligationCompactEvery > 0) {
+        assert.ok(Object.hasOwn(summary, "compactions"), label + " returned " + key + " reports compactions");
+        assert.ok(Number.isSafeInteger(summary.compactions) && summary.compactions! >= 0,
+          label + " returned " + key + " compaction count is bounded");
+      } else {
+        assert.equal(Object.hasOwn(summary, "compactions"), false,
+          label + " returned " + key + " keeps the default summary shape");
+      }
     }
     assert.equal(copiedBad, combined.bad, label + " split bad closures equal the old combined root");
     assert.equal(copiedBad, formulaForKeys(model, graph, graph.bad), label + " split bad closures match the oracle");
@@ -1304,10 +1348,11 @@ test("failure absorption retains synthetic invalid-success and uncovered-enabled
 test("failure-absorbed mode fails closed at its own fixed point and snapshots options", () => {
   const depthModel = modelFor(validateScenario(FAULT_ONLY_CONTINUATION), { stock: 1 }, "interleaved", "relational", false);
   const depthProgress: {
-    readonly phase: "completion" | "completion-or-failure" | "obligation";
+    readonly phase: "completion" | "completion-or-failure" | "obligation" | "obligation-compact";
     readonly id?: string;
     readonly round: number;
     readonly nodes: number;
+    readonly previousNodes?: number;
     readonly fixed: boolean;
   }[] = [];
   assert.throws(
@@ -1348,6 +1393,7 @@ test("failure-absorbed mode fails closed at its own fixed point and snapshots op
   let modeReads = 0;
   let roundReads = 0;
   let partitionReads = 0;
+  let compactReads = 0;
   const options = {
     get nonCompletionMode(): "failure-absorbed" {
       modeReads++;
@@ -1361,11 +1407,16 @@ test("failure-absorbed mode fails closed at its own fixed point and snapshots op
       partitionReads++;
       return "scene";
     },
+    get obligationCompactEvery(): number {
+      compactReads++;
+      return 2;
+    },
   };
   proveCompletionSafetyByObligation(getterModel, options);
   assert.equal(modeReads, 1, "absorbed mode option is read once");
   assert.equal(roundReads, 1, "absorbed round limit is read once");
   assert.equal(partitionReads, 1, "absorbed partition option is read once");
+  assert.equal(compactReads, 1, "obligation compaction interval is read once");
 });
 
 test("property proof distinguishes isolated arithmetic faults and intermediate bound exits", () => {
@@ -1524,6 +1575,34 @@ test("scene-partitioned non-completion cones preserve cross-scene reachability a
   );
 });
 
+test("obligation-local compaction preserves exact cones and reports owner handoffs", () => {
+  for (const interval of [1, 2] as const) {
+    // The only-fault route has a three-step predecessor cone, so both
+    // intervals exercise a copy after a genuinely nonfixed round. The direct
+    // global run checks the ordinary obligation shape; the absorbed scene run
+    // checks the decomposed W/non-completion shape with zero seeds alongside
+    // the nonzero fault cone.
+    checkObligationScenario(
+      FAULT_ONLY_CONTINUATION,
+      { stock: 1 },
+      "compact-direct-global-" + interval,
+      false,
+      "direct",
+      "global",
+      interval,
+    );
+    checkObligationScenario(
+      FAULT_ONLY_CONTINUATION,
+      { stock: 1 },
+      "compact-absorbed-scene-" + interval,
+      false,
+      "failure-absorbed",
+      "scene",
+      interval,
+    );
+  }
+});
+
 class SameOwnerFreshModel extends SymbolicModel {
   override fresh(): SymbolicModel {
     return this;
@@ -1542,6 +1621,68 @@ class WrongBoundFreshModel extends SymbolicModel {
       nodeLimit: 100_000,
       cacheLimit: 20_000,
     });
+  }
+}
+
+type SecondFreshFailure = "alias" | "bounds" | "valid";
+
+interface FreshCallTrace {
+  calls: number;
+}
+
+/**
+ * Keep the first obligation owner valid, then make the first compaction
+ * handoff invalid. This proves compaction validates every owner boundary,
+ * rather than only the initial seed copy.
+ */
+class SecondFreshFailureModel extends SymbolicModel {
+  readonly trace: FreshCallTrace;
+  private readonly boundsSnapshot: Readonly<Record<string, number>>;
+  private readonly optionsSnapshot: SymbolicOptions;
+  private readonly failure: SecondFreshFailure;
+
+  constructor(
+    input: unknown,
+    bounds: Readonly<Record<string, number>>,
+    options: SymbolicOptions = {},
+    trace: FreshCallTrace = { calls: 0 },
+    failure: SecondFreshFailure = "alias",
+  ) {
+    super(input, bounds, options);
+    this.trace = trace;
+    this.boundsSnapshot = Object.freeze({ ...bounds });
+    this.optionsSnapshot = Object.freeze({
+      order: options.order,
+      transitionMode: options.transitionMode,
+      fieldOrder: options.fieldOrder === undefined ? undefined : Object.freeze([...options.fieldOrder]),
+      nodeLimit: options.nodeLimit,
+      cacheLimit: options.cacheLimit,
+      maxDomain: options.maxDomain,
+    });
+    this.failure = failure;
+  }
+
+  override fresh(): SymbolicModel {
+    this.trace.calls++;
+    if (this.trace.calls >= 2 && this.failure === "alias") return this;
+    if (this.trace.calls >= 2 && this.failure === "bounds") {
+      const resource = Object.keys(this.boundsSnapshot)[0]!;
+      const current = this.boundsSnapshot[resource]!;
+      return new SecondFreshFailureModel(
+        this.scenario,
+        { ...this.boundsSnapshot, [resource]: Math.max(0, current - 1) },
+        this.optionsSnapshot,
+        this.trace,
+        this.failure,
+      );
+    }
+    return new SecondFreshFailureModel(
+      this.scenario,
+      this.boundsSnapshot,
+      this.optionsSnapshot,
+      this.trace,
+      this.failure,
+    );
   }
 }
 
@@ -1579,6 +1720,13 @@ test("split safety obligations reject invalid caps and propagate observer failur
       "rejects split roundLimit=" + String(roundLimit),
     );
   }
+  for (const obligationCompactEvery of [null, -1, 1.5, Number.NaN, "2"] as const) {
+    assert.throws(
+      () => proveCompletionSafetyByObligation(model, { obligationCompactEvery: obligationCompactEvery as never }),
+      /obligationCompactEvery|compaction/i,
+      "rejects obligationCompactEvery=" + String(obligationCompactEvery),
+    );
+  }
   assert.throws(() => proveCompletionSafetyByObligation(model, null as never), /options/i);
   assert.throws(
     () => proveCompletionSafetyByObligation(model, { onProgress: null as never }),
@@ -1612,10 +1760,11 @@ test("split safety obligations reject invalid caps and propagate observer failur
 
   const obligationDepth = modelFor(validateScenario(OBLIGATION_DEPTH), { stock: 1 }, "interleaved", "relational", false);
   const depthProgress: {
-    readonly phase: "completion" | "completion-or-failure" | "obligation";
+    readonly phase: "completion" | "completion-or-failure" | "obligation" | "obligation-compact";
     readonly id?: string;
     readonly round: number;
     readonly nodes: number;
+    readonly previousNodes?: number;
     readonly fixed: boolean;
   }[] = [];
   assert.throws(
@@ -1645,5 +1794,82 @@ test("split safety obligations reject invalid caps and propagate observer failur
       onObligation: () => { throw obligationError; },
     }),
     error => error === obligationError,
+  );
+});
+
+test("obligation compaction fails closed at its boundary and propagates compaction observers", () => {
+  const scenario = validateScenario(FAULT_ONLY_CONTINUATION);
+  const ownerOptions: SymbolicOptions = {
+    order: "interleaved",
+    transitionMode: "relational",
+    nodeLimit: 100_000,
+    cacheLimit: 20_000,
+  };
+  for (const failure of ["alias", "bounds"] as const) {
+    const model = new SecondFreshFailureModel(scenario, { stock: 3 }, ownerOptions, { calls: 0 }, failure);
+    assert.throws(
+      () => proveCompletionSafetyByObligation(model, {
+        roundLimit: 64,
+        obligationCompactEvery: 1,
+      }),
+      /fresh|owner|distinct|domain|layout|bound|static/i,
+      "the second fresh owner must be validated for " + failure,
+    );
+    assert.ok(model.trace.calls >= 2, "" + failure + " reaches a second fresh-owner boundary");
+  }
+
+  const tracked = new SecondFreshFailureModel(scenario, { stock: 1 }, ownerOptions, { calls: 0 }, "valid");
+  const finalOwners = new Set<SymbolicModel>();
+  const trackedResult = proveCompletionSafetyByObligation(tracked, {
+    roundLimit: 64,
+    obligationCompactEvery: 1,
+    onObligation: payload => {
+      if (!payload.summary.seedZero) finalOwners.add(payload.model);
+    },
+  });
+  const nonzeroCount = trackedResult.obligations.filter(summary => !summary.seedZero).length;
+  const compactionCount = trackedResult.obligations.reduce(
+    (count, summary) => count + (summary.compactions ?? 0),
+    0,
+  );
+  assert.ok(compactionCount > 0, "the owner trace includes at least one compaction");
+  assert.equal(tracked.trace.calls, nonzeroCount + compactionCount,
+    "each nonzero cone copy and compaction creates exactly one fresh owner");
+  assert.equal(finalOwners.size, nonzeroCount,
+    "each nonzero final callback owns its own latest compacted manager");
+
+  const capped = modelFor(scenario, { stock: 1 }, "interleaved", "relational", false);
+  const capProgress: {
+    readonly phase: "completion" | "completion-or-failure" | "obligation" | "obligation-compact";
+    readonly id?: string;
+    readonly round: number;
+    readonly nodes: number;
+    readonly previousNodes?: number;
+    readonly fixed: boolean;
+  }[] = [];
+  assert.throws(
+    () => proveCompletionSafetyByObligation(capped, {
+      roundLimit: 2,
+      obligationCompactEvery: 1,
+      onProgress: event => capProgress.push(event),
+    }),
+    /obligation arithmetic-error:arithmetic-work-only-fault.*round limit/i,
+    "a cap reached after compaction still fails closed",
+  );
+  assert.ok(capProgress.some(event => event.phase === "obligation-compact"),
+    "the cap test reaches a real compaction before failing");
+
+  const observed = modelFor(scenario, { stock: 1 }, "interleaved", "relational", false);
+  const compactionError = new Error("intentional obligation compaction interruption");
+  assert.throws(
+    () => proveCompletionSafetyByObligation(observed, {
+      roundLimit: 64,
+      obligationCompactEvery: 1,
+      onProgress: event => {
+        if (event.phase === "obligation-compact") throw compactionError;
+      },
+    }),
+    error => error === compactionError,
+    "compaction observer failures are propagated without a partial result",
   );
 });
