@@ -38,6 +38,17 @@ interface ScenarioIndex {
   readonly resources: readonly string[];
   readonly clocksById: ReadonlyMap<string, string>;
   readonly monotoneFlags: ReadonlySet<string>;
+  /**
+   * Monotone false-gate flags in each static scene closure.  The analyzer's
+   * cache only needs the current values of these flags; every other current
+   * flag is irrelevant to the conservative closure.
+   */
+  readonly phaseFlagsByScene: ReadonlyMap<string, readonly string[]>;
+}
+
+/** A compiled future-influence analyzer for one detached Scenario snapshot. */
+export interface FutureInfluenceAnalyzer {
+  (state: FutureInfluenceState): FutureInfluenceAnalysis;
 }
 
 /**
@@ -52,11 +63,47 @@ export function analyzeFutureInfluence(
   scenario: Scenario,
   state: FutureInfluenceState,
 ): FutureInfluenceAnalysis {
-  const index = indexScenario(scenario);
+  return createFutureInfluenceAnalyzer(scenario)(state);
+}
+
+/**
+ * Compile the static Scenario index once and analyze many current states.
+ *
+ * The input is copied and deeply frozen before indexing.  The returned
+ * function therefore cannot be invalidated by a caller changing the Scenario
+ * object after compilation.  Results are cached only on the current scene,
+ * terminal/playing status, and values of monotone false-gate flags that can
+ * affect that scene's conservative closure.
+ */
+export function createFutureInfluenceAnalyzer(scenario: Scenario): FutureInfluenceAnalyzer {
+  const snapshot = snapshotScenario(scenario);
+  const index = indexScenario(snapshot);
+  const cache = new Map<string, FutureInfluenceAnalysis>();
+
+  return (state: FutureInfluenceState): FutureInfluenceAnalysis => {
+    if (!index.scenesById.has(state.scene)) {
+      throw new Error(`Future influence cannot analyze unknown scene ${JSON.stringify(state.scene)}`);
+    }
+    assertState(state);
+
+    const key = cacheKey(index, state);
+    const cached = cache.get(key);
+    if (cached !== undefined) return cached;
+
+    const result = analyzeIndexedScenario(index, state);
+    const immutable = freezeAnalysis(result);
+    cache.set(key, immutable);
+    return immutable;
+  };
+}
+
+function analyzeIndexedScenario(
+  index: ScenarioIndex,
+  state: FutureInfluenceState,
+): FutureInfluenceAnalysis {
   if (!index.scenesById.has(state.scene)) {
     throw new Error(`Future influence cannot analyze unknown scene ${JSON.stringify(state.scene)}`);
   }
-  assertState(state);
 
   const textFlags = new Set<string>();
   const activeFlags = new Set<string>();
@@ -125,6 +172,17 @@ export function analyzeFutureInfluence(
   );
 }
 
+function cacheKey(index: ScenarioIndex, state: FutureInfluenceState): string {
+  if (state.status !== "playing") return JSON.stringify([state.status, state.scene]);
+  const phaseFlags = index.phaseFlagsByScene.get(state.scene) ?? [];
+  const mask = phaseFlags.map((flag) => currentFlagIsTrue(state.flags, flag) ? "1" : "0").join("");
+  return JSON.stringify([state.status, state.scene, mask]);
+}
+
+function currentFlagIsTrue(flags: Readonly<Record<string, boolean>>, flag: string): boolean {
+  return Object.hasOwn(flags, flag) && flags[flag] === true;
+}
+
 function finish(
   resources: readonly string[],
   reachableScenes: readonly string[],
@@ -145,6 +203,59 @@ function finish(
     conservedFlags: [...textFlags].filter((flag) => !activeFlagSet.has(flag)).sort(),
     pruningJustifiers: [...pruningJustifiers].sort(),
   };
+}
+
+function freezeAnalysis(analysis: FutureInfluenceAnalysis): FutureInfluenceAnalysis {
+  return Object.freeze({
+    reachableScenes: Object.freeze([...analysis.reachableScenes]),
+    reachableChoices: Object.freeze([...analysis.reachableChoices]),
+    activeResources: Object.freeze([...analysis.activeResources]),
+    conservedResources: Object.freeze([...analysis.conservedResources]),
+    activeFlags: Object.freeze([...analysis.activeFlags]),
+    conservedFlags: Object.freeze([...analysis.conservedFlags]),
+    pruningJustifiers: Object.freeze([...analysis.pruningJustifiers]),
+  });
+}
+
+function snapshotScenario(scenario: Scenario): Scenario {
+  const snapshot: Scenario = {
+    version: scenario.version,
+    initialScene: scenario.initialScene,
+    initialResources: Object.fromEntries(Object.entries(scenario.initialResources)),
+    initialFacts: [...scenario.initialFacts],
+    ...(scenario.clocks === undefined
+      ? {}
+      : { clocks: scenario.clocks.map((clock) => ({ ...clock })) }),
+    scenes: scenario.scenes.map((scene) => ({
+      id: scene.id,
+      title: scene.title,
+      text: scene.text.map((line) => ({
+        text: line.text,
+        ...(line.when === undefined
+          ? {}
+          : { when: line.when.map((condition) => ({ ...condition })) }),
+      })),
+    })),
+    choices: scenario.choices.map((choice) => ({
+      id: choice.id,
+      scene: choice.scene,
+      label: choice.label,
+      description: choice.description,
+      ...(choice.when === undefined
+        ? {}
+        : { when: choice.when.map((condition) => ({ ...condition })) }),
+      effects: choice.effects.map((effect) => ({ ...effect })),
+      ...(choice.outcome === undefined ? {} : { outcome: { ...choice.outcome } }),
+    })),
+  };
+  return deepFreeze(snapshot);
+}
+
+function deepFreeze<T>(value: T): T {
+  if (typeof value !== "object" || value === null || Object.isFrozen(value)) return value;
+  Object.freeze(value);
+  for (const child of Object.values(value as Record<string, unknown>)) deepFreeze(child);
+  return value;
 }
 
 function indexScenario(scenario: Scenario): ScenarioIndex {
@@ -202,13 +313,51 @@ function indexScenario(scenario: Scenario): ScenarioIndex {
     if (writes !== undefined && [...writes].every((value) => value === true)) monotoneFlags.add(flag);
   }
 
+  const phaseFlagsByScene = new Map<string, readonly string[]>();
+  for (const sceneId of scenesById.keys()) {
+    const reachableScenes = staticSceneClosure(sceneId, choicesByScene);
+    const phaseFlags = new Set<string>();
+    for (const reachableScene of reachableScenes) {
+      for (const choice of choicesByScene.get(reachableScene) ?? []) {
+        for (const condition of choice.when ?? []) {
+          if (condition.type === "flag"
+            && condition.value === false
+            && monotoneFlags.has(condition.flag)) {
+            phaseFlags.add(condition.flag);
+          }
+        }
+      }
+    }
+    phaseFlagsByScene.set(sceneId, Object.freeze([...phaseFlags].sort()));
+  }
+
   return {
     scenesById,
     choicesByScene,
     resources,
     clocksById,
     monotoneFlags,
+    phaseFlagsByScene,
   };
+}
+
+function staticSceneClosure(
+  initialScene: string,
+  choicesByScene: ReadonlyMap<string, readonly Scenario["choices"][number][]>,
+): ReadonlySet<string> {
+  const reachable = new Set<string>([initialScene]);
+  const pending = [initialScene];
+  for (let index = 0; index < pending.length; index++) {
+    const sceneId = pending[index]!;
+    for (const choice of choicesByScene.get(sceneId) ?? []) {
+      for (const effect of choice.effects) {
+        if (effect.type !== "goTo" || reachable.has(effect.scene)) continue;
+        reachable.add(effect.scene);
+        pending.push(effect.scene);
+      }
+    }
+  }
+  return reachable;
 }
 
 function assertState(state: FutureInfluenceState): void {

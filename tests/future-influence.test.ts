@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { analyzeFutureInfluence, type FutureInfluenceState } from "../src/engine/future-influence.js";
+import {
+  analyzeFutureInfluence,
+  createFutureInfluenceAnalyzer,
+  type FutureInfluenceState,
+} from "../src/engine/future-influence.js";
 import type { Scenario } from "../src/engine/content.js";
 import { SCENARIO } from "../src/engine/content.js";
 import { sharedLowResolved } from "./reedway-witnesses.js";
@@ -219,4 +223,60 @@ test("resolved shores retain future costs while preserving old displayed history
   assert.ok(result.activeFlags.includes("reedway-salvager-hostile"), "care can still reset hostility");
   assert.ok(result.pruningJustifiers.includes("blackglass-resolved"));
   assert.equal(result.reachableScenes.includes("pressure-control"), false);
+});
+
+test("a compiled analyzer keeps a detached Scenario snapshot", () => {
+  const mutableScenario = structuredClone(BRANCH_SCENARIO) as Scenario;
+  const analyzer = createFutureInfluenceAnalyzer(mutableScenario);
+  const before = analyzer(playing("start"));
+
+  const firstChoice = mutableScenario.choices[0] as unknown as {
+    effects: Array<{ type: string; scene?: string }>;
+  };
+  firstChoice.effects[0]!.scene = "finish";
+  assert.equal(firstChoice.effects[0]!.scene, "finish");
+
+  assert.deepEqual(analyzer(playing("start")), before);
+  assert.ok(before.reachableScenes.includes("distant"));
+});
+
+test("the cache follows monotone phase flags and ignores irrelevant history flags", () => {
+  const analyzer = createFutureInfluenceAnalyzer(PHASE_SCENARIO);
+  const flags: Record<string, boolean> = {};
+
+  const open = analyzer({ scene: "gate", status: "playing", flags });
+  assert.ok(open.reachableScenes.includes("early"));
+
+  flags.phase = true;
+  const closed = analyzer({ scene: "gate", status: "playing", flags });
+  assert.equal(closed.reachableScenes.includes("early"), false);
+  assert.deepEqual(closed.pruningJustifiers, ["phase"]);
+
+  const sameClosed = analyzer({
+    scene: "gate",
+    status: "playing",
+    flags: { phase: true, "unrelated-history": true },
+  });
+  assert.strictEqual(sameClosed, closed);
+
+  flags.phase = false;
+  const reopened = analyzer({ scene: "gate", status: "playing", flags });
+  assert.ok(reopened.reachableScenes.includes("early"));
+  assert.notStrictEqual(reopened, closed);
+});
+
+test("compiled analyses are deeply immutable and cannot poison the cache", () => {
+  const analyzer = createFutureInfluenceAnalyzer(BRANCH_SCENARIO);
+  const first = analyzer(playing("start"));
+
+  assert.equal(Object.isFrozen(first), true);
+  assert.equal(Object.isFrozen(first.reachableScenes), true);
+  assert.throws(() => (first.reachableScenes as string[]).push("poison"), TypeError);
+  assert.throws(() => {
+    (first as { activeFlags: readonly string[] }).activeFlags = ["poison"];
+  }, TypeError);
+
+  const second = analyzer(playing("start"));
+  assert.strictEqual(second, first);
+  assert.equal(second.reachableScenes.includes("poison"), false);
 });
