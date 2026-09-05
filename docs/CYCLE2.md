@@ -59,3 +59,18 @@ First ask neutrally for the situation, available ways forward, any apparent mism
 Interpretation: verify that readers select a legal action, identify repair as unavailable, and can ground its absence in the missing supply. Report whether they regard the requirements as explained, alongside their original reasoning. Candidate prose must match engine counterfactuals. If both candidate readers correctly explain the missing supply and available kit alternative without a new misunderstanding, this can support retaining the factual guidance for this particular state. It does not establish overall enjoyment or resolve the global rating result. If baseline readers do equally well, report no comprehension advantage; if candidates fail, revise the explanatory design rather than declaring success.
 
 Focused results pending. Broader abrupt travel remains an open issue for campaign navigation.
+
+### First focused result and declared revision C
+
+Common harness `1a589f9`; trusted baseline `f66ecd2` and B `ea6caf3`. Four attempts completed with no transport failures. Original first responses and structured answers are retained under the external `comprehension-runs` root.
+
+| Version / seed | Run ID | Explains supply blocks repair | Notes |
+| --- | --- | --- | --- |
+| Baseline / 1 | `2026-09-05T01-48-37-934Z-e3872f15` | No | First response was only a choice; structured answer called repair available despite its absence. No explanatory first answer was fabricated or retried. |
+| Baseline / 2 | `2026-09-05T01-48-37-951Z-125b5c1d` | No | Recognized repair was unlisted but considered its stated prerequisites satisfied. |
+| B / 1 | `2026-09-05T01-48-37-951Z-7b638cac` | Yes | Selected kit evacuation; questioned whether medicine meant silverleaf and whether the stamped order conveyed a usable seal. |
+| B / 2 | `2026-09-05T01-48-37-973Z-4ad3c213` | Yes | Selected kit evacuation; noted tools/kit naming and absent council choice. |
+
+The supply explanation improved this narrow reading in these four conversations, but B fails the full focused criterion because the first candidate introduced unresolved medicine/seal interpretations. Its structured `requirementsFullyExplained` was false and `missingRequirement` was “silverleaf dose,” despite medicine=2. The second candidate used an empty missing-requirement field while explaining the supply shortfall correctly; interpret the original reasoning, not that ambiguous field alone. This remains a specialist result, with no normal-play or enjoyment acceptance claim.
+
+Revision C is declared before edits or calls: on a separate trusted checkout based on B, revise only the chamber requirement sentence and order-owner sentence. Explicitly map a repair kit to the visible tools resource and silverleaf to medicine, and distinguish a seal granted by Tovan from a stamp on the stolen order. Keep all mechanics and all other copy unchanged. Compare two fresh C readers (seeds 1/2) with the preserved baseline/B readers; this is an adaptive development comparison. Use the same common harness, prompts and isolation. No unchanged reruns. Both must explain the missing supply and legal kit alternative without the medicine/seal misunderstandings to retain C as a specific presentation correction. The earlier global rating failures remain failed. Preserve/export all attempts and report any missing free explanations rather than silently filling them in.
