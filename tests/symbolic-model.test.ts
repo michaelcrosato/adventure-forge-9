@@ -411,6 +411,16 @@ function endingPairs(scenario: Scenario): Array<[string, string]> {
   return pairs;
 }
 
+/** Derive a deliberately different full layout from content, independently
+ * of the compiler's field list. Even lifecycle fields move in this layout. */
+function reversedFieldOrder(raw: RawScenario | Scenario): string[] {
+  const scenario = validateScenario(raw);
+  return ["scene", "status", "ending",
+    ...Object.keys(scenario.initialResources).sort().map(name => `resource:${name}`),
+    ...flagNames(scenario).map(name => `flag:${name}`),
+  ].reverse();
+}
+
 function stateKey(state: OracleState, resources: readonly string[], flags: readonly string[]): string {
   return JSON.stringify([
     state.scene,
@@ -721,12 +731,13 @@ function replayThroughRealEngine(
   paths: Readonly<Record<string, readonly string[]>>,
   bounds: Readonly<Record<string, number>>,
   order: "interleaved" | "blocked",
+  fieldOrder?: readonly string[],
 ): Record<string, EngineReplay> {
   const fixture = materializeEngineFixture(scenario);
   try {
     const inputPath = join(fixture.root, "paths.json");
     const probePath = join(fixture.root, "probe.mjs");
-    writeFileSync(inputPath, JSON.stringify({ paths, bounds, order }));
+    writeFileSync(inputPath, JSON.stringify({ paths, bounds, order, fieldOrder }));
     writeFileSync(probePath, `
 import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
@@ -734,8 +745,8 @@ import { SCENARIO } from "./src/engine/content.ts";
 import { observe, replay, restore, save, stateHash } from "./src/engine/index.ts";
 import { SymbolicModel, symbolicReachability } from "./src/verification/symbolic-model.ts";
 import { replaySymbolicPath, verifySymbolicWitnesses } from "./src/verification/symbolic-replay.ts";
-const { paths, bounds, order } = JSON.parse(readFileSync(process.argv[2], "utf8"));
-const model = new SymbolicModel(SCENARIO, bounds, { order, nodeLimit: 200_000, cacheLimit: 20_000 });
+const { paths, bounds, order, fieldOrder } = JSON.parse(readFileSync(process.argv[2], "utf8"));
+const model = new SymbolicModel(SCENARIO, bounds, { order, fieldOrder, nodeLimit: 200_000, cacheLimit: 20_000 });
 const graph = symbolicReachability(model, 64);
 const verified = verifySymbolicWitnesses(model, graph);
 for (const kind of ["scene", "choice", "ending"]) {
@@ -871,8 +882,9 @@ function assertSymbolicMatchesOracle(rawScenario: RawScenario, bounds: Readonly<
   const graph = buildOracle(validated, bounds);
   const graphStates = [...graph.states.values()];
   const domainStates = allValidStates(validated, bounds);
-  for (const order of ["interleaved", "blocked"] as const) {
-    const model = new SymbolicModel(rawScenario, bounds, { order, nodeLimit: 200_000, cacheLimit: 20_000 });
+  for (const order of ["interleaved", "blocked"] as const) for (const fieldOrder of [undefined, reversedFieldOrder(rawScenario)]) {
+    const model = new SymbolicModel(rawScenario, bounds, { order, fieldOrder, nodeLimit: 200_000, cacheLimit: 20_000 });
+    if (fieldOrder !== undefined) assert.deepEqual(model.fieldOrder, fieldOrder, "the requested layout is used");
     const result = symbolicReachability(model, 64);
     const reachable = formulaForStates(model, graphStates);
     const completable = formulaForStates(model, expectedStateSet(graph, graph.completable));
@@ -930,7 +942,7 @@ function assertSymbolicMatchesOracle(rawScenario: RawScenario, bounds: Readonly<
       if (key.startsWith("scene:")) assert.equal(expected.scene, key.slice("scene:".length));
       if (key.startsWith("choice:") || key.startsWith("ending:")) assert.equal(path.at(-1), key.slice(key.indexOf(":") + 1));
     }
-    assertEngineReplayMatches(validated, graph, paths, replayThroughRealEngine(rawScenario, paths, bounds, order), bounds);
+    assertEngineReplayMatches(validated, graph, paths, replayThroughRealEngine(rawScenario, paths, bounds, order, fieldOrder), bounds);
 
     for (const choice of model.choices) {
       const choiceEdges = graph.edges.filter((edge) => edge.choiceId === choice.id);
@@ -1067,8 +1079,9 @@ function compactFixtureResult(
   scenario: RawScenario,
   bounds: Readonly<Record<string, number>>,
   order: "interleaved" | "blocked",
+  fieldOrder?: readonly string[],
 ): { readonly input: SymbolicModel; readonly result: CompactReachabilityResult; readonly progress: readonly CompactProgressEvent[] } {
-  const input = new SymbolicModel(scenario, bounds, { order, nodeLimit: 100_000, cacheLimit: 20_000 });
+  const input = new SymbolicModel(scenario, bounds, { order, fieldOrder, nodeLimit: 100_000, cacheLimit: 20_000 });
   const inputStats = input.bdd.stats();
   const initialAssignment = input.bdd.satisfyingAssignment(input.initial);
   const progress: CompactProgressEvent[] = [];
@@ -1077,6 +1090,7 @@ function compactFixtureResult(
   }, { compactAtNodes: 1 });
   assert.deepEqual(input.bdd.stats(), inputStats, "private generations leave the caller's node and cache tables unchanged");
   assert.deepEqual(input.bdd.satisfyingAssignment(input.initial), initialAssignment, "the original initial handle preserves its meaning");
+  assert.deepEqual(result.model.fieldOrder, input.fieldOrder, "every copied generation preserves the field layout");
   return Object.freeze({ input, result, progress: Object.freeze(progress) });
 }
 
@@ -1165,10 +1179,10 @@ test("forced compaction preserves complete finite reachability, frontiers, and w
     { label: "unreachable-unsafe-branch", scenario: UNREACHABLE_INVALID_SCENARIO, bounds: { stock: 2 } },
   ];
   for (const fixture of fixtures) {
-    for (const order of ["interleaved", "blocked"] as const) {
+    for (const order of ["interleaved", "blocked"] as const) for (const fieldOrder of [undefined, reversedFieldOrder(fixture.scenario)]) {
       const baselineModel = new SymbolicModel(fixture.scenario, fixture.bounds, { order, nodeLimit: 100_000, cacheLimit: 20_000 });
       const baseline = symbolicReachability(baselineModel, 64);
-      const { input, result, progress } = compactFixtureResult(fixture.scenario, fixture.bounds, order);
+      const { input, result, progress } = compactFixtureResult(fixture.scenario, fixture.bounds, order, fieldOrder);
       assert.equal(result.exhaustive, true, `${fixture.label}/${order} compact traversal is exhaustive`);
       assert.notStrictEqual(result.model, input, `${fixture.label}/${order} threshold compaction creates a result owner`);
       assert.ok(result.compactions > 0, `${fixture.label}/${order} threshold 1 performs compaction`);
@@ -1201,7 +1215,7 @@ test("the isolated real-engine replay adapter accepts the compact result owner a
   try {
     const inputPath = join(fixture.root, "compaction-probe.json");
     const probePath = join(fixture.root, "compaction-probe.mjs");
-    writeFileSync(inputPath, JSON.stringify({ bounds: { stock: 2, tide: 2 } }));
+    writeFileSync(inputPath, JSON.stringify({ bounds: { stock: 2, tide: 2 }, reversedFields: reversedFieldOrder(ORDERED_SCENARIO) }));
     writeFileSync(probePath, `
 import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
@@ -1209,10 +1223,10 @@ import { SCENARIO } from "./src/engine/content.ts";
 import { replay, stateHash } from "./src/engine/index.ts";
 import { SymbolicModel, symbolicReachability } from "./src/verification/symbolic-model.ts";
 import { replaySymbolicPath, verifySymbolicWitnesses } from "./src/verification/symbolic-replay.ts";
-const { bounds } = JSON.parse(readFileSync(process.argv[2], "utf8"));
+const { bounds, reversedFields } = JSON.parse(readFileSync(process.argv[2], "utf8"));
 const reports = [];
-for (const order of ["interleaved", "blocked"]) {
-const input = new SymbolicModel(SCENARIO, bounds, { order, nodeLimit: 100_000, cacheLimit: 20_000 });
+for (const order of ["interleaved", "blocked"]) for (const fieldOrder of [undefined, reversedFields]) {
+const input = new SymbolicModel(SCENARIO, bounds, { order, fieldOrder, nodeLimit: 100_000, cacheLimit: 20_000 });
 const phases = [];
 const result = symbolicReachability(input, 64, (phase, step, owner) => {
   assert.equal(typeof step, "number");
@@ -1240,7 +1254,7 @@ console.log(JSON.stringify(reports));
       maxBuffer: 16 * 1024 * 1024,
     });
     const reports = JSON.parse(stdout.trim()) as { order: string; compactions: number; summary: { choiceWitnesses: number }; path: readonly string[]; phases: readonly string[] }[];
-    assert.deepEqual(reports.map(report => report.order), ["interleaved", "blocked"]);
+    assert.deepEqual(reports.map(report => report.order), ["interleaved", "interleaved", "blocked", "blocked"]);
     for (const report of reports) {
       assert.ok(report.compactions > 0);
       assert.equal(report.summary.choiceWitnesses, 11);
@@ -1255,8 +1269,10 @@ console.log(JSON.stringify(reports));
 test("compaction snapshots source, bounds, and construction options", () => {
   const source = cloneRawScenario(ORDERED_SCENARIO);
   const bounds: { stock: number; tide: number } = { stock: 2, tide: 2 };
-  const options: { order: "interleaved" | "blocked"; maxDomain: number; nodeLimit: number; cacheLimit: number } = {
-    order: "blocked", maxDomain: 8, nodeLimit: 100_000, cacheLimit: 20_000,
+  const fieldOrder = reversedFieldOrder(source);
+  const preservedOrder = [...fieldOrder];
+  const options: { order: "interleaved" | "blocked"; maxDomain: number; nodeLimit: number; cacheLimit: number; fieldOrder: string[] } = {
+    order: "blocked", maxDomain: 8, nodeLimit: 100_000, cacheLimit: 20_000, fieldOrder,
   };
   const normalized = validateScenario(cloneRawScenario(source));
   const model = new SymbolicModel(source, bounds, options);
@@ -1269,9 +1285,12 @@ test("compaction snapshots source, bounds, and construction options", () => {
   options.maxDomain = 1;
   options.nodeLimit = 0;
   options.cacheLimit = 0;
+  fieldOrder.fill("invalid-after-construction");
+  options.fieldOrder = [];
   const result = symbolicReachability(model, 64, undefined, { compactAtNodes: 1 });
   assert.notStrictEqual(result.model, model);
   assert.deepEqual(result.model.scenario, normalized, "compaction uses the normalized scenario snapshot");
+  assert.deepEqual(result.model.fieldOrder, preservedOrder, "compaction uses the independent field-order snapshot");
   assertCompactedCoverageMatchesOracle(ORDERED_SCENARIO, { stock: 2, tide: 2 }, "blocked", result);
 });
 
