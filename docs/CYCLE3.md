@@ -1,0 +1,11 @@
+# Cycle 3: make the clinic departure explicit
+
+Declared before implementation or candidate calls. Candidate B seed 1 in Cycle 2 (`2026-09-05T01-33-46-695Z-9d633670`) reported: “Promising the clinic immediately moved to the council hall without an explicit travel choice.” The choice currently promises aid and silently changes location. Seed 2 reported no confusion. Both completed the shared-water route; clarity/enjoyment were 4/4 and 5/5.
+
+Change only the labels/descriptions of `make-clinic-promise` and `skip-clinic-promise`. Each label will explicitly combine the decision with going to Council Hall; each description will retain the promise and medicine consequences. No new click, scene, condition, cost, effect, choice order or outcome. Compare parsed content with frozen B (`ea6caf3`) after stripping only those four strings to prove unchanged mechanics. Existing witnesses and all required checks must pass.
+
+Use the two already preserved B games as the development baseline. Run two fresh candidate conversations, seeds 1 and 2, using the unchanged neutral player instruction, same-thread free interview before structured ratings, Luna/max, managed ChatGPT subscription and verified isolation. Freeze the candidate source and preserve every attempt externally. This comparison intentionally responds to known baseline feedback and reuses that baseline; it is an iterative development check, not an independent confirmatory experiment. No unchanged reruns to seek favorable scores.
+
+Readout: did each player encounter a clinic decision, and did its original free or structured interview report an unexplained clinic-to-council move? Report all other confusion and defects too. Retain the explicit navigation correction if both candidates encounter the edited decision, neither reports the abrupt move, no new defect appears, and clarity/enjoyment medians are at least the baseline's 4.5/4.5. This supports only a limited observed navigation improvement. No exposure or a failed criterion yields an untested or failed result, not acceptance. Report willingness to replay separately from observed behavior.
+
+Candidate source and results pending. The focused Cycle 2 screen test remains separately identified and cannot replace these normal gameplay interviews.
