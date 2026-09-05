@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.env*
+*.log
+*.tsbuildinfo
+coverage/
+playtest-runs/
+*.save.json
+*:Zone.Identifier
