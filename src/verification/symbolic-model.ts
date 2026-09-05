@@ -29,6 +29,8 @@ export interface SymbolicChoice {
 
 export interface SymbolicOptions {
   readonly order?: "interleaved" | "blocked";
+  /** Exact field permutation used for symbolic bit assignment. */
+  readonly fieldOrder?: readonly string[];
   readonly nodeLimit?: number;
   readonly cacheLimit?: number;
   /** Unary effect tables are deliberately limited in this first experiment. */
@@ -36,6 +38,30 @@ export interface SymbolicOptions {
 }
 
 const STATUSES: readonly GameStatus[] = ["playing", "completed", "departed", "dead"];
+
+function normalizeFieldOrder(
+  requested: unknown,
+  specs: readonly { readonly id: string }[],
+): readonly string[] {
+  const expected = specs.map(spec => spec.id);
+  if (requested === undefined) return Object.freeze([...expected]);
+  if (!Array.isArray(requested)) throw new Error("fieldOrder must be an array");
+  if (requested.length !== expected.length) {
+    throw new Error(`fieldOrder must contain exactly ${expected.length} fields`);
+  }
+  const known = new Set(expected);
+  const seen = new Set<string>();
+  for (let index = 0; index < requested.length; index++) {
+    if (!Object.hasOwn(requested, index)) throw new Error("fieldOrder must not be sparse");
+    const id = requested[index];
+    if (typeof id !== "string") throw new Error(`fieldOrder[${index}] must be a field id`);
+    if (!known.has(id)) throw new Error(`fieldOrder contains unknown field ${JSON.stringify(id)}`);
+    if (seen.has(id)) throw new Error(`fieldOrder contains duplicate field ${JSON.stringify(id)}`);
+    seen.add(id);
+  }
+  if (seen.size !== known.size) throw new Error("fieldOrder must include every field exactly once");
+  return Object.freeze([...requested]);
+}
 
 function flagNames(scenario: Scenario): string[] {
   const names = new Set<string>();
@@ -72,6 +98,7 @@ export class SymbolicModel {
   readonly choices: readonly SymbolicChoice[];
   readonly currentVariables: readonly number[];
   readonly nextVariables: readonly number[];
+  readonly fieldOrder: readonly string[];
   readonly flags: readonly string[];
   readonly resources: readonly string[];
   private readonly fields = new Map<string, Field>();
@@ -119,20 +146,27 @@ export class SymbolicModel {
       specs.push({ id: `resource:${name}`, maximum: bound });
     }
     for (const name of this.flags) specs.push({ id: `flag:${name}`, maximum: 1 });
+    const fieldOrder = normalizeFieldOrder(options.fieldOrder, specs);
+    const specsById = new Map(specs.map(spec => [spec.id, spec] as const));
+    const orderedSpecs = fieldOrder.map(id => {
+      const spec = specsById.get(id);
+      if (spec === undefined) throw new Error(`Unknown symbolic field ${id}`);
+      return spec;
+    });
     const width = (maximum: number) => Math.max(1, Math.ceil(Math.log2(maximum + 1)));
-    const bitCount = specs.reduce((count, spec) => count + width(spec.maximum), 0);
+    const bitCount = orderedSpecs.reduce((count, spec) => count + width(spec.maximum), 0);
     const order = options.order ?? "interleaved";
     if (order !== "interleaved" && order !== "blocked") throw new Error("Unknown symbolic variable order");
     this.resourceBounds = Object.freeze(Object.fromEntries(specs
       .filter(spec => spec.id.startsWith("resource:"))
       .map(spec => [spec.id.slice("resource:".length), spec.maximum])));
-    this.compileOptions = Object.freeze({ order, maxDomain,
+    this.compileOptions = Object.freeze({ order, fieldOrder, maxDomain,
       nodeLimit: options.nodeLimit ?? 250_000, cacheLimit: options.cacheLimit ?? 100_000 });
     this.variableCount = bitCount * 2;
     this.bdd = new Bdd(this.variableCount, this.compileOptions);
     const currentVariables: number[] = [], nextVariables: number[] = [];
     let offset = 0;
-    for (const spec of specs) {
+    for (const spec of orderedSpecs) {
       const current: number[] = [], next: number[] = [];
       for (let bit = 0; bit < width(spec.maximum); bit++) {
         const index = offset++;
@@ -144,6 +178,7 @@ export class SymbolicModel {
     }
     this.currentVariables = Object.freeze(currentVariables);
     this.nextVariables = Object.freeze(nextVariables);
+    this.fieldOrder = fieldOrder;
     this.toCurrent = new Map(nextVariables.map((variable, index) => [variable, currentVariables[index]!]));
     this.toNext = new Map(currentVariables.map((variable, index) => [variable, nextVariables[index]!]));
     let domain = 1;
