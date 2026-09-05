@@ -1,13 +1,23 @@
 import { isDeepStrictEqual } from "node:util";
 import { SymbolicModel, type SymbolicChoice } from "./symbolic-model.js";
 
-/** The exact failure obligations checked by the split property proof. */
-export type ObligationKind =
-  | "non-completion"
+/** The exact per-choice failure seeds checked by the split property proof. */
+export type FailureKind =
   | "arithmetic-error"
   | "bound-exit"
   | "invalid-success"
   | "uncovered-enabled";
+
+/** The exact obligations checked by the split property proof. */
+export type ObligationKind = "non-completion" | FailureKind | "failure-union";
+
+/** Metadata for an original per-choice failure seed in combined mode. */
+export interface FailureSeedSummary {
+  readonly id: string;
+  readonly kind: FailureKind;
+  readonly choiceId: string;
+  readonly seedZero: boolean;
+}
 
 /** A serializable summary of one independently solved bad-state seed. */
 export interface ObligationSummary {
@@ -53,6 +63,12 @@ export interface SymbolicObligationOptions {
    */
   readonly nonCompletionPartition?: "global" | "scene";
   /**
+   * Solve each choice's four failure seeds independently (the default), or
+   * solve their exact union as one cone. Combined mode retains seed metadata
+   * but does not claim to compute a separate closure for each choice.
+   */
+  readonly failurePartition?: "choice" | "combined";
+  /**
    * Replace each nonzero obligation manager every N nonfixed rounds. Zero
    * disables obligation-local compaction and preserves the default shape.
    */
@@ -80,6 +96,8 @@ export interface CompletionSafetyByObligationResult {
   /** True when the original initial projection is in any obligation closure. */
   readonly initialInBad: boolean;
   readonly obligations: readonly ObligationSummary[];
+  /** Present only in combined failure mode; contains no owned BDD roots. */
+  readonly failureSeeds?: readonly FailureSeedSummary[];
   readonly complete: true;
 }
 
@@ -105,6 +123,11 @@ interface SeedSpec {
   readonly sceneId?: string;
   readonly choiceId?: string;
   readonly seed: CurrentRoot;
+}
+
+interface FailureSeedSpec extends SeedSpec {
+  readonly kind: FailureKind;
+  readonly choiceId: string;
 }
 
 function assertEquivalentFreshModel(original: SymbolicModel, fresh: SymbolicModel): void {
@@ -135,6 +158,7 @@ function snapshotOptions(options: SymbolicObligationOptions | undefined): {
   readonly roundLimit: number;
   readonly nonCompletionMode: "direct" | "failure-absorbed";
   readonly nonCompletionPartition: "global" | "scene";
+  readonly failurePartition: "choice" | "combined";
   readonly obligationCompactEvery: number;
   readonly onProgress: ((progress: ObligationProgress) => void) | undefined;
   readonly onObligation: ((value: {
@@ -149,6 +173,7 @@ function snapshotOptions(options: SymbolicObligationOptions | undefined): {
       roundLimit: DEFAULT_ROUND_LIMIT,
       nonCompletionMode: "direct" as const,
       nonCompletionPartition: "global" as const,
+      failurePartition: "choice" as const,
       obligationCompactEvery: 0,
       onProgress: undefined,
       onObligation: undefined,
@@ -162,12 +187,14 @@ function snapshotOptions(options: SymbolicObligationOptions | undefined): {
   const requestedRoundLimit = options.roundLimit;
   const requestedNonCompletionMode = options.nonCompletionMode;
   const requestedNonCompletionPartition = options.nonCompletionPartition;
+  const requestedFailurePartition = options.failurePartition;
   const requestedObligationCompactEvery = options.obligationCompactEvery;
   const onProgress = options.onProgress;
   const onObligation = options.onObligation;
   const roundLimit = requestedRoundLimit === undefined ? DEFAULT_ROUND_LIMIT : requestedRoundLimit;
   const nonCompletionMode = requestedNonCompletionMode === undefined ? "direct" : requestedNonCompletionMode;
   const nonCompletionPartition = requestedNonCompletionPartition === undefined ? "global" : requestedNonCompletionPartition;
+  const failurePartition = requestedFailurePartition === undefined ? "choice" : requestedFailurePartition;
   const obligationCompactEvery = requestedObligationCompactEvery === undefined ? 0 : requestedObligationCompactEvery;
   if (!Number.isSafeInteger(roundLimit) || roundLimit < 1) {
     throw new RangeError("roundLimit must be a positive safe integer");
@@ -178,6 +205,9 @@ function snapshotOptions(options: SymbolicObligationOptions | undefined): {
   if (nonCompletionPartition !== "global" && nonCompletionPartition !== "scene") {
     throw new RangeError("nonCompletionPartition must be \"global\" or \"scene\"");
   }
+  if (failurePartition !== "choice" && failurePartition !== "combined") {
+    throw new RangeError("failurePartition must be \"choice\" or \"combined\"");
+  }
   if (!Number.isSafeInteger(obligationCompactEvery) || obligationCompactEvery < 0) {
     throw new RangeError("obligationCompactEvery must be a non-negative safe integer");
   }
@@ -187,7 +217,7 @@ function snapshotOptions(options: SymbolicObligationOptions | undefined): {
   if (onObligation !== undefined && typeof onObligation !== "function") {
     throw new TypeError("onObligation must be a function");
   }
-  return Object.freeze({ roundLimit, nonCompletionMode, nonCompletionPartition, obligationCompactEvery, onProgress, onObligation });
+  return Object.freeze({ roundLimit, nonCompletionMode, nonCompletionPartition, failurePartition, obligationCompactEvery, onProgress, onObligation });
 }
 
 /**
@@ -213,6 +243,12 @@ function snapshotOptions(options: SymbolicObligationOptions | undefined): {
  * equivalent manager after each configured number of nonfixed rounds. The
  * canonical fixed-point comparison happens before that copy; compaction
  * changes ownership and allocation history, never the predecessor relation.
+ *
+ * Combined failure mode solves Pre*(union_i F_i) once. Distributivity makes
+ * this exactly the union of the separate failure closures for initial-state
+ * safety, including overlapping and zero seeds. Original seed metadata is
+ * retained, but a combined failure does not identify an offending choice or
+ * claim that each individual failure closure was computed.
  */
 export function proveCompletionSafetyByObligation(
   model: SymbolicModel,
@@ -263,7 +299,7 @@ export function proveCompletionSafetyByObligation(
   const completion = completionFixedPoint();
   const seeds: SeedSpec[] = [];
 
-  const seedForChoice = (choice: SymbolicChoice): readonly SeedSpec[] => {
+  const seedForChoice = (choice: SymbolicChoice): readonly FailureSeedSpec[] => {
     const enabled = current(choice.enabled, `choice ${choice.id}.enabled`);
     const arithmeticError = current(choice.arithmeticError, `choice ${choice.id}.arithmeticError`);
     const boundExit = current(choice.boundExit, `choice ${choice.id}.boundExit`);
@@ -289,6 +325,28 @@ export function proveCompletionSafetyByObligation(
   };
 
   /**
+   * Build the exact union of all four failure seeds for every authored choice.
+   * Every individual formula is still constructed. Its identity and emptiness
+   * are retained as metadata; only the predecessor closures are grouped.
+   */
+  const combineFailureSeeds = (choiceSeeds: readonly FailureSeedSpec[]): {
+    readonly seed: CurrentRoot;
+    readonly metadata: readonly FailureSeedSummary[];
+  } => {
+    let seed: CurrentRoot = 0;
+    for (const spec of choiceSeeds) {
+      seed = current(bdd.or(seed, spec.seed), "failure seed union");
+    }
+    const metadata = Object.freeze(choiceSeeds.map(spec => Object.freeze({
+      id: spec.id,
+      kind: spec.kind,
+      choiceId: spec.choiceId,
+      seedZero: spec.seed === 0,
+    })));
+    return Object.freeze({ seed, metadata });
+  };
+
+  /**
    * Compute W = Pre*(C ∪ F). Since C = Pre*(completed), this is exactly
    * Pre*(completed ∪ F); using C avoids rebuilding the already-proven
    * completion cone. W is an existential "can complete or reach failure"
@@ -311,6 +369,7 @@ export function proveCompletionSafetyByObligation(
   };
 
   let completionOrFailure: FixedPoint | undefined;
+  let failureSeedMetadata: readonly FailureSeedSummary[] | undefined;
   const appendNonCompletionSeeds = (seed: CurrentRoot): void => {
     if (snapshot.nonCompletionPartition === "global") {
       seeds.push(Object.freeze({
@@ -360,13 +419,32 @@ export function proveCompletionSafetyByObligation(
     // Keep the default operation order: direct mode constructs the global
     // non-completion seed before compiling each choice's four failure seeds.
     appendNonCompletionSeeds(current(bdd.and(playing, bdd.not(completion.root)), "non-completion seed"));
-    for (const choice of model.choices) seeds.push(...seedForChoice(choice));
+    if (snapshot.failurePartition === "choice") {
+      for (const choice of model.choices) seeds.push(...seedForChoice(choice));
+    } else {
+      const choiceSeeds: FailureSeedSpec[] = [];
+      for (const choice of model.choices) choiceSeeds.push(...seedForChoice(choice));
+      const combined = combineFailureSeeds(choiceSeeds);
+      failureSeedMetadata = combined.metadata;
+      seeds.push(Object.freeze({
+        id: "failure-union:",
+        kind: "failure-union" as const,
+        seed: combined.seed,
+      }));
+    }
   } else {
-    const choiceSeeds: SeedSpec[] = [];
+    const choiceSeeds: FailureSeedSpec[] = [];
     for (const choice of model.choices) choiceSeeds.push(...seedForChoice(choice));
-    let failureSeed = 0;
-    for (const spec of choiceSeeds) {
-      failureSeed = current(bdd.or(failureSeed, spec.seed), "failure seed union");
+    let failureSeed: CurrentRoot;
+    if (snapshot.failurePartition === "combined") {
+      const combined = combineFailureSeeds(choiceSeeds);
+      failureSeed = combined.seed;
+      failureSeedMetadata = combined.metadata;
+    } else {
+      failureSeed = 0;
+      for (const spec of choiceSeeds) {
+        failureSeed = current(bdd.or(failureSeed, spec.seed), "failure seed union");
+      }
     }
     const completionOrFailureSeed = current(
       bdd.or(completion.root, failureSeed),
@@ -377,7 +455,15 @@ export function proveCompletionSafetyByObligation(
       bdd.and(playing, bdd.not(completionOrFailure.root)),
       "failure-absorbed non-completion seed",
     ));
-    seeds.push(...choiceSeeds);
+    if (snapshot.failurePartition === "choice") {
+      seeds.push(...choiceSeeds);
+    } else {
+      seeds.push(Object.freeze({
+        id: "failure-union:",
+        kind: "failure-union" as const,
+        seed: failureSeed,
+      }));
+    }
   }
 
   const solveObligation = (spec: SeedSpec): ObligationSummary => {
@@ -533,6 +619,7 @@ export function proveCompletionSafetyByObligation(
     completionRounds: completion.rounds,
     initialInBad: obligations.some(obligation => obligation.initialInBad),
     obligations,
+    ...(failureSeedMetadata === undefined ? {} : { failureSeeds: failureSeedMetadata }),
   };
   if (completionOrFailure === undefined) {
     return Object.freeze({ ...baseResult, complete: true as const });

@@ -808,10 +808,21 @@ type ObligationKind =
   | "arithmetic-error"
   | "bound-exit"
   | "invalid-success"
-  | "uncovered-enabled";
+  | "uncovered-enabled"
+  | "failure-union";
 
+type FailureKind = Exclude<ObligationKind, "non-completion" | "failure-union">;
 type NonCompletionMode = "direct" | "failure-absorbed";
 type NonCompletionPartition = "global" | "scene";
+type FailurePartition = "choice" | "combined";
+
+interface ExpectedFailureSeed {
+  readonly id: string;
+  readonly kind: FailureKind;
+  readonly choiceId: string;
+  readonly seed: ReadonlySet<string>;
+  readonly seedZero: boolean;
+}
 
 interface ExpectedObligation {
   readonly key: string;
@@ -846,6 +857,7 @@ function expectedObligations(
   graph: RawGraph,
   nonCompletionMode: NonCompletionMode = "direct",
   nonCompletionPartition: NonCompletionPartition = "global",
+  failurePartition: FailurePartition = "choice",
 ): readonly ExpectedObligation[] {
   const expected: ExpectedObligation[] = [];
   const completedStates = new Set(graph.states
@@ -879,6 +891,7 @@ function expectedObligations(
     });
   }
 
+  const failureObligations: ExpectedObligation[] = [];
   for (const choice of graph.scenario.choices) {
     const seeds: Record<"arithmetic-error" | "bound-exit" | "invalid-success" | "uncovered-enabled", Set<string>> = {
       "arithmetic-error": new Set(),
@@ -899,7 +912,7 @@ function expectedObligations(
       }
     }
     for (const kind of ["arithmetic-error", "bound-exit", "invalid-success", "uncovered-enabled"] as const) {
-      expected.push({
+      failureObligations.push({
         key: obligationKey(kind, choice.id),
         kind,
         choiceId: choice.id,
@@ -908,7 +921,34 @@ function expectedObligations(
       });
     }
   }
+  if (failurePartition === "choice") {
+    expected.push(...failureObligations);
+  } else {
+    const union = new Set<string>();
+    for (const obligation of failureObligations) {
+      for (const key of obligation.seed) union.add(key);
+    }
+    expected.push({
+      key: obligationKey("failure-union"),
+      kind: "failure-union",
+      seed: union,
+      bad: predecessorClosure(graph, union),
+    });
+  }
   return expected;
+}
+
+function expectedFailureSeeds(graph: RawGraph): readonly ExpectedFailureSeed[] {
+  return expectedObligations(graph, "direct", "global", "choice")
+    .filter((obligation): obligation is ExpectedObligation & { readonly kind: FailureKind; readonly choiceId: string } =>
+      obligation.kind !== "non-completion" && obligation.kind !== "failure-union")
+    .map(obligation => ({
+      id: obligation.key,
+      kind: obligation.kind,
+      choiceId: obligation.choiceId,
+      seed: obligation.seed,
+      seedZero: obligation.seed.size === 0,
+    }));
 }
 
 function modelFor(
@@ -952,9 +992,12 @@ function checkObligationScenario(
   nonCompletionMode: NonCompletionMode = "direct",
   nonCompletionPartition: NonCompletionPartition = "global",
   obligationCompactEvery = 0,
+  failurePartition?: FailurePartition,
 ): void {
   const graph = buildRawGraph(raw, bounds);
-  const expected = expectedObligations(graph, nonCompletionMode, nonCompletionPartition);
+  const selectedFailurePartition = failurePartition ?? "choice";
+  const expected = expectedObligations(graph, nonCompletionMode, nonCompletionPartition, selectedFailurePartition);
+  const expectedChoiceFailureSeeds = expectedFailureSeeds(graph);
   const expectedByKey = new Map(expected.map(obligation => [obligation.key, obligation]));
   const orders = allLayouts ? (["interleaved", "blocked"] as const) : (["interleaved"] as const);
   const modes = ["relational", "partitioned"] as const;
@@ -989,6 +1032,7 @@ function checkObligationScenario(
       roundLimit: 64,
       nonCompletionMode,
       nonCompletionPartition,
+      ...(failurePartition === undefined ? {} : { failurePartition }),
       ...(obligationCompactEvery === 0 ? {} : { obligationCompactEvery }),
       onProgress: event => {
         progress.push(event);
@@ -1027,6 +1071,9 @@ function checkObligationScenario(
         if (summary.kind === "non-completion") {
           assert.equal(nonCompletionPartition === "scene", summary.sceneId !== undefined,
             label + " " + key + " scene partition metadata");
+        } else if (summary.kind === "failure-union") {
+          assert.equal(summary.choiceId, undefined,
+            label + " " + key + " combined failure summary has no choice metadata");
         } else {
           assert.equal(summary.sceneId, undefined, label + " " + key + " failure summary has no scene metadata");
         }
@@ -1126,7 +1173,8 @@ function checkObligationScenario(
     }
 
     const nonCompletionCount = nonCompletionPartition === "scene" ? graph.scenario.scenes.length : 1;
-    assert.equal(split.obligations.length, nonCompletionCount + 4 * model.choices.length, label + " retains every obligation");
+    const failureObligationCount = selectedFailurePartition === "choice" ? 4 * model.choices.length : 1;
+    assert.equal(split.obligations.length, nonCompletionCount + failureObligationCount, label + " retains every obligation");
     assert.equal(new Set(split.obligations.map(summary => summary.id)).size, split.obligations.length, label + " summary IDs are unique");
     assert.equal(callbackIds.size, split.obligations.length, label + " reports every obligation to the callback");
     for (const summary of split.obligations) {
@@ -1151,6 +1199,33 @@ function checkObligationScenario(
     }
     assert.equal(copiedBad, combined.bad, label + " split bad closures equal the old combined root");
     assert.equal(copiedBad, formulaForKeys(model, graph, graph.bad), label + " split bad closures match the oracle");
+
+    if (selectedFailurePartition === "combined") {
+      assert.equal(Object.hasOwn(split, "failureSeeds"), true, label + " combined mode exposes failure metadata");
+      const metadata = split.failureSeeds!;
+      assert.ok(Array.isArray(metadata), label + " combined failure metadata is an array");
+      assert.ok(Object.isFrozen(metadata), label + " combined failure metadata is frozen");
+      assert.equal(metadata.length, 4 * model.choices.length, label + " retains all original failure seed metadata");
+      assert.deepEqual(
+        metadata.map(seed => ({ id: seed.id, kind: seed.kind, choiceId: seed.choiceId, seedZero: seed.seedZero })),
+        expectedChoiceFailureSeeds.map(seed => ({ id: seed.id, kind: seed.kind, choiceId: seed.choiceId, seedZero: seed.seedZero })),
+        label + " combined failure metadata matches the independent oracle",
+      );
+      for (const seed of metadata) {
+        assert.ok(Object.isFrozen(seed), label + " failure seed metadata is frozen");
+        assert.deepEqual(Object.keys(seed).sort(), ["choiceId", "id", "kind", "seedZero"],
+          label + " failure seed metadata contains no owned roots");
+      }
+      assert.equal(
+        metadata.some(seed => (seed.kind as string) === "failure-union"),
+        false,
+        label + " original failure metadata never invents a union kind",
+      );
+      assert.equal(Object.hasOwn(split, "failureUnion"), false, label + " has no duplicate global failure-union record");
+      assert.equal(Object.hasOwn(split, "failureSeed"), false, label + " has no duplicate global failure-seed record");
+    } else {
+      assert.equal(Object.hasOwn(split, "failureSeeds"), false, label + " default choice mode keeps its original result shape");
+    }
   }
 }
 
@@ -1393,6 +1468,7 @@ test("failure-absorbed mode fails closed at its own fixed point and snapshots op
   let modeReads = 0;
   let roundReads = 0;
   let partitionReads = 0;
+  let failurePartitionReads = 0;
   let compactReads = 0;
   const options = {
     get nonCompletionMode(): "failure-absorbed" {
@@ -1407,6 +1483,10 @@ test("failure-absorbed mode fails closed at its own fixed point and snapshots op
       partitionReads++;
       return "scene";
     },
+    get failurePartition(): "combined" {
+      failurePartitionReads++;
+      return "combined";
+    },
     get obligationCompactEvery(): number {
       compactReads++;
       return 2;
@@ -1416,6 +1496,7 @@ test("failure-absorbed mode fails closed at its own fixed point and snapshots op
   assert.equal(modeReads, 1, "absorbed mode option is read once");
   assert.equal(roundReads, 1, "absorbed round limit is read once");
   assert.equal(partitionReads, 1, "absorbed partition option is read once");
+  assert.equal(failurePartitionReads, 1, "failure partition option is read once");
   assert.equal(compactReads, 1, "obligation compaction interval is read once");
 });
 
@@ -1600,6 +1681,145 @@ test("obligation-local compaction preserves exact cones and reports owner handof
       "scene",
       interval,
     );
+    checkObligationScenario(
+      FAULT_ONLY_CONTINUATION,
+      { stock: 1 },
+      "compact-combined-direct-global-" + interval,
+      false,
+      "direct",
+      "global",
+      interval,
+      "combined",
+    );
+    checkObligationScenario(
+      FAULT_ONLY_CONTINUATION,
+      { stock: 1 },
+      "compact-combined-absorbed-scene-" + interval,
+      false,
+      "failure-absorbed",
+      "scene",
+      interval,
+      "combined",
+    );
+  }
+});
+
+test("combined failure partition matches choice cones, exact raw unions, and zero-seed shape", () => {
+  const overlapGraph = buildRawGraph(REACHABLE_FAULTS, { stock: 1 });
+  const overlapSeeds = expectedFailureSeeds(overlapGraph);
+  assert.ok(overlapSeeds.some((left, leftIndex) => overlapSeeds.some((right, rightIndex) =>
+    leftIndex < rightIndex && [...left.seed].some(key => right.seed.has(key))),
+  ), "the raw fixture has overlapping arithmetic and bound failure sources");
+
+  for (const failurePartition of ["choice", "combined"] as const) {
+    // All layouts exercise both transition compilers while keeping the
+    // direct/global partition independent from the absorbed/scene one.
+    checkObligationScenario(
+      REACHABLE_FAULTS,
+      { stock: 1 },
+      "failure-partition-direct-global-" + failurePartition,
+      true,
+      "direct",
+      "global",
+      0,
+      failurePartition,
+    );
+    checkObligationScenario(
+      FAULT_ONLY_CONTINUATION,
+      { stock: 1 },
+      "failure-partition-absorbed-scene-" + failurePartition,
+      true,
+      "failure-absorbed",
+      "scene",
+      0,
+      failurePartition,
+    );
+    checkObligationScenario(
+      INTERMEDIATE_BOUND,
+      { stock: 1 },
+      "failure-partition-intermediate-bound-" + failurePartition,
+      true,
+      "direct",
+      "global",
+      0,
+      failurePartition,
+    );
+  }
+
+  const zeroGraph = buildRawGraph(SAFE_CYCLE, { energy: 1 });
+  assert.equal(expectedFailureSeeds(zeroGraph).every(seed => seed.seedZero), true,
+    "the safe fixture has no raw failure sources");
+  checkObligationScenario(
+    SAFE_CYCLE,
+    { energy: 1 },
+    "failure-partition-all-zero-combined",
+    false,
+    "direct",
+    "global",
+    0,
+    "combined",
+  );
+});
+
+test("combined failure union retains synthetic invalid and uncovered seeds outside completion", () => {
+  const scenario = validateScenario(TERMINAL_ONLY);
+  for (const [Model, kind] of [
+    [SyntheticInvalidSuccessModel, "invalid-success"],
+    [SyntheticUncoveredModel, "uncovered-enabled"],
+  ] as const) {
+    for (const nonCompletionMode of ["direct", "failure-absorbed"] as const) {
+      const model = new Model(scenario, { token: 0 });
+      const direct = proveCompletionSafety(model, { roundLimit: 64 });
+      assert.equal(model.bdd.and(model.initial, direct.completable), 0,
+        kind + " synthetic initial state is outside strong completion");
+      let unionBad = 0;
+      let unionSeed = 0;
+      const result = proveCompletionSafetyByObligation(model, {
+        roundLimit: 64,
+        nonCompletionMode,
+        failurePartition: "combined",
+        onObligation: payload => {
+          if (payload.summary.kind !== "failure-union") return;
+          unionSeed = payload.model === model
+            ? payload.seed
+            : payload.model.bdd.copyForestTo(model.bdd, [payload.seed])[0]!;
+          const bad = payload.model === model
+            ? payload.bad
+            : payload.model.bdd.copyForestTo(model.bdd, [payload.bad])[0]!;
+          unionBad = model.bdd.or(unionBad, bad);
+        },
+      });
+      const unionSummary = result.obligations.find(obligation => obligation.kind === "failure-union");
+      assert.ok(unionSummary !== undefined, kind + " has one combined failure obligation");
+      assert.equal(unionSummary!.choiceId, undefined, kind + " combined failure obligation has no choice ID");
+      assert.equal(unionSummary!.seedZero, false, kind + " synthetic failure seed is nonzero");
+      assert.equal(unionSummary!.initialInBad, true, kind + " synthetic failure reaches the initial state");
+      assert.notEqual(unionSeed, 0, kind + " failure-union callback retains the injected seed");
+      assert.equal(model.bdd.and(model.initial, unionBad), model.initial,
+        kind + " combined failure cone retains the injected initial state");
+      assert.equal(unionBad, direct.bad, kind + " combined failure cone equals the original aggregate bad root");
+      assert.equal(result.initialInBad, true, kind + " combined mode reports the initial failure");
+      assert.equal(result.completable, direct.completable, kind + " combined mode preserves strong completion");
+      if (nonCompletionMode === "failure-absorbed") {
+        assert.equal(result.completionOrFailure, model.bdd.or(direct.completable, unionBad),
+          kind + " absorbed W includes the full synthetic failure cone outside C");
+      } else {
+        assert.equal(Object.hasOwn(result, "completionOrFailure"), false,
+          kind + " direct mode preserves the result shape without W");
+      }
+
+      const metadata = result.failureSeeds!;
+      assert.ok(Object.isFrozen(metadata), kind + " combined metadata is frozen");
+      assert.equal(metadata.filter(seed => !seed.seedZero).length, 1,
+        kind + " has exactly one injected nonzero seed");
+      const injected = metadata.find(seed => seed.kind === kind && seed.choiceId === model.choices[0]!.id);
+      assert.ok(injected !== undefined, kind + " metadata retains the injected seed identity");
+      assert.equal(injected!.seedZero, false, kind + " metadata marks the injected seed nonzero");
+      assert.deepEqual(Object.keys(injected!).sort(), ["choiceId", "id", "kind", "seedZero"],
+        kind + " metadata exposes no owned roots");
+      assert.equal(result.obligations.filter(obligation => obligation.kind === "failure-union").length, 1,
+        kind + " has one failure-union obligation rather than a global duplicate record");
+    }
   }
 });
 
@@ -1751,6 +1971,14 @@ test("split safety obligations reject invalid caps and propagate observer failur
   assert.throws(
     () => proveCompletionSafetyByObligation(model, { nonCompletionPartition: "unsupported" as never }),
     /nonCompletionPartition|partition/i,
+  );
+  assert.throws(
+    () => proveCompletionSafetyByObligation(model, { failurePartition: null as never }),
+    /failurePartition|partition/i,
+  );
+  assert.throws(
+    () => proveCompletionSafetyByObligation(model, { failurePartition: "unsupported" as never }),
+    /failurePartition|partition/i,
   );
   assert.throws(
     () => proveCompletionSafetyByObligation(model, { roundLimit: 1 }),
