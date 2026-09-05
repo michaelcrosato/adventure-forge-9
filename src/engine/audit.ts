@@ -201,7 +201,50 @@ function projectionWordCount(view: Observation): number {
 
 interface CanonicalState {
   readonly state: GameState;
-  readonly path: readonly string[];
+  /** Index of the predecessor in the canonical queue; the root uses -1. */
+  readonly parentIndex: number;
+  /** The authored choice that led from parentIndex to this state. */
+  readonly choiceFromParent?: string;
+}
+
+type RetainedFlagOrder = readonly string[];
+
+/**
+ * Serialize an audit state with orders prepared from the validated scenario.
+ * `futureStateKey` remains the public defensive helper for arbitrary callers;
+ * this internal form avoids sorting the same immutable vocabulary on every
+ * canonical successor visit.
+ */
+function orderedFutureStateKey(
+  state: AuditStateProjection,
+  retainedFlags: RetainedFlagOrder,
+  resourceOrder: readonly string[],
+): string {
+  const flags = retainedFlags
+    .map((flag) => [flag, Object.hasOwn(state.flags, flag) && state.flags[flag] === true] as const);
+  const resources = resourceOrder.map((resource) => [resource, state.resources[resource]] as const);
+  return JSON.stringify({
+    scene: state.scene,
+    resources,
+    flags,
+    status: state.status,
+    ending: state.receipt === undefined ? null : { kind: state.receipt.kind, summary: state.receipt.summary },
+  });
+}
+
+function reconstructPath(queue: readonly CanonicalState[], index: number): string[] {
+  const reversed: string[] = [];
+  let currentIndex = index;
+  while (currentIndex !== 0) {
+    const current = queue[currentIndex];
+    if (current === undefined || current.parentIndex < 0 || current.choiceFromParent === undefined) {
+      throw new Error("Audit internal error: canonical path chain is incomplete");
+    }
+    reversed.push(current.choiceFromParent);
+    currentIndex = current.parentIndex;
+  }
+  reversed.reverse();
+  return reversed;
 }
 
 /**
@@ -213,11 +256,13 @@ interface CanonicalState {
 function assertCongruent(
   representative: GameState,
   candidate: GameState,
-  retainedFlags: ReadonlySet<string>,
+  retainedFlags: RetainedFlagOrder,
   key: string,
-  retainedFor: (state: Pick<GameState, "scene" | "status">) => ReadonlySet<string>,
+  retainedFor: (state: Pick<GameState, "scene" | "status">) => RetainedFlagOrder,
+  resourceOrder: readonly string[],
 ): number {
-  if (futureStateKey(representative, retainedFlags) !== key || futureStateKey(candidate, retainedFlags) !== key) {
+  if (orderedFutureStateKey(representative, retainedFlags, resourceOrder) !== key
+    || orderedFutureStateKey(candidate, retainedFlags, resourceOrder) !== key) {
     throw new Error("Audit internal error: collision key does not describe both states");
   }
   const representativeView = observe(representative);
@@ -236,7 +281,8 @@ function assertCongruent(
       const candidateNext = choose(candidate, choice.id, candidateView.revision);
       successors++;
       const successorFlags = retainedFor(representativeNext);
-      if (futureStateKey(representativeNext, successorFlags) !== futureStateKey(candidateNext, successorFlags)) {
+      if (orderedFutureStateKey(representativeNext, successorFlags, resourceOrder)
+        !== orderedFutureStateKey(candidateNext, successorFlags, resourceOrder)) {
         throw new Error(`Audit successor key diverged for equivalent choice ${choice.id}`);
       }
     }
@@ -283,19 +329,19 @@ export function auditScenario(maxStates = 250_000): ScenarioAudit {
 
   const futureReads = analyzeFutureReads(SCENARIO);
   const initial = start(1);
+  const resourceOrder = Object.keys(initial.resources).sort((a, b) => a.localeCompare(b));
   const retainedFlagsByScene = new Map(
-    [...futureReads.retainedFlagsByScene].map(([scene, flags]) => [scene, new Set(flags)] as const),
+    [...futureReads.retainedFlagsByScene].map(([scene, flags]) => [scene, flags] as const),
   );
   const terminalTextFlagsByScene = new Map(
-    [...futureReads.terminalTextFlagsByScene].map(([scene, flags]) => [scene, new Set(flags)] as const),
+    [...futureReads.terminalTextFlagsByScene].map(([scene, flags]) => [scene, flags] as const),
   );
-  const retainedFor = (state: Pick<GameState, "scene" | "status">): ReadonlySet<string> => {
-    if (state.status !== "playing") return terminalTextFlagsByScene.get(state.scene) ?? new Set<string>();
-    return retainedFlagsByScene.get(state.scene) ?? new Set<string>();
+  const retainedFor = (state: Pick<GameState, "scene" | "status">): RetainedFlagOrder => {
+    if (state.status !== "playing") return terminalTextFlagsByScene.get(state.scene) ?? [];
+    return retainedFlagsByScene.get(state.scene) ?? [];
   };
-  const initialKey = futureStateKey(initial, retainedFor(initial));
-  const queue: CanonicalState[] = [{ state: initial, path: [] }];
-  const seen = new Set([initialKey]);
+  const initialKey = orderedFutureStateKey(initial, retainedFor(initial), resourceOrder);
+  const queue: CanonicalState[] = [{ state: initial, parentIndex: -1 }];
   const indices = new Map([[initialKey, 0]]);
   const parents: number[][] = [[]];
   const completionReachable = new Set<number>();
@@ -322,10 +368,12 @@ export function auditScenario(maxStates = 250_000): ScenarioAudit {
       if (view.choices.length !== 0 || !view.receipt || view.receipt.stateHash !== stateHash(state)) {
         throw new Error("Invalid terminal projection");
       }
-      endings.set(current.path.at(-1)!, endings.get(current.path.at(-1)!) ?? [...current.path]);
+      const path = reconstructPath(queue, index);
+      const endingChoice = path.at(-1)!;
+      if (!endings.has(endingChoice)) endings.set(endingChoice, path);
       continue;
     }
-    if (view.choices.length === 0) deadEnds.push([...current.path]);
+    if (view.choices.length === 0) deadEnds.push(reconstructPath(queue, index));
 
     const before = stateHash(state);
     for (const choice of view.choices) {
@@ -336,25 +384,30 @@ export function auditScenario(maxStates = 250_000): ScenarioAudit {
       if (Object.values(next.resources).some((value) => !Number.isSafeInteger(value) || value < 0)) {
         throw new Error(`Invalid resource balance: ${choice.id}`);
       }
-      choices.set(choice.id, choices.get(choice.id) ?? [...current.path, choice.id]);
+      if (!choices.has(choice.id)) choices.set(choice.id, [...reconstructPath(queue, index), choice.id]);
 
       const nextRetainedFlags = retainedFor(next);
-      const key = futureStateKey(next, nextRetainedFlags);
+      const key = orderedFutureStateKey(next, nextRetainedFlags, resourceOrder);
       const successorIndex = indices.get(key);
       if (successorIndex === undefined) {
-        if (seen.size >= maxStates) {
+        if (indices.size >= maxStates) {
           throw new Error(`Audit exceeded ${maxStates} future-relevant states; exhaustive coverage is not established`);
         }
-        seen.add(key);
         indices.set(key, queue.length);
-        parents.push([]);
-        queue.push({ state: next, path: [...current.path, choice.id] });
-        parents[queue.length - 1]!.push(index);
+        parents.push([index]);
+        queue.push({ state: next, parentIndex: index, choiceFromParent: choice.id });
       } else {
         parents[successorIndex]!.push(index);
         mergedStates++;
         const representative = queue[successorIndex]!.state;
-        congruenceSuccessors += assertCongruent(representative, next, nextRetainedFlags, key, retainedFor);
+        congruenceSuccessors += assertCongruent(
+          representative,
+          next,
+          nextRetainedFlags,
+          key,
+          retainedFor,
+          resourceOrder,
+        );
       }
     }
   }
@@ -371,7 +424,7 @@ export function auditScenario(maxStates = 250_000): ScenarioAudit {
 
   return {
     exhaustive: true,
-    states: seen.size,
+    states: indices.size,
     transitions,
     authoredScenes: SCENARIO.scenes.length,
     authoredChoices: SCENARIO.choices.length,
@@ -380,7 +433,7 @@ export function auditScenario(maxStates = 250_000): ScenarioAudit {
     unreachableChoices: SCENARIO.choices.map((choice) => choice.id).filter((id) => !choices.has(id)),
     deadEnds,
     noCompletionPaths: queue.flatMap((entry, index) => entry.state.status === "playing" && !completionReachable.has(index)
-      ? [{ scene: entry.state.scene, path: entry.path }]
+      ? [{ scene: entry.state.scene, path: reconstructPath(queue, index) }]
       : []),
     maxChoices,
     maxProjectionWords,
