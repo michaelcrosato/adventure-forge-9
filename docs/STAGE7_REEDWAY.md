@@ -278,3 +278,65 @@ The fixed 60-turn ceiling and original gameplay/interview prompts are
 unchanged. Logs are `/tmp/af9-stage7-continuation-player-seed{1,2,3}.log`.
 Dispatch grants neither region acceptance nor a clarity-improvement claim;
 all attempts and original evidence must be reviewed under the rules above.
+
+## Clarified batch: clarity observation, regional exposure still insufficient
+
+All three `8b2be2c` runs completed normally with original interviews. Each
+passed integrity/replay and recorded verification against the clean trusted
+checkout, with exact source/build match and `sourceExecution: "none"`.
+Independent preflight and completed-record review confirm ChatGPT/OpenAI,
+Luna/max, the same neutral prompts, verified isolation and a distinct single
+gameplay/interview thread per run. All exports and checksum sidecars pass;
+archived files match the sealed originals byte for byte.
+
+| Seed / run suffix | Actions / ending | Clarity / enjoyment | Reedway entry / allocation |
+| --- | --- | --- | --- |
+| 1 / `88d77150` | 42 / clinic completed | 5 / 5 | Yes / clinic |
+| 2 / `36b8720b` | 20 / Archive completed | 5 / 4 | No / no |
+| 3 / `1b6bbe98` | 20 / Archive completed | 4 / 4 | No / no |
+
+The full IDs are `2026-09-05T07-08-55-050Z-88d77150`,
+`2026-09-05T07-08-55-057Z-36b8720b` and
+`2026-09-05T07-08-55-060Z-1b6bbe98`, under the continuation evidence root
+above. Exports are in the standard external `exports` directory, named
+`stage7-continuation-8b2be2c-<full-run-id>.tar.gz`, each with a checked
+`.sha256` sidecar. Derived comparison, including original free responses and
+the explicit manual confusion classification, is
+`/tmp/af9-stage7-continuation-comparison.json`.
+
+Seed 1 entered from Blackglass at revision 24, visited both claimants before
+recovery, bartered as a canalwright at revision 30, revisited both claimants,
+and installed at the clinic at revision 36. The player treated the annex
+patients, revisited the worker landing after installation and commissioned
+Sera's relief on credit. No old hub was revisited after allocation and Milo
+was not treated. The player reported uncertainty about predicting the
+regulator choice's consequences, but no inability to proceed. Only one
+entrant supplies regional experience; neither batch supplies a natural
+ferry allocation or a different character background.
+
+Both non-entrants chose a clearly labeled Archive completion, then expressed
+interest in Blackglass in their interviews. Stated interest is not observed
+continuation. Seed 2 reported intricate resource interactions; seed 3 noted
+the contradiction between a personally owned kit and its description as
+unfamiliar. These are separate remaining clarity issues. No player reported
+a defect; all three said they would play again.
+
+Manager decision: the unchanged regional gate **fails again** at 1/3 natural
+entries and allocations. Reedway remains unaccepted and unpublished. Median
+clarity rose from four to five, enjoyment remained four, and volunteered
+end/continue/optional-chapter confusion fell from 2/3 to 0/3. This meets the
+predeclared narrow criterion for a limited clarity observation. It does not
+establish causal improvement, full comprehension, a human-population effect,
+or increased exploration; chapter exposure differed across the tiny batches.
+Retain the explicit completion/continuation language, both failed exposure
+batches and all valid earlier endings. Do not dispatch the same candidate
+again to seek a favorable result.
+
+Next structural work should make regional goals accessible in freely chosen
+order earlier in the same campaign. Currently Reedway is available only
+after the water crisis, Archive verdict and Blackglass resolution. Moving
+toward parallel activities is justified by the full explorable-world goal,
+not by claiming these interviews prove the topology caused non-entry. Any
+new entry/resume paths require an explicit phase/once-only contract, resource
+counterfactuals, truthful changed locations and fresh verification. Neither
+old workload failures nor these live failures may be erased by that work.
