@@ -216,10 +216,10 @@ export class SymbolicModel {
       relation = this.bdd.and(relation, flagWrites.has(flag)
         ? this.equal(`flag:${flag}`, flagWrites.get(flag) ? 1 : 0, "next") : this.unchanged(`flag:${flag}`));
     }
-    let arithmeticError = 0, boundExit = 0;
+    const effectFailures = choice.effects.map(() => ({ arithmetic: 0, bound: 0 }));
     for (const resource of this.resources) {
       const field = this.field(`resource:${resource}`);
-      const effects = choice.effects.filter(effect =>
+      const effects = [...choice.effects.entries()].filter(([, effect]) =>
         ((effect.type === "setResource" || effect.type === "adjustResource") && effect.resource === resource)
         || (effect.type === "advanceClock" && this.scenario.clocks?.find(clock => clock.id === effect.clock)?.resource === resource));
       if (effects.length === 0) { relation = this.bdd.and(relation, this.unchanged(field.id)); continue; }
@@ -227,22 +227,31 @@ export class SymbolicModel {
       for (let input = 0; input <= field.maximum; input++) {
         let output = input;
         let failure: "arithmetic-error" | "bound-exit" | undefined;
-        for (const effect of effects) {
+        let failureIndex = -1;
+        for (const [index, effect] of effects) {
           if (effect.type === "setResource") output = effect.value;
           else if (effect.type === "adjustResource") output += effect.delta;
           else if (effect.type === "advanceClock") {
             const clock = this.scenario.clocks!.find(clock => clock.id === effect.clock)!;
             output = effect.delta >= clock.max - output ? clock.max : output + effect.delta;
           }
-          if (!Number.isSafeInteger(output) || output < 0) { failure = "arithmetic-error"; break; }
-          if (output > field.maximum) { failure = "bound-exit"; break; }
+          if (!Number.isSafeInteger(output) || output < 0) { failure = "arithmetic-error"; failureIndex = index; break; }
+          if (output > field.maximum) { failure = "bound-exit"; failureIndex = index; break; }
         }
         const source = this.equal(field.id, input);
-        if (failure === "arithmetic-error") arithmeticError = this.bdd.or(arithmeticError, source);
-        else if (failure === "bound-exit") boundExit = this.bdd.or(boundExit, source);
+        if (failure === "arithmetic-error") effectFailures[failureIndex]!.arithmetic = this.bdd.or(effectFailures[failureIndex]!.arithmetic, source);
+        else if (failure === "bound-exit") effectFailures[failureIndex]!.bound = this.bdd.or(effectFailures[failureIndex]!.bound, source);
         else resourceRelation = this.bdd.or(resourceRelation, this.bdd.and(source, this.equal(field.id, output, "next")));
       }
       relation = this.bdd.and(relation, resourceRelation);
+    }
+    // Resource folds commute on successful transitions, but fault diagnostics
+    // must retain the original cross-resource effect order.
+    let arithmeticError = 0, boundExit = 0, beforeFailure = enabled;
+    for (const failure of effectFailures) {
+      arithmeticError = this.bdd.or(arithmeticError, this.bdd.and(beforeFailure, failure.arithmetic));
+      boundExit = this.bdd.or(boundExit, this.bdd.and(beforeFailure, failure.bound));
+      beforeFailure = this.bdd.and(beforeFailure, this.bdd.not(this.bdd.or(failure.arithmetic, failure.bound)));
     }
     return Object.freeze({ id: choice.id, enabled, relation,
       arithmeticError: this.bdd.and(enabled, arithmeticError),
