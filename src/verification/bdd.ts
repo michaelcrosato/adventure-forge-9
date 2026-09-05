@@ -229,6 +229,41 @@ export class Bdd {
     });
   }
 
+  /**
+   * Copy a forest of exact functions into another manager with the same fixed
+   * variable order. The source-handle memo is shared across every root, while
+   * the target's canonical node table deduplicates against nodes already there.
+   * Operation and literal caches are intentionally not copied. A target node
+   * limit can fail after earlier nodes were appended; callers should use a
+   * disposable target when they need all-or-nothing ownership.
+   */
+  public copyForestTo(target: Bdd, roots: readonly number[]): readonly number[] {
+    if (!(target instanceof Bdd)) throw new TypeError("target must be a Bdd");
+    if (target.variableCount !== this.variableCount) {
+      throw new RangeError("target must use the same variable count and fixed order");
+    }
+    if (!Array.isArray(roots)) throw new TypeError("roots must be an array");
+    // Validate the complete forest before touching the target node table.
+    for (const root of roots) this.assertHandle(root);
+    if (target === this) return Object.freeze([...roots]);
+
+    const memo = new Map<Handle, Handle>([
+      [FALSE, FALSE],
+      [TRUE, TRUE],
+    ]);
+    const copy = (root: Handle): Handle => {
+      const cached = memo.get(root);
+      if (cached !== undefined) return cached;
+      const node = this.nodeAt(root);
+      const low = copy(node.low);
+      const high = copy(node.high);
+      const result = target.makeNode(node.variable, low, high);
+      memo.set(root, result);
+      return result;
+    };
+    return Object.freeze(roots.map(root => copy(root)));
+  }
+
   private binary(operation: BinaryOperation, left: Handle, right: Handle): Handle {
     this.assertHandle(left);
     this.assertHandle(right);
