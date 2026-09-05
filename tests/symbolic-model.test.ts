@@ -1030,3 +1030,25 @@ test("content validation rejects unknown vocabulary, clock writes, and multiple 
     "a non-terminal choice cannot hide a second navigation effect",
   );
 });
+
+test("a wholly out-of-bound resource relation remains false rather than losing its field constraint", () => {
+  const scenario: RawScenario = {
+    version: 1, initialScene: "start", initialResources: { token: 0 }, initialFacts: [],
+    scenes: [scene("start"), scene("done")],
+    choices: [
+      { id: "increase", scene: "start", label: "Increase", description: "Increase past the model bound.",
+        effects: [{ type: "goTo", scene: "done" }, { type: "adjustResource", resource: "token", delta: 1 }] },
+      terminal("finish", "done", "completed", "Finished."),
+    ],
+  };
+  for (const order of ["interleaved", "blocked"] as const) {
+    const model = new SymbolicModel(scenario, { token: 0 }, { order });
+    const choice = model.choices.find(choice => choice.id === "increase")!;
+    assert.notEqual(model.bdd.and(model.initial, choice.enabled), 0);
+    assert.notEqual(model.bdd.and(model.initial, choice.boundExit), 0);
+    assert.equal(choice.relation, 0);
+    assert.equal(model.image(model.initial, choice), 0);
+    assert.throws(() => symbolicReachability(model), error => error instanceof SymbolicTransitionError
+      && error.reason === "bound-exit" && error.path.join(",") === "increase");
+  }
+});
