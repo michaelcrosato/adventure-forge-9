@@ -627,7 +627,7 @@ export const RAW_SCENARIO = {
       id: "use-canalwright-kit",
       scene: "workshop",
       label: "Use your own canalwright kit",
-      description: "Carry your worn kit into the floodworks without spending Nessa's supply or taking her debt. The unfamiliar gear adds 1 risk, but preserves material for the shared repair.",
+      description: "Carry your worn kit into the floodworks without spending Nessa's supply or taking her debt. Its worn fittings add 1 risk, but preserve material for the shared repair.",
       when: [
         { type: "flag", flag: "background-canalwright", value: true },
         { type: "flag", flag: "repair-tools", value: false },
