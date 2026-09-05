@@ -574,6 +574,18 @@ test("revisiting every site after multiple services preserves the full activity 
 
   const looped = travelAllSites(serviced);
   assert.deepEqual(activityProjection(looped), beforeLoops, "regional travel changed an allocated or completed activity result");
+
+  let ferry = step(visit(evacuationPublicProtectedResolved(), "visit-reedway-barge"), "force-reedway-regulator");
+  ferry = install(ferry, "visit-reedway-workers", "install-reedway-regulator-at-workers");
+  ferry = step(visit(ferry, "visit-reedway-clinic"), "triage-reedway-patients-as-medic");
+  ferry = step(visit(ferry, "visit-reedway-barge"), "splint-reedway-deckhand-as-medic");
+  ferry = step(visit(ferry, "visit-reedway-workers"), "send-reedway-relief-with-sera");
+  ferry = toCommons(ferry);
+  assert.equal(ferry.resources.supplies, 0);
+  assert.equal(ferry.flags["reedway-ferry-powered"], true);
+  assert.equal(ferry.flags["reedway-salvager-hostile"], false);
+  assert.match(observe(step(ferry, "return-to-blackglass-from-reedway")).text.join(" "), /ferry now hauls heavy freight/i);
+  assert.deepEqual(activityProjection(travelAllSites(ferry)), activityProjection(ferry), "regional travel changed a serviced ferry result");
 });
 
 test("revisiting the barge preserves the order-sensitive care and seizure relationship", () => {

@@ -216,9 +216,9 @@ h2 { margin-bottom: 0; color: #eff4ee; font-size: clamp(1.55rem, 2.6vw, 2.25rem)
 .log-count { min-width: 28px; padding: 5px 8px; color: var(--teal); font-size: 0.75rem; text-align: center; border: 1px solid rgba(142, 208, 194, 0.3); border-radius: 999px; }
 .log-toggle { font-size: 0.7rem; white-space: nowrap; }
 .resources-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
-.resource { padding: 12px 13px; background: rgba(6, 15, 22, 0.34); border: 1px solid var(--line); border-radius: 9px; }
-.resource-name { display: block; overflow: hidden; color: var(--muted); font-size: 0.67rem; letter-spacing: 0.08em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
-.resource-value { display: block; margin-top: 5px; color: var(--paper); font-family: Georgia, serif; font-size: 1.25rem; }
+.resource { display: flex; flex-direction: column; padding: 12px 13px; background: rgba(6, 15, 22, 0.34); border: 1px solid var(--line); border-radius: 9px; }
+.resource-name { display: block; color: var(--muted); font-size: 0.67rem; line-height: 1.4; letter-spacing: 0.08em; overflow-wrap: anywhere; text-transform: uppercase; }
+.resource-value { display: block; margin-top: auto; padding-top: 5px; color: var(--paper); font-family: Georgia, serif; font-size: 1.25rem; }
 .journey-log { max-height: 240px; overflow: auto; margin: 0; padding: 0 0 0 24px; color: var(--muted); font-size: 0.79rem; line-height: 1.55; }
 .journey-log li { padding: 0 0 14px 3px; }
 .journey-log li::marker { color: var(--rust); font-size: 0.74rem; }
