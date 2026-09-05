@@ -218,3 +218,37 @@ review. Separately, static source comparisons resolved four old draft/test
 worktrees as superseded or duplicated. Root refreshed their overlay hashes,
 archived exact source and commits, and removed them; no unexplained dirty
 source was discarded.
+
+The per-choice transition implementation from `5896399` was integrated as
+`5bf9560` after independent review. Root's follow-up checks cover exact
+partial image/preimage unions, authored choice ordering, pending-root copying
+and allocation-interval scheduling. On clean manager
+`68f8932322f275dae85793cdb4f34cb21a6d7739`, `npm run build` plus the 36 BDD
+and symbolic checks passed in 12.72 seconds with 1,240,784 KiB maximum RSS.
+The unchanged-source provenance is recorded in
+`/tmp/af9-symbolic-per-choice-interval-test-provenance.json`, with output in
+`/tmp/af9-symbolic-per-choice-interval-tests.log`.
+
+Two failed root stress-test attempts remain preserved for review. Commit
+`d14c28c` exposed an undeclared `never` flag in an expanded fixture; its
+provenance is `/tmp/af9-symbolic-per-choice-test-provenance.json` and its
+output is `/tmp/af9-symbolic-per-choice-expanded-tests.log`. Commit
+`7d2ccea` exposed a false expectation that disabled choices would have equal
+compaction counts; its provenance is
+`/tmp/af9-symbolic-per-choice-corrected-test-provenance.json` and its output
+is `/tmp/af9-symbolic-per-choice-corrected-tests.log`. The verification
+modules were byte-unchanged across those attempts and the clean manager.
+The final allocation check measures actual newly allocated nodes at each copy,
+because a false image can still allocate BDD work. These bounded checks do
+not complete the campaign proof and provide no model-speed ranking or
+authoring-time measurement.
+
+Static review hardened the next runner against stale output overwrites and
+manifest/path mismatches but missed the historical checkout's absent locked
+dependencies. The first launch failed before the profiler imported, with its
+original log/finalization retained. Root installed dependencies with `npm ci`
+and verified harmless `tsx` startup before a separate fresh-output attempt.
+That attempt remains incomplete at forward round 24 after 17 copies
+(84.69 seconds / 1,368,956 KiB maximum RSS), with exact matching provenance.
+This advances the observed prefix but does not complete campaign coverage;
+no witness checker, capacity fallback or live players were run.

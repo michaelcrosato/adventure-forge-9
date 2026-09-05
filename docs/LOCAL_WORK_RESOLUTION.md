@@ -50,6 +50,44 @@ the source archives and detailed review archive. The cleanup result records
 42 remaining worktrees and 13 branches at that point, after 27 total worktree
 and 26 topic-branch removals across the two cleanup batches.
 
+A third cleanup batch followed the symbolic-topic disposition review at
+`/home/micha/.local/share/adventure-forge-9/worktree-review-20260905/20260905T174249Z-symbolic-topic-disposition/`.
+The nine integrated topics removed were `bdd-andexists-cachekey`,
+`bdd-core`, `bdd-relprod-tests`, `bdd-tests`, `symbolic-compaction`,
+`symbolic-model-reassoc`, `symbolic-replay`, `symbolic-tests` and
+`stage8-audit-review`. Their exact branch tips and source archives are
+preserved under
+`/home/micha/.local/share/adventure-forge-9/worktree-archives/20260905T174530Z/`.
+The cleanup manifest SHA-256 is
+`d24236a25feb65fa9d41222056c5403b21d38dcb16d564b73ea2823561260398`.
+Its verified result records 35 worktrees and five branches remaining at the
+removal point, with nine worktrees and nine topic branches removed in this
+batch. Across the three batches, 36 worktrees and 35 topic branches were
+removed. A later prepared probe may change the live worktree count; these
+figures describe the verified removal snapshot. The archive excludes only
+reproducible `node_modules`, `dist` and `.git`; its manifest records each
+full tip, status and source-archive hash.
+
+A fourth batch removes the three recently completed topics
+`symbolic-field-order`, `symbolic-partitioned` and `symbolic-per-choice`.
+Root refreshed every ref and complete untracked status and confirmed that
+all four topic commits are patch-equivalent to the integrated manager at
+`68f8932`. The independent read-only snapshot agreed and found only ignored
+build/dependency output. Root's recorded disposition is
+`worktree-review-20260905/20260905T181118Z-root-final-symbolic-topics/` under
+the durable local evidence root.
+
+Before removal, root verified the complete Git bundle, compared every source
+archive against its worktree, and refreshed source hashes, refs, status and
+process CWDs. The reconstructible archive and cleanup script are in
+`/home/micha/.local/share/adventure-forge-9/worktree-archives/20260905T181140Z/`.
+Its manifest SHA-256 is
+`8888ff5a0eb55b88e578fd86379ccda4ede10a33b9d3c253a9816d08559f2566`.
+The four batches now account for 39 removed worktrees and 38 topic branches.
+At this removal snapshot, 32 worktrees remain: main, the active symbolic
+manager, and 30 detached historical source/diagnostic checkouts. The only
+local branches are `main` and `audit-symbolic-manager`.
+
 The active symbolic proof, historical diagnostic overlays and blind-player
 source freezes remain available. Publication, remaining cleanup and the final
 completion audit have not passed yet.

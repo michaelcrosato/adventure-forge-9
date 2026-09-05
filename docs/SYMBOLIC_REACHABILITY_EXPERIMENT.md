@@ -632,7 +632,7 @@ companions, plus `/tmp/af9-symbolic-partitioned-2m-manifest.json` (SHA-256
 The report uses exact modules from `6167cea` with historical engine/content;
 no fallback run was launched.
 
-The next reviewed change targets the traversal's copy boundaries. The current
+The next reviewed change targeted the traversal's copy boundaries. The prior
 `model.image(frontier)` and `model.preimage(completable)` each accumulate all
 131 historical choices before another copy can run. They are full-round
 operations, not single-choice products. Per-choice traversal accumulation can
@@ -641,5 +641,106 @@ same atomic root bundle. Every choice must be reacquired from the new owner
 by index after copying. The proposed scheduling uses the existing threshold
 for the first copy, then allows that many newly allocated nodes beyond the
 retained forest before the next copy. This avoids copying on every boundary
-when live roots themselves exceed the initial threshold. The implementation
-and independent review are under way; no complete campaign proof follows yet.
+when live roots themselves exceed the initial threshold.
+
+### Exact accumulation between choices
+
+The independently reviewed implementation (`5896399`, integrated as
+`5bf9560`) is now tested in clean manager freeze `68f8932`. Forward traversal
+checks every authored fault before computing any image. It then unions each
+choice's image of the fixed frontier into a pending root. Backward traversal
+similarly unions preimages of the fixed completable set. Each phase applies
+its final reachability/difference mask only after processing all choices.
+Copies retain that pending root together with every prior traversal root and
+frontier, and reacquire each choice by index from the new owner. Thus a copy
+cannot lose a partial union or repeat/skip a choice.
+
+The first copy uses `compactAtNodes`; each later trigger is the allocated
+unique-node count immediately after the last copy plus that interval, capped
+at `Number.MAX_SAFE_INTEGER`. The count includes constructor allocations;
+it is not a measurement of the live root forest alone. Even an operation
+whose result is false may allocate temporary nodes. Disabled choices
+therefore need not produce equal copy counts at an interval of one.
+
+Build and all 36 focused checks pass on unchanged clean pre/post source
+`68f8932322f275dae85793cdb4f34cb21a6d7739`, in 12.72 seconds / 1,240,784 KiB
+maximum RSS. New instrumentation checks that both forward and backward
+copies retain a nonempty pending union, every choice is processed exactly
+once in authored order in each round, and later copies obey the allocation
+interval. Independent finite-domain coverage, completion and witnesses agree
+across both strategies and bit layouts; an unreachable huge threshold causes
+no copies. Preserve `/tmp/af9-symbolic-per-choice-interval-tests.log` and
+`/tmp/af9-symbolic-per-choice-interval-test-provenance.json`. The log SHA-256 is
+`1f5dd943ccba770e7e3af0024459a5efb59b31383b4d6f5be9e1dd0d6cdc8d0a`.
+Forced-copy fixtures retain owner references for inspection, so this RSS is
+not a campaign performance measurement.
+
+Two failed root test attempts remain separate. At `d14c28c`, the added stress
+fixture used an undeclared flag (`/tmp/af9-symbolic-per-choice-expanded-tests.log`
+and `/tmp/af9-symbolic-per-choice-test-provenance.json`). At `7d2ccea`, its
+equal-copy-count expectation for repeated disabled choices was false
+(`/tmp/af9-symbolic-per-choice-corrected-tests.log` and
+`/tmp/af9-symbolic-per-choice-corrected-test-provenance.json`). Both builds
+passed with 35/36 checks; these were fixture/expectation defects, and their
+verifier modules are byte-identical to the final passing freeze. The corrected
+check measures actual allocation intervals rather than assuming a false
+result makes no allocations.
+
+A historical relational diagnostic uses the original
+default 66-field order, interleaved bits, two million nodes, 500,000 cache
+entries, a 500,000-node allocation interval, 128 rounds, a checked 120-second
+deadline, external 150-second TERM plus five-second KILL, and a 1,536 MiB Node
+heap cap. Every historical engine/content/package byte is bound to `139e48a`;
+the three verifier modules match the clean passing freeze above. Preparation
+review corrected the runner's stale default profiler, added rejection of
+existing output/temp artifacts and input/output path aliases, bound all four
+CLI output paths to the manifest, and made log creation exclusive. The
+original runner and every manifest revision remain preserved. Final runner
+`/tmp/af9-symbolic-relational-per-choice-2m-runner-v2.mjs` has SHA-256
+`1d1b4e35a45b8dff618c0a165d8ff8b74a6a5e68008a8582dfb78b41775a49b7`.
+
+The first launch stopped before importing the profiler: the prepared checkout
+had no installed dependencies, so Node could not resolve `tsx`. Root and
+independent static checks had missed this runtime prerequisite. The wrapper
+closed with exit 1 in 0.10 seconds / 46,548 KiB maximum RSS, with matching
+source provenance and no progress or final report. Preserve the original
+`/tmp/af9-symbolic-relational-per-choice-2m-139e48.log` and `.finalization.json`,
+plus `/tmp/af9-symbolic-relational-per-choice-2m-manifest.json` (SHA-256
+`0e2de5e7bdc015f83c923ed9a48be80cbcc81855389d5d32f7a9fd84548329c7`).
+This is a setup failure, not a BDD capacity measurement.
+
+Root installed the checkout's own locked dependencies with `npm ci` and
+verified a harmless `node --import tsx` startup. The runtime-ready attempt has
+fresh outputs under
+`/tmp/af9-symbolic-relational-per-choice-2m-runtime-ready-139e48.*` and manifest
+`/tmp/af9-symbolic-relational-per-choice-2m-runtime-ready-manifest.json`, SHA-256
+`972a1ea7feed958175b4d56358e2f7a695adf9adbc37f0b57c3e1d2152da96a4`.
+Source, scripts, bounds, configuration and order are unchanged between the
+setup failure and this attempt; no larger-capacity or alternate-order fallback
+was substituted.
+
+The runtime-ready diagnostic is incomplete: it reaches the two-million-node
+guard in forward round 24, with no backward round or witness replay. There
+are 17 successful copies, with the last post-copy manager containing
+1,285,939 allocated non-terminal nodes. Runtime is 84,454 ms internally /
+84.69 seconds externally, with 1,368,956 KiB maximum RSS. The child wrapper
+(`1234405`) closes with exit 1 and no signal and is absent after the run;
+all source, script, bounds, order, config and manifest provenance matches.
+The last callback's phase is `compact`, so `lastForwardRound: 24` is the
+actual traversal phase/round evidence; the callback label alone does not
+establish that forest copying caused the failure. The report does not identify
+the specific failing choice/operation.
+
+Copying between choices advances this historical prefix from the prior
+round-22 failure but does not establish a fixed point or completed coverage.
+Read-only review proposes an operation trace and exact root inventory at
+a predeclared copy boundary: before copying, after constructing the new model,
+and after copying the complete forest. It must distinguish permanent model
+roots, current traversal/pending roots, all historical witness frontiers and
+cache closures, with both the last completed and next pending operation.
+Post-copy counts include constructor garbage, so only exact union differences
+can establish whether historical frontiers or temporary allocations dominate.
+Earlier round checkpoints are not immediate pre-copy measurements. No further capacity/order run is authorized by this
+result, and no frontier or state field may be silently dropped.
+No campaign fixed point, historical replay acceptance or release adoption
+follows from the focused fixture checks.

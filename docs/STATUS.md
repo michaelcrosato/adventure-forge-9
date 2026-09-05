@@ -4,7 +4,7 @@ Updated: 2026-09-05 (America/Vancouver). The full Skyrim-breadth/BG3-depth goal 
 
 Stage 7 is implemented and mechanically verified locally: four regional places connect resolved Lowsail/Blackglass hubs with free reversible travel, competing regulator allocations and once-only services (29 scenes, 160 choices). The conserved-parameter release audit passes at 243,426 families / 703,812 transitions, with all 160 choice witnesses replayed, 36 ending witnesses and no dead ends or missing completed paths. All 108 checks pass on `998a214`; independent historical comparisons and preserved failures support the documented change in proof representation. The same source completed a fresh 44-action browser journey, save restoration, changed hub returns and mobile checks, with a 5,608-byte final request. A clean trusted freeze at `/tmp/af9-stage7-verified` uses game build `af9-55d07242701a5613af8d0919`. All three fresh neutral Luna/max games at seeds 1–3 completed with original interviews, independent source/isolation/replay checks and verified exports. Only seed 2 entered Reedway and allocated the regulator (1/3, below the required 2/3); median clarity/enjoyment are both four and no player reported a defect. The region remains unaccepted and unpublished. The predeclared clarification is now verified at `8b2be2c`: all 108 checks pass, a 50-action browser journey checks the revised hub text and save restoration, and all four revised earlier completion choices work in the browser. A clean source freeze at `/tmp/af9-stage7-continuation-verified` uses build `af9-c4b63b33db556a8a2e83dc7d`; all three new neutral seed 1–3 players completed with original interviews and checked exports. Again only one entered Reedway and allocated its regulator; the regional 2/3 gate fails. Volunteered end/continue confusion fell from 2/3 to 0/3, meeting the predeclared narrow clarity criterion, with median clarity five and enjoyment four. This supports a limited wording observation, not increased exploration or a broad causal claim. Both failed regional exposure batches remain preserved; no identical rerun is planned. All prior choices and endings remain. Production remains the accepted Blackglass build.
 
-Stage 8 is integrated locally, with final game copy at `2f6212d`: earlier Reedway access, safe Archive pause/resume and decided-record revisits, plus a personal credit consequence for Sera's salvage relationship (29 scenes, 166 choices). Eight independent behavioral checks and a 52-action stateless browser journey pass on `c64c47c`, including regional work during a partial case, both quest orders, Sera's refusal/recovery and save restoration. Final-copy browser uploads/ending clicks also pass, along with all 115 non-audit checks. The actual final request is 6,264 bytes. Full `npm run verify` on `c64c47c` failed the existing 250,000-family workload guard and one older static future-read assertion; the latter is corrected, and the complete original failure is retained. A separate diagnostic also hit 500,000 families without finishing. A proposed local-pruning optimization was rejected after a counterexample and negligible reduction. Coarse prefix partitions also hit their diagnostic guards. The isolated symbolic compiler now passes 34 focused checks at `6167cea`, including exact forest copying, owned-generation compaction, immutable full field permutations and opt-in partitioned transitions. Its two-million-node historical diagnostic still fails in forward round 22 after eight compactions. The single affinity-order attempt also fails at round 22; the partitioned attempt fails at round 21, and copying between choice calculations is now under development, retaining every field and bit; no symbolic campaign coverage is accepted. Stage 8 remains unaccepted and unpublished. See `STAGE8_PARALLEL_CAMPAIGN.md`. Production remains `139e48a`; the public page, new-game API and GitHub main automatic deployment were freshly verified.
+Stage 8 is integrated locally, with final game copy at `2f6212d`: earlier Reedway access, safe Archive pause/resume and decided-record revisits, plus a personal credit consequence for Sera's salvage relationship (29 scenes, 166 choices). Eight independent behavioral checks and a 52-action stateless browser journey pass on `c64c47c`, including regional work during a partial case, both quest orders, Sera's refusal/recovery and save restoration. Final-copy browser uploads/ending clicks also pass, along with all 115 non-audit checks. The actual final request is 6,264 bytes. Full `npm run verify` on `c64c47c` failed the existing 250,000-family workload guard and one older static future-read assertion; the latter is corrected, and the complete original failure is retained. A separate diagnostic also hit 500,000 families without finishing. A proposed local-pruning optimization was rejected after a counterexample and negligible reduction. Coarse prefix partitions also hit their diagnostic guards. The isolated symbolic compiler now passes 36 focused checks at `68f8932`, including exact forest copying, owned-generation compaction, immutable full field permutations and opt-in partitioned transitions. Its two-million-node historical diagnostic still fails in forward round 22 after eight compactions. The single affinity-order attempt also fails at round 22; the partitioned attempt fails at round 21. Exact copying between choice calculations now passes independent partial-union, authored-order and allocation-interval checks. After a preserved missing-dependency setup failure, its runtime-ready historical attempt fails at forward round 24 after 17 copies. No symbolic campaign coverage is accepted. Stage 8 remains unaccepted and unpublished. See `STAGE8_PARALLEL_CAMPAIGN.md`. Production remains `139e48a`; the public page, new-game API and GitHub main automatic deployment were freshly verified.
 
 ## Accepted foundation
 
@@ -42,7 +42,7 @@ prefix partitions were independently reviewed. Coarse partitions hit their
 100,000-family diagnostic caps. A bounded symbolic compiler experiment is
 selected in `/tmp/af9-symbolic-manager`, separate from main and the release
 audit. Its complete small-scenario comparisons and real-engine witness
-replay pass all 34 focused checks at `6167cea`, across default/reversed field
+replay pass all 36 focused checks at `68f8932`, across default/reversed field
 orders, both blocked/interleaved bit layouts and both transition strategies.
 Exact forest copying and opt-in owned-generation compaction preserve every
 field, frontier and root owner in the independent finite fixtures. The
@@ -53,9 +53,18 @@ the corrected timeout overrun remain preserved. The single affinity-order
 diagnostic also fails at round 22 (36.44 seconds / 858,600 KiB maximum RSS),
 with exact source/provenance checks. The partitioned diagnostic with
 the original default order also fails at round 21 (38.04 seconds / 924,652 KiB
-maximum RSS). Copying between individual choice calculations, with an exact
-pending-root handoff and allocation interval, is now under development and
-independent review. No complete symbolic campaign coverage is accepted.
+maximum RSS). Copying between individual choice calculations now passes
+independent checks for nonempty pending-root handoff, exact authored choice
+order and allocation intervals. The clean 36-check run takes 12.72 seconds /
+1,240,784 KiB maximum RSS; two failed root stress-fixture attempts are retained
+with their corrections. After a preserved missing-dependency setup failure,
+the runtime-ready historical attempt fails at forward round 24 after 17
+copies (84.69 seconds / 1,368,956 KiB maximum RSS), with matching provenance.
+No backward traversal or witness replay completes. Read-only review proposes an
+operation trace and exact root inventory around one predeclared copy boundary,
+separating constructor garbage, temporary allocations and historical frontiers.
+Implementation and the bounded inventory remain pending; no complete symbolic
+campaign coverage is accepted.
 The production family guard is unchanged. See
 `SYMBOLIC_REACHABILITY_EXPERIMENT.md`. Final copy rendering and all 115 non-audit checks pass, but the
 full audit remains open. The 52-action browser and original failure evidence
@@ -102,3 +111,19 @@ local evidence root. Cleanup now accounts for 27 removed worktrees and 26
 removed topic branches; the 42 worktrees and 13 branches remaining at removal
 contain active experiments or historical evidence. No candidate source was
 discarded without a reconstructible archive and recorded disposition.
+
+Nine more integrated development topics and their worktrees have been
+archived and removed, with exact source, commits and rejected-pruning evidence
+preserved in `worktree-archives/20260905T174530Z/` under the same durable root.
+The three batches account for 36 removed worktrees and 35 topic branches.
+The third batch leaves 35 worktrees and five branches at removal; historical
+source freezes and diagnostic overlays remain available. See
+`LOCAL_WORK_RESOLUTION.md` for hashes and reconstruction.
+
+The final three completed symbolic topic branches are also archived and
+removed after complete source/bundle verification and refreshed process,
+status and patch checks. Archive `worktree-archives/20260905T181140Z/` records
+39 cumulative worktree removals and 38 topic-branch removals. Only `main` and
+`audit-symbolic-manager` remain as local branches, alongside 30 detached
+historical source/diagnostic checkouts. The active proof and release gates
+remain unfinished; this cleanup is not final campaign acceptance.
