@@ -205,18 +205,15 @@ export class SymbolicModel {
       if (effect.type === "goTo") destination = effect.scene;
       else if (effect.type === "setFlag") flagWrites.set(effect.flag, effect.value);
     }
-    // Build the output/frame relation independently of the source guard, then
-    // apply the guard once. Conjunction is associative, so this preserves the
-    // relation exactly while avoiding large guard-specific intermediate BDDs.
-    let relation = 1;
-    relation = this.bdd.and(relation, this.equal("scene", this.scenes.indexOf(destination), "next"));
+    const constraints = new Map<string, number>();
+    constraints.set("scene", this.equal("scene", this.scenes.indexOf(destination), "next"));
     const status = choice.outcome?.status ?? "playing";
     const ending = choice.outcome === undefined ? 0
       : this.endings.findIndex(([kind, summary]) => kind === status && summary === choice.outcome!.summary) + 1;
-    relation = this.bdd.and(relation, this.equal("status", STATUSES.indexOf(status), "next"));
-    relation = this.bdd.and(relation, this.equal("ending", ending, "next"));
+    constraints.set("status", this.equal("status", STATUSES.indexOf(status), "next"));
+    constraints.set("ending", this.equal("ending", ending, "next"));
     for (const flag of this.flags) {
-      relation = this.bdd.and(relation, flagWrites.has(flag)
+      constraints.set(`flag:${flag}`, flagWrites.has(flag)
         ? this.equal(`flag:${flag}`, flagWrites.get(flag) ? 1 : 0, "next") : this.unchanged(`flag:${flag}`));
     }
     const effectFailures = choice.effects.map(() => ({ arithmetic: 0, bound: 0 }));
@@ -225,7 +222,7 @@ export class SymbolicModel {
       const effects = [...choice.effects.entries()].filter(([, effect]) =>
         ((effect.type === "setResource" || effect.type === "adjustResource") && effect.resource === resource)
         || (effect.type === "advanceClock" && this.scenario.clocks?.find(clock => clock.id === effect.clock)?.resource === resource));
-      if (effects.length === 0) { relation = this.bdd.and(relation, this.unchanged(field.id)); continue; }
+      if (effects.length === 0) { constraints.set(field.id, this.unchanged(field.id)); continue; }
       let resourceRelation = 0;
       for (let input = 0; input <= field.maximum; input++) {
         let output = input;
@@ -246,7 +243,7 @@ export class SymbolicModel {
         else if (failure === "bound-exit") effectFailures[failureIndex]!.bound = this.bdd.or(effectFailures[failureIndex]!.bound, source);
         else resourceRelation = this.bdd.or(resourceRelation, this.bdd.and(source, this.equal(field.id, output, "next")));
       }
-      relation = this.bdd.and(relation, resourceRelation);
+      constraints.set(field.id, resourceRelation);
     }
     // Resource folds commute on successful transitions, but fault diagnostics
     // must retain the original cross-resource effect order.
@@ -255,6 +252,14 @@ export class SymbolicModel {
       arithmeticError = this.bdd.or(arithmeticError, this.bdd.and(beforeFailure, failure.arithmetic));
       boundExit = this.bdd.or(boundExit, this.bdd.and(beforeFailure, failure.bound));
       beforeFailure = this.bdd.and(beforeFailure, this.bdd.not(this.bdd.or(failure.arithmetic, failure.bound)));
+    }
+    // Build later variable fields first to share suffixes, then apply the
+    // source guard. Only conjunction order changes; every field is required.
+    let relation = 1;
+    for (const field of [...this.fields.values()].reverse()) {
+      const constraint = constraints.get(field.id);
+      if (constraint === undefined) throw new Error(`Missing symbolic constraint for ${field.id}`);
+      relation = this.bdd.and(constraint, relation);
     }
     relation = this.bdd.and(enabled, relation);
     return Object.freeze({ id: choice.id, enabled, relation,
