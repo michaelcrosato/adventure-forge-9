@@ -13,6 +13,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
 import test from "node:test";
+import { Bdd } from "../src/verification/bdd.js";
 import { validateScenario, type Choice, type Condition, type Effect, type Scenario } from "../src/engine/content.js";
 import {
   SymbolicModel,
@@ -1323,5 +1324,83 @@ test("malformed compaction thresholds are rejected and authored failures retain 
       `${order} compact traversal preserves the authored failure path`,
     );
     assert.ok(progress.some((event) => event.phase === "compact"), `${order} failure path exercised compaction`);
+  }
+});
+
+test("generation copies carry nonempty pending unions in both passes and process every choice once", () => {
+  const originalCopy = Bdd.prototype.copyForestTo;
+  const originalImage = SymbolicModel.prototype.image;
+  const originalPreimage = SymbolicModel.prototype.preimage;
+  let phase = "setup", round = 0;
+  const calls = new Map<string, string[]>();
+  const pendingCopies = new Set<string>();
+  Bdd.prototype.copyForestTo = function(target, roots) {
+    if ((phase === "forward" || phase === "backward") && roots[4] !== 0) pendingCopies.add(phase);
+    return originalCopy.call(this, target, roots);
+  };
+  SymbolicModel.prototype.image = function(source, choice) {
+    if (phase === "forward") {
+      assert.ok(choice, "forward accumulation uses an explicit choice");
+      const key = `${phase}:${round}`;
+      const entries = calls.get(key) ?? [];
+      entries.push(choice.id); calls.set(key, entries);
+    }
+    return originalImage.call(this, source, choice);
+  };
+  SymbolicModel.prototype.preimage = function(target, choice) {
+    if (phase === "backward") {
+      assert.ok(choice, "backward accumulation uses an explicit choice");
+      const key = `${phase}:${round}`;
+      const entries = calls.get(key) ?? [];
+      entries.push(choice.id); calls.set(key, entries);
+    }
+    return originalPreimage.call(this, target, choice);
+  };
+  try {
+    for (const order of ["interleaved", "blocked"] as const) for (const transitionMode of ["relational", "partitioned"] as const) {
+      phase = "setup"; round = 0; calls.clear(); pendingCopies.clear();
+      const model = new SymbolicModel(ORDERED_SCENARIO, { stock: 2, tide: 2 }, { order, transitionMode });
+      const result = symbolicReachability(model, 64, (event, step) => {
+        if (event !== "compact") { phase = event; round = step; }
+      }, { compactAtNodes: 1 });
+      phase = "verification";
+      assert.deepEqual([...pendingCopies].sort(), ["backward", "forward"], "both passes copied a nonempty pending union");
+      const expected = ORDERED_SCENARIO.choices.map(choice => choice.id);
+      assert.equal(calls.size, result.forwardRounds + result.backwardRounds);
+      for (const [key, processed] of calls) assert.deepEqual(processed, expected, `${order}/${transitionMode}/${key} preserves exact authored processing order`);
+      assertCompactedCoverageMatchesOracle(ORDERED_SCENARIO, { stock: 2, tide: 2 }, order, result);
+    }
+  } finally {
+    Bdd.prototype.copyForestTo = originalCopy;
+    SymbolicModel.prototype.image = originalImage;
+    SymbolicModel.prototype.preimage = originalPreimage;
+  }
+});
+
+test("allocation intervals avoid repeated copies for duplicate disabled choices and handle huge thresholds", () => {
+  const fixture = (disabledChoices: number): RawScenario => ({
+    version: 1, initialScene: "start", initialResources: { token: 1 }, initialFacts: [],
+    scenes: [scene("start")],
+    choices: [terminal("finish", "start", "completed", "Finished."),
+      ...Array.from({ length: disabledChoices }, (_, index): RawChoice => ({
+        id: `unused-${index}`, scene: "start", label: "Unused", description: "Unreachable action.",
+        when: [{ type: "flag", flag: "never", value: true }],
+        effects: [{ type: "goTo", scene: "start" }],
+      })),
+    ],
+  });
+  for (const order of ["interleaved", "blocked"] as const) for (const transitionMode of ["relational", "partitioned"] as const) {
+    const small = compactFixtureResult(fixture(1), { token: 1 }, order, undefined, transitionMode).result;
+    const large = compactFixtureResult(fixture(31), { token: 1 }, order, undefined, transitionMode).result;
+    assert.ok(small.compactions > 0);
+    assert.equal(large.compactions, small.compactions, "duplicate zero-work choices do not provoke extra generations");
+    assert.equal(large.reachableCount, 2n);
+    assert.equal(large.unreachableChoices.length, 31);
+    const model = new SymbolicModel(fixture(1), { token: 1 }, { order, transitionMode });
+    const result = symbolicReachability(model, 8, undefined, { compactAtNodes: Number.MAX_SAFE_INTEGER });
+    assert.equal(result.compactions, 0);
+    assert.equal(result.reachableCount, small.reachableCount);
+    assert.deepEqual(result.choiceWitnesses, small.choiceWitnesses);
+    assert.equal(result.noCompletion, 0);
   }
 });

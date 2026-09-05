@@ -521,8 +521,8 @@ export interface SymbolicReachability {
 export interface SymbolicReachabilityOptions {
   /**
    * Opt-in exact generation replacement between choice operations. The first
-   * copy occurs at this many retained unique nodes; each later copy waits for
-   * the previous retained size plus this interval. No default compaction.
+   * copy occurs at this many allocated unique nodes; each later copy waits for
+   * the post-copy size plus this allocation interval. No default compaction.
    */
   readonly compactAtNodes?: number;
 }
