@@ -809,15 +809,20 @@ type ObligationKind =
   | "invalid-success"
   | "uncovered-enabled";
 
+type NonCompletionMode = "direct" | "failure-absorbed";
+type NonCompletionPartition = "global" | "scene";
+
 interface ExpectedObligation {
   readonly key: string;
   readonly kind: ObligationKind;
   readonly choiceId?: string;
+  readonly sceneId?: string;
   readonly seed: ReadonlySet<string>;
   readonly bad: ReadonlySet<string>;
 }
 
-function obligationKey(kind: ObligationKind, choiceId?: string): string {
+function obligationKey(kind: ObligationKind, choiceId?: string, sceneId?: string): string {
+  if (kind === "non-completion" && sceneId !== undefined) return `non-completion:scene:${sceneId}`;
   return kind + ":" + (choiceId ?? "");
 }
 
@@ -838,7 +843,8 @@ function predecessorClosure(graph: RawGraph, seed: ReadonlySet<string>): Readonl
 /** Build each seed independently from the raw transition interpreter. */
 function expectedObligations(
   graph: RawGraph,
-  nonCompletionMode: "direct" | "failure-absorbed" = "direct",
+  nonCompletionMode: NonCompletionMode = "direct",
+  nonCompletionPartition: NonCompletionPartition = "global",
 ): readonly ExpectedObligation[] {
   const expected: ExpectedObligation[] = [];
   const completedStates = new Set(graph.states
@@ -853,17 +859,24 @@ function expectedObligations(
     ...completedStates,
     ...failureSeed,
   ]));
-  const nonCompletionSeed = new Set(graph.states
-    .filter(state => state.status === "playing" && !(nonCompletionMode === "failure-absorbed"
-      ? completionOrFailure
-      : graph.completable).has(stateKey(state, graph.resources, graph.flags)))
-    .map(state => stateKey(state, graph.resources, graph.flags)));
-  expected.push({
-    key: obligationKey("non-completion"),
-    kind: "non-completion",
-    seed: nonCompletionSeed,
-    bad: predecessorClosure(graph, nonCompletionSeed),
-  });
+  const completionSet = nonCompletionMode === "failure-absorbed" ? completionOrFailure : graph.completable;
+  const sceneIds = nonCompletionPartition === "scene"
+    ? graph.scenario.scenes.map(scene => scene.id)
+    : [undefined];
+  for (const sceneId of sceneIds) {
+    const nonCompletionSeed = new Set(graph.states
+      .filter(state => state.status === "playing"
+        && (sceneId === undefined || state.scene === sceneId)
+        && !completionSet.has(stateKey(state, graph.resources, graph.flags)))
+      .map(state => stateKey(state, graph.resources, graph.flags)));
+    expected.push({
+      key: obligationKey("non-completion", undefined, sceneId),
+      kind: "non-completion",
+      ...(sceneId === undefined ? {} : { sceneId }),
+      seed: nonCompletionSeed,
+      bad: predecessorClosure(graph, nonCompletionSeed),
+    });
+  }
 
   for (const choice of graph.scenario.choices) {
     const seeds: Record<"arithmetic-error" | "bound-exit" | "invalid-success" | "uncovered-enabled", Set<string>> = {
@@ -935,10 +948,11 @@ function checkObligationScenario(
   bounds: Readonly<Record<string, number>>,
   label: string,
   allLayouts = false,
-  nonCompletionMode: "direct" | "failure-absorbed" = "direct",
+  nonCompletionMode: NonCompletionMode = "direct",
+  nonCompletionPartition: NonCompletionPartition = "global",
 ): void {
   const graph = buildRawGraph(raw, bounds);
-  const expected = expectedObligations(graph, nonCompletionMode);
+  const expected = expectedObligations(graph, nonCompletionMode, nonCompletionPartition);
   const expectedByKey = new Map(expected.map(obligation => [obligation.key, obligation]));
   const orders = allLayouts ? (["interleaved", "blocked"] as const) : (["interleaved"] as const);
   const modes = ["relational", "partitioned"] as const;
@@ -970,6 +984,7 @@ function checkObligationScenario(
     const split = proveCompletionSafetyByObligation(model, {
       roundLimit: 64,
       nonCompletionMode,
+      nonCompletionPartition,
       onProgress: event => {
         progress.push(event);
         assert.ok(event.phase === "completion" || event.phase === "completion-or-failure" || event.phase === "obligation");
@@ -979,15 +994,23 @@ function checkObligationScenario(
       },
       onObligation: payload => {
         const summary = payload.summary;
-        const key = obligationKey(summary.kind, summary.choiceId);
+        const key = obligationKey(summary.kind, summary.choiceId, summary.sceneId);
         const fixture = expectedByKey.get(key);
         assert.ok(fixture !== undefined, label + " has an expected obligation for " + key);
+        assert.equal(summary.id, fixture!.key, label + " callback obligation ID matches the oracle key");
         assert.equal(callbackIds.has(summary.id), false, label + " obligation IDs are unique");
         callbackIds.add(summary.id);
         assert.ok(Object.isFrozen(summary), label + " " + key + " summary is frozen");
         assert.equal(Object.hasOwn(summary, "seed"), false, label + " " + key + " summary hides seed root");
         assert.equal(Object.hasOwn(summary, "bad"), false, label + " " + key + " summary hides bad root");
         assert.equal(Object.hasOwn(summary, "model"), false, label + " " + key + " summary hides owner");
+        assert.equal(summary.sceneId, fixture!.sceneId, label + " " + key + " scene metadata");
+        if (summary.kind === "non-completion") {
+          assert.equal(nonCompletionPartition === "scene", summary.sceneId !== undefined,
+            label + " " + key + " scene partition metadata");
+        } else {
+          assert.equal(summary.sceneId, undefined, label + " " + key + " failure summary has no scene metadata");
+        }
         assert.ok(Number.isSafeInteger(summary.rounds) && summary.rounds >= 0);
         assert.ok(Number.isSafeInteger(summary.nodes) && summary.nodes >= 2);
         assert.equal(summary.seedZero, fixture!.seed.size === 0, label + " " + key + " seed emptiness");
@@ -1066,16 +1089,19 @@ function checkObligationScenario(
       assert.ok(progress.some(event => event.phase === "obligation"), label + " reports obligation progress");
     }
 
-    assert.equal(split.obligations.length, 1 + 4 * model.choices.length, label + " retains every obligation");
+    const nonCompletionCount = nonCompletionPartition === "scene" ? graph.scenario.scenes.length : 1;
+    assert.equal(split.obligations.length, nonCompletionCount + 4 * model.choices.length, label + " retains every obligation");
     assert.equal(new Set(split.obligations.map(summary => summary.id)).size, split.obligations.length, label + " summary IDs are unique");
     assert.equal(callbackIds.size, split.obligations.length, label + " reports every obligation to the callback");
     for (const summary of split.obligations) {
-      const key = obligationKey(summary.kind, summary.choiceId);
+      const key = obligationKey(summary.kind, summary.choiceId, summary.sceneId);
       const fixture = expectedByKey.get(key);
       assert.ok(fixture !== undefined, label + " returned an expected obligation for " + key);
+      assert.equal(summary.id, fixture!.key, label + " returned obligation ID matches the oracle key");
       assert.ok(Object.isFrozen(summary), label + " returned " + key + " summary is frozen");
       assert.equal(Object.hasOwn(summary, "seed"), false, label + " returned " + key + " hides seed root");
       assert.equal(Object.hasOwn(summary, "bad"), false, label + " returned " + key + " hides bad root");
+      assert.equal(summary.sceneId, fixture!.sceneId, label + " returned " + key + " scene metadata");
       assert.equal(summary.seedZero, fixture!.seed.size === 0, label + " returned " + key + " seed emptiness");
       assert.equal(summary.initialInBad, fixture!.bad.has(graph.initialKey), label + " returned " + key + " initial membership");
     }
@@ -1182,6 +1208,27 @@ class MixedAbsorbedModel extends SyntheticInvalidSuccessModel {
       return this.bdd.variable(this.nextVariables[0]!);
     }
     return super.preimage(target, choice);
+  }
+}
+
+class MixedScenePredicateModel extends SymbolicModel {
+  override atScene(id: string): number {
+    if (id === "trap") return this.bdd.variable(this.nextVariables[0]!);
+    return super.atScene(id);
+  }
+}
+
+class MissingScenePredicateModel extends SymbolicModel {
+  override atScene(id: string): number {
+    if (id === "trap") return 0;
+    return super.atScene(id);
+  }
+}
+
+class OverlappingScenePredicateModel extends SymbolicModel {
+  override atScene(id: string): number {
+    if (id === "start") return super.atScene("trap");
+    return super.atScene(id);
   }
 }
 
@@ -1300,6 +1347,7 @@ test("failure-absorbed mode fails closed at its own fixed point and snapshots op
   const getterModel = modelFor(validateScenario(REACHABLE_TRAP), { water: 1 }, "interleaved", "relational", false);
   let modeReads = 0;
   let roundReads = 0;
+  let partitionReads = 0;
   const options = {
     get nonCompletionMode(): "failure-absorbed" {
       modeReads++;
@@ -1309,10 +1357,15 @@ test("failure-absorbed mode fails closed at its own fixed point and snapshots op
       roundReads++;
       return 64;
     },
+    get nonCompletionPartition(): "scene" {
+      partitionReads++;
+      return "scene";
+    },
   };
   proveCompletionSafetyByObligation(getterModel, options);
   assert.equal(modeReads, 1, "absorbed mode option is read once");
   assert.equal(roundReads, 1, "absorbed round limit is read once");
+  assert.equal(partitionReads, 1, "absorbed partition option is read once");
 });
 
 test("property proof distinguishes isolated arithmetic faults and intermediate bound exits", () => {
@@ -1410,6 +1463,67 @@ test("failure absorption removes only-fault non-completion states without changi
   assert.equal(summary.initialInBad, absorbedNonCompletion.bad.has(graph.initialKey), "the absorbed residual membership matches the independent oracle");
 });
 
+test("scene-partitioned non-completion cones preserve cross-scene reachability and zero seeds", () => {
+  const trapGraph = buildRawGraph(REACHABLE_TRAP, { water: 1 });
+  const trapExpected = expectedObligations(trapGraph, "direct", "scene");
+  const trapSeed = trapExpected.find(obligation => obligation.sceneId === "trap")!;
+  const startSeed = trapExpected.find(obligation => obligation.sceneId === "start")!;
+  const safeSeed = trapExpected.find(obligation => obligation.sceneId === "safe")!;
+  assert.ok(trapSeed.seed.size > 0, "the trap scene contributes a non-completion seed");
+  assert.equal(trapSeed.bad.has(trapGraph.initialKey), true, "the trap cone reaches an initial state in another scene");
+  assert.equal(startSeed.seed.size, 0, "the start scene has a zero seed");
+  assert.equal(safeSeed.seed.size, 0, "the safe scene has a zero seed");
+
+  for (const nonCompletionMode of ["direct", "failure-absorbed"] as const) {
+    const model = modelFor(trapGraph.scenario, { water: 1 }, "interleaved", "partitioned", false);
+    const result = proveCompletionSafetyByObligation(model, {
+      roundLimit: 64,
+      nonCompletionMode,
+      nonCompletionPartition: "scene",
+    });
+    const summaries = result.obligations.filter(obligation => obligation.kind === "non-completion");
+    assert.deepEqual(
+      summaries.map(obligation => obligation.sceneId),
+      trapGraph.scenario.scenes.map(scene => scene.id),
+      `${nonCompletionMode} returns one scene obligation for every authored scene`,
+    );
+    assert.equal(
+      summaries.find(obligation => obligation.sceneId === "trap")!.initialInBad,
+      true,
+      `${nonCompletionMode} preserves the cross-scene trap cone`,
+    );
+    assert.equal(
+      summaries.filter(obligation => obligation.seedZero).length,
+      2,
+      `${nonCompletionMode} reports both zero scene seeds`,
+    );
+  }
+
+  checkObligationScenario(SAFE_CYCLE, { energy: 1 }, "partitioned-safe-zero-seeds", true, "direct", "scene");
+  checkObligationScenario(REACHABLE_TRAP, { water: 1 }, "partitioned-cross-scene-trap", true, "direct", "scene");
+  checkObligationScenario(REACHABLE_FAULTS, { stock: 1 }, "partitioned-fault-zero-seeds", true, "failure-absorbed", "scene");
+  checkObligationScenario(FAULT_ONLY_CONTINUATION, { stock: 1 }, "partitioned-fault-route", false, "failure-absorbed", "scene");
+
+  const mixed = new MixedScenePredicateModel(trapGraph.scenario, { water: 1 });
+  assert.throws(
+    () => proveCompletionSafetyByObligation(mixed, { nonCompletionPartition: "scene" }),
+    /scene trap predicate.*current-only/i,
+    "scene partition rejects a mixed-phase scene predicate",
+  );
+  const missing = new MissingScenePredicateModel(trapGraph.scenario, { water: 1 });
+  assert.throws(
+    () => proveCompletionSafetyByObligation(missing, { nonCompletionPartition: "scene" }),
+    /scene-partitioned non-completion seed.*equal the global seed/i,
+    "scene partition rejects incomplete scene coverage",
+  );
+  const overlapping = new OverlappingScenePredicateModel(trapGraph.scenario, { water: 1 });
+  assert.throws(
+    () => proveCompletionSafetyByObligation(overlapping, { nonCompletionPartition: "scene" }),
+    /scene-partitioned non-completion seeds overlap/i,
+    "scene partition rejects overlapping scene predicates",
+  );
+});
+
 class SameOwnerFreshModel extends SymbolicModel {
   override fresh(): SymbolicModel {
     return this;
@@ -1481,6 +1595,14 @@ test("split safety obligations reject invalid caps and propagate observer failur
   assert.throws(
     () => proveCompletionSafetyByObligation(model, { nonCompletionMode: "unsupported" as never }),
     /nonCompletionMode|mode/i,
+  );
+  assert.throws(
+    () => proveCompletionSafetyByObligation(model, { nonCompletionPartition: null as never }),
+    /nonCompletionPartition|partition/i,
+  );
+  assert.throws(
+    () => proveCompletionSafetyByObligation(model, { nonCompletionPartition: "unsupported" as never }),
+    /nonCompletionPartition|partition/i,
   );
   assert.throws(
     () => proveCompletionSafetyByObligation(model, { roundLimit: 1 }),

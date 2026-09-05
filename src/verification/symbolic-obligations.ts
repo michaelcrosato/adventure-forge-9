@@ -13,6 +13,8 @@ export type ObligationKind =
 export interface ObligationSummary {
   readonly id: string;
   readonly kind: ObligationKind;
+  /** Present only for a scene-partitioned non-completion obligation. */
+  readonly sceneId?: string;
   readonly choiceId?: string;
   readonly rounds: number;
   readonly nodes: number;
@@ -33,6 +35,11 @@ export interface SymbolicObligationOptions {
   readonly roundLimit?: number;
   /** Whether to absorb failure-reachable states from the global seed. */
   readonly nonCompletionMode?: "direct" | "failure-absorbed";
+  /**
+   * Partition the non-completion seed by its source scene. Global is the
+   * default and preserves the original single-obligation shape.
+   */
+  readonly nonCompletionPartition?: "global" | "scene";
   readonly onProgress?: (progress: ObligationProgress) => void;
   /** Observe each obligation while its roots still belong to its fresh model. */
   readonly onObligation?: (value: {
@@ -71,6 +78,7 @@ interface FixedPoint {
 interface SeedSpec {
   readonly id: string;
   readonly kind: ObligationKind;
+  readonly sceneId?: string;
   readonly choiceId?: string;
   readonly seed: CurrentRoot;
 }
@@ -102,6 +110,7 @@ function assertEquivalentFreshModel(original: SymbolicModel, fresh: SymbolicMode
 function snapshotOptions(options: SymbolicObligationOptions | undefined): {
   readonly roundLimit: number;
   readonly nonCompletionMode: "direct" | "failure-absorbed";
+  readonly nonCompletionPartition: "global" | "scene";
   readonly onProgress: ((progress: ObligationProgress) => void) | undefined;
   readonly onObligation: ((value: {
     readonly model: SymbolicModel;
@@ -114,6 +123,7 @@ function snapshotOptions(options: SymbolicObligationOptions | undefined): {
     return Object.freeze({
       roundLimit: DEFAULT_ROUND_LIMIT,
       nonCompletionMode: "direct" as const,
+      nonCompletionPartition: "global" as const,
       onProgress: undefined,
       onObligation: undefined,
     });
@@ -125,15 +135,20 @@ function snapshotOptions(options: SymbolicObligationOptions | undefined): {
   // prevents an accessor from changing the proof configuration mid-run.
   const requestedRoundLimit = options.roundLimit;
   const requestedNonCompletionMode = options.nonCompletionMode;
+  const requestedNonCompletionPartition = options.nonCompletionPartition;
   const onProgress = options.onProgress;
   const onObligation = options.onObligation;
   const roundLimit = requestedRoundLimit === undefined ? DEFAULT_ROUND_LIMIT : requestedRoundLimit;
   const nonCompletionMode = requestedNonCompletionMode === undefined ? "direct" : requestedNonCompletionMode;
+  const nonCompletionPartition = requestedNonCompletionPartition === undefined ? "global" : requestedNonCompletionPartition;
   if (!Number.isSafeInteger(roundLimit) || roundLimit < 1) {
     throw new RangeError("roundLimit must be a positive safe integer");
   }
   if (nonCompletionMode !== "direct" && nonCompletionMode !== "failure-absorbed") {
     throw new RangeError("nonCompletionMode must be \"direct\" or \"failure-absorbed\"");
+  }
+  if (nonCompletionPartition !== "global" && nonCompletionPartition !== "scene") {
+    throw new RangeError("nonCompletionPartition must be \"global\" or \"scene\"");
   }
   if (onProgress !== undefined && typeof onProgress !== "function") {
     throw new TypeError("onProgress must be a function");
@@ -141,7 +156,7 @@ function snapshotOptions(options: SymbolicObligationOptions | undefined): {
   if (onObligation !== undefined && typeof onObligation !== "function") {
     throw new TypeError("onObligation must be a function");
   }
-  return Object.freeze({ roundLimit, nonCompletionMode, onProgress, onObligation });
+  return Object.freeze({ roundLimit, nonCompletionMode, nonCompletionPartition, onProgress, onObligation });
 }
 
 /**
@@ -155,6 +170,12 @@ function snapshotOptions(options: SymbolicObligationOptions | undefined): {
  * removes states that can already reach either completion or an explicit
  * failure seed from the global non-completion seed; it leaves C and every
  * separate failure obligation intact.
+ *
+ * In scene-partitioned mode the non-completion seed N is split into disjoint
+ * N_s = N & atScene(s) for every authored scene, and each cone still uses all
+ * authored choices as predecessors. The exact distributive identity
+ * Pre*(union_s N_s) = union_s Pre*(N_s) makes this equivalent to one global
+ * non-completion obligation; the partition is only a workload decomposition.
  */
 export function proveCompletionSafetyByObligation(
   model: SymbolicModel,
@@ -251,14 +272,55 @@ export function proveCompletionSafetyByObligation(
   };
 
   let completionOrFailure: FixedPoint | undefined;
+  const appendNonCompletionSeeds = (seed: CurrentRoot): void => {
+    if (snapshot.nonCompletionPartition === "global") {
+      seeds.push(Object.freeze({
+        id: "non-completion:",
+        kind: "non-completion",
+        seed,
+      }));
+      return;
+    }
+
+    const scenePredicates = model.scenario.scenes.map(scene => Object.freeze({
+      id: scene.id,
+      predicate: current(model.atScene(scene.id), `scene ${scene.id} predicate`),
+    }));
+    const sceneSeeds = scenePredicates.map(scene => Object.freeze({
+      id: `non-completion:scene:${scene.id}`,
+      kind: "non-completion" as const,
+      sceneId: scene.id,
+      seed: current(
+        bdd.and(seed, scene.predicate),
+        `non-completion seed for scene ${scene.id}`,
+      ),
+    }));
+
+    // Validate the decomposition before any cone is solved. atScene() is
+    // checked independently above, and these checks make the partition
+    // contract fail closed if a model implementation changes its encoding.
+    for (let left = 0; left < sceneSeeds.length; left++) {
+      for (let right = left + 1; right < sceneSeeds.length; right++) {
+        if (bdd.and(sceneSeeds[left]!.seed, sceneSeeds[right]!.seed) !== 0) {
+          throw new Error("scene-partitioned non-completion seeds overlap");
+        }
+      }
+    }
+    let union = 0;
+    for (const sceneSeed of sceneSeeds) union = current(
+      bdd.or(union, sceneSeed.seed),
+      "scene-partitioned non-completion seed union",
+    );
+    if (bdd.xor(union, seed) !== 0) {
+      throw new Error("scene-partitioned non-completion seeds do not equal the global seed");
+    }
+    seeds.push(...sceneSeeds);
+  };
+
   if (snapshot.nonCompletionMode === "direct") {
     // Keep the default operation order: direct mode constructs the global
     // non-completion seed before compiling each choice's four failure seeds.
-    seeds.push(Object.freeze({
-      id: "non-completion:",
-      kind: "non-completion",
-      seed: current(bdd.and(playing, bdd.not(completion.root)), "non-completion seed"),
-    }));
+    appendNonCompletionSeeds(current(bdd.and(playing, bdd.not(completion.root)), "non-completion seed"));
     for (const choice of model.choices) seeds.push(...seedForChoice(choice));
   } else {
     const choiceSeeds: SeedSpec[] = [];
@@ -272,14 +334,10 @@ export function proveCompletionSafetyByObligation(
       "completion-or-failure initial seed",
     );
     completionOrFailure = completionOrFailureFixedPoint(completionOrFailureSeed);
-    seeds.push(Object.freeze({
-      id: "non-completion:",
-      kind: "non-completion",
-      seed: current(
-        bdd.and(playing, bdd.not(completionOrFailure.root)),
-        "failure-absorbed non-completion seed",
-      ),
-    }));
+    appendNonCompletionSeeds(current(
+      bdd.and(playing, bdd.not(completionOrFailure.root)),
+      "failure-absorbed non-completion seed",
+    ));
     seeds.push(...choiceSeeds);
   }
 
@@ -288,6 +346,7 @@ export function proveCompletionSafetyByObligation(
       const summary = Object.freeze({
         id: spec.id,
         kind: spec.kind,
+        ...(spec.sceneId === undefined ? {} : { sceneId: spec.sceneId }),
         ...(spec.choiceId === undefined ? {} : { choiceId: spec.choiceId }),
         rounds: 1,
         nodes: bdd.stats().nodes,
@@ -353,6 +412,7 @@ export function proveCompletionSafetyByObligation(
     const summary = Object.freeze({
       id: spec.id,
       kind: spec.kind,
+      ...(spec.sceneId === undefined ? {} : { sceneId: spec.sceneId }),
       ...(spec.choiceId === undefined ? {} : { choiceId: spec.choiceId }),
       rounds,
       nodes: fresh.bdd.stats().nodes,
