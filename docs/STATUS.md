@@ -12,19 +12,18 @@ Updated: 2026-09-04 (America/Vancouver). Full goal remains active.
 
 ## Active milestone
 
-Stage 1: two-scene ferry emergency, deterministic engine, terminal/browser projection, isolated subscription adapter, and evidence runner implemented. Source is being frozen for the specialist capability audit and first blind player/interview. No live experience result is claimed yet.
+Stage 1 accepted on frozen commit `04b492b`: live specialist capability audit passed; one fresh blind subscription player completed the rescue and gave its original interview in the same conversation. Integrity and deterministic replay passed. Hashed exports are outside the repository; see EVIDENCE.md.
+
+Stage 2 now active: complete Lowsail/Red Sluice small game with three resolutions, meaningful resource or obligation costs, and a changed return. The first player understood the rescue choice but was uncertain about the downstream medicine loss; authored clinic consequences are an explicit requirement for the next game. This is not yet an improvement comparison.
 
 Assignments: Luna/max engine and mechanical proofs; Luna/max human player surfaces; Luna/max subscription boundary probe and adapter. Manager owns integration, evidence runner, publication, and quality decisions.
 
 ## Acceptance still required
 
-1. Preserve frozen implementation and passing mechanical/UI verification in Git.
-2. Complete the separate live specialist capability audit.
-3. Subscription adapter proves isolation during actual model turns with keyless auth.
-4. Frozen candidate runs a fresh blind player; engine exits; same player gives original free-form and structured interview.
-5. Run integrity and replay pass, with durable export and evidence index.
-6. Implement full small game, then two comparable feedback-led improvement cycles.
-7. Continue systems and authored world expansion toward the full scale/depth requirement.
+1. Implement and mechanically verify the full small game, including all three resolution witnesses.
+2. Verify terminal/browser play, freeze source, and collect fresh blind feedback.
+3. Complete two predeclared, comparable feedback-led improvement cycles.
+4. Continue systems and authored world expansion toward the full scale/depth requirement.
 
 ## Continuation audit
 

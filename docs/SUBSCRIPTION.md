@@ -57,8 +57,10 @@ The protocol and settings were checked against the pinned source review at
 Server schema, and a no-turn local preflight. The preflight completed auth
 verification, effective-config validation, and `thread/start` with
 `gpt-5.6-luna`/`max`; it did not send gameplay or interview content. A live
-playtest remains required before claiming a completed experience or an
-authentic interview.
+playtest was then completed on frozen commit `04b492b`: the separate specialist
+audit and the fresh blind rescue/interview both passed. See EVIDENCE.md for IDs,
+limitations, and preserved artifacts. This proves the pinned client boundary and
+one observed session; it is not independent attestation of remote model weights.
 
 References: [Codex App Server](https://learn.chatgpt.com/docs/app-server),
 [Authentication](https://learn.chatgpt.com/docs/auth),

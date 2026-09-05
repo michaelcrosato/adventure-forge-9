@@ -16,7 +16,30 @@ Manager review requested a compact action-first layout, a visible ending receipt
 
 ## Live runs
 
-No accepted live run yet. The provider capability boundary passed source/config/initialization checks and awaits the separate specialist live audit. Use `npm run evidence -- list` as the authoritative inventory of attempted games, including interrupted and unsealed records. Specialist audits are preserved separately in `~/.local/share/adventure-forge-9/capability-probes`. A mechanical test or builder walkthrough cannot substitute for a blind player interview.
+Use `npm run evidence -- list` as the authoritative inventory of attempted games, including interrupted and unsealed records. Specialist audits are preserved separately in `~/.local/share/adventure-forge-9/capability-probes`. A mechanical test or builder walkthrough cannot substitute for a blind player interview.
+
+### Stage 1 accepted run
+
+Frozen source commit: `04b492bc96f19d17a94b23c0e32c5b3b0a163efc`. Build: `af9-49051eed9606c3a2a6a7b777`. Source snapshot SHA-256: `0113f116eb502b6c6f6b5f5e707a8b03ec0e7bee377a77e537de66f13839bef7`. GitHub CI [passed](https://github.com/michaelcrosato/adventure-forge-9/actions/runs/33933972795).
+
+The specialist audit `2026-09-05T00-44-33-936Z-2925c550` passed all eight checks: managed ChatGPT auth, verified isolation, pinned client/source, effective config, no forbidden calls, protected canary, and no capabilities reported. Its original response reported no exposed tools or file/repository/browser/network access. This supports the reviewed client/config boundary; it is not remote model attestation. Manifest and 75-event chain verify.
+
+Blind run `2026-09-05T00-44-53-519Z-754bbebc` used a different fresh thread, `gpt-5.6-luna`/`max`, seed 1. It chose `rescue-people`, then `finish-rescue`, and received a completed receipt at revision 2. The same conversation answered the original free-form questions and structured interview. No formatting recovery was needed. Integrity, 247-event chain, original response linkage, final state, and deterministic replay passed; `liveAccepted: true`. Elapsed runner time: 17.838 seconds. Attempts: 1/1 completed game; 1/1 completed specialist audit. No failed live attempts in this milestone.
+
+Original free-form interview:
+
+> 1. I was trying to decide whether to save six people or preserve the fever medicine, then accept the consequences.
+> 2. Cutting the cargo loose mattered most because it prioritized the trapped people.
+> 3. I wasn’t unable to proceed. The consequences of losing the medicine were uncertain, but the choice was clear.
+> 4. Seeing the survivors reunite with their families.
+> 5. Knowing the medicine was lost despite families needing it.
+> 6. I would start another run to see what happens if I save the cargo instead.
+
+Structured results: clarity 5/5, enjoyment 4/5, no confusion or defects reported, stated willingness to replay. Original reason: “The choices and consequences were clear, and the moral dilemma was engaging. I would try another run to save the medicine and compare the outcome.” No second run was observed in that conversation. One player does not establish general quality, improvement, or large-world breadth.
+
+Local preserved originals: `~/.local/share/adventure-forge-9/runs/2026-09-05T00-44-53-519Z-754bbebc/` and the audit directory above. Hashed durable exports: `~/.local/share/adventure-forge-9/exports/stage1-blind-rescue.tar.gz` and `stage1-capability-audit.tar.gz`, each with a `.sha256` sidecar checked successfully. Each archive includes its exact source snapshot and original events. Files are sealed read-only; hashes prove local integrity, not external notarization. These are local artifacts, not public release uploads.
+
+Decision: accept Stage 1 pipeline. Continue to the full small game; show the downstream clinic consequences explicitly. This decision is not a measured improvement claim.
 
 ## Improvement comparisons
 
