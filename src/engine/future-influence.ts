@@ -149,7 +149,6 @@ function finish(
 
 function indexScenario(scenario: Scenario): ScenarioIndex {
   const resources = Object.keys(scenario.initialResources).sort();
-  if (resources.length === 0) throw new Error("Future influence cannot analyze a scenario without resources");
   const resourceSet = new Set(resources);
 
   const scenesById = new Map<string, Scenario["scenes"][number]>();
@@ -198,9 +197,9 @@ function indexScenario(scenario: Scenario): ScenarioIndex {
   const monotoneFlags = new Set<string>();
   for (const flag of seenFlags) {
     const writes = flagWrites.get(flag);
-    // A condition-only flag has no false write and is therefore safe to treat
-    // as monotone if a caller supplies it true in the current state.
-    if (writes === undefined || [...writes].every((value) => value === true)) monotoneFlags.add(flag);
+    // Match the active audit's conservative rule: at least one authored
+    // write, and every such write sets the flag true.
+    if (writes !== undefined && [...writes].every((value) => value === true)) monotoneFlags.add(flag);
   }
 
   return {

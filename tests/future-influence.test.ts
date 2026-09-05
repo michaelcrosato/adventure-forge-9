@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { analyzeFutureInfluence, type FutureInfluenceState } from "../src/engine/future-influence.js";
 import type { Scenario } from "../src/engine/content.js";
+import { SCENARIO } from "../src/engine/content.js";
+import { sharedLowResolved } from "./reedway-witnesses.js";
 
 const BRANCH_SCENARIO: Scenario = {
   version: 1,
@@ -195,4 +197,26 @@ test("unknown conditions, effects, references, and destinations fail closed", ()
   assert.throws(() => analyzeFutureInfluence(unknownEffect, playing("start")), /unknown effect type/);
   assert.throws(() => analyzeFutureInfluence(unknownClock, playing("start")), /unknown clock/);
   assert.throws(() => analyzeFutureInfluence(unknownDestination, playing("start")), /unknown destination/);
+});
+
+test("permanent closure cannot hide unknown behavior from the influence proof", () => {
+  const invalid = {
+    ...PHASE_SCENARIO,
+    choices: PHASE_SCENARIO.choices.map(choice => choice.id === "take-early"
+      ? { ...choice, effects: [{ type: "unsupported-behind-closed-gate" }] }
+      : choice),
+  } as unknown as Scenario;
+  assert.throws(() => analyzeFutureInfluence(invalid, playing("gate", { phase: true })), /unknown effect type/);
+});
+
+test("resolved shores retain future costs while preserving old displayed history as parameters", () => {
+  const result = analyzeFutureInfluence(SCENARIO, sharedLowResolved());
+  assert.deepEqual(result.conservedResources, ["archive-evidence", "evacuees", "tide"]);
+  assert.ok(result.activeResources.includes("water"), "the canalwright exchange still spends water");
+  assert.ok(result.activeResources.includes("risk"), "old completed choices still read Risk");
+  assert.ok(result.conservedFlags.includes("archive-verdict-exposed"));
+  assert.ok(result.conservedFlags.includes("shared-water"));
+  assert.ok(result.activeFlags.includes("reedway-salvager-hostile"), "care can still reset hostility");
+  assert.ok(result.pruningJustifiers.includes("blackglass-resolved"));
+  assert.equal(result.reachableScenes.includes("pressure-control"), false);
 });
