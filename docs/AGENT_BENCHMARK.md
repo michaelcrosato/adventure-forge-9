@@ -85,3 +85,33 @@ favor/seizure orders and regional work during partial Archive investigation.
 Eight strengthened tests pass; reported 142–217 ms figures are test runtimes,
 not authoring durations. Full integration still exceeds the audit workload
 guard. No new cost or model-ranking claim follows from these tasks.
+
+The isolated symbolic experiment keeps Luna/max workers on bounded core,
+independent-test and review tasks. Manager review added memoized counting
+after finding repeated expansion of shared decision-diagram suffixes, and
+fixed incomplete Boolean assignments being accepted as false. The first
+ten core checks pass, including an 80-variable parity count. Manager-owned
+DSL compilation preserves exact fields and original effect order; peer
+review confirms the structural argument still needs complete comparisons
+and actual engine replay. The first combined 13-test run took 1.25 seconds
+and 117,516 KiB maximum RSS, including two small fixture state-set comparisons
+under both orders; this is a focused test runtime, not an authoring or
+campaign performance measurement. The first replay-test draft inferred
+receipt identity from the expected action instead of inspecting the actual
+receipt, and lacked repeated same-field writes and shared-summary ending
+cases. Those gaps are assigned for correction. A separate smoke oracle
+initially counted successors without asserting every exact tuple; that
+finding is retained and its review result is not accepted until corrected.
+
+The corrected independent fixture suite adds actual receipt/state/observation
+checks, repeated writes, duplicate-receipt terminal IDs and invalid
+intermediate values followed by resets. Manager integration exercises the
+new witness adapter in both fixture orders, including deliberate unreachable
+report and fixed-scenario mismatches. The adapter's first draft coupled
+witness validity to an absence of dead ends, which prevented replay of known
+negative fixtures; root required those graph-quality findings to remain
+separate and required unreachable reports to agree with the computed set.
+All 14 focused checks pass in 3.16 seconds / 181,496 KiB maximum RSS. The first
+historical constructor diagnostic still hits its 250,000-node limit before
+any graph traversal (3.21 seconds / 187,928 KiB); no campaign-scale success or
+model ranking follows from the small fixture results.
