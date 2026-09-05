@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2023", "module": "NodeNext", "moduleResolution": "NodeNext",
-    "strict": true, "noUncheckedIndexedAccess": true,
+    "strict": true, "noUncheckedIndexedAccess": true, "noEmitOnError": true,
     "outDir": "dist", "rootDir": ".", "skipLibCheck": true,
     "resolveJsonModule": true, "esModuleInterop": true
   },

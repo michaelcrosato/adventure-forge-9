@@ -10,7 +10,9 @@
     "verify": "npm run build && npm test",
     "play": "tsx src/player/cli.ts",
     "dev": "tsx src/player/server.ts",
-    "playtest": "tsx src/playtest/run.ts"
+    "playtest": "tsx src/playtest/run.ts",
+    "probe": "tsx src/playtest/probe.ts",
+    "evidence": "tsx src/playtest/manage.ts"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
