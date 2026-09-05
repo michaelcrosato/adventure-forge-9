@@ -78,6 +78,32 @@ test("ordinary resourceAtLeast and resource writers reject inherited constructor
   );
 });
 
+test("a resource named constructor can be adjusted when it is an authored property", () => {
+  const base = scenario();
+  const choices = base.choices as RecordValue[];
+  const parsed = validateScenario({
+    ...base,
+    initialResources: { constructor: 0 },
+    choices: [
+      {
+        ...choices[0],
+        effects: [
+          { type: "adjustResource", resource: "constructor", delta: 1 },
+          { type: "goTo", scene: "done" },
+        ],
+      },
+      choices[1],
+    ],
+  });
+
+  assert.equal(Object.hasOwn(parsed.initialResources, "constructor"), true);
+  assert.equal(parsed.initialResources.constructor, 0);
+  assert.deepEqual(parsed.choices[0]?.effects, [
+    { type: "adjustResource", resource: "constructor", delta: 1 },
+    { type: "goTo", scene: "done" },
+  ]);
+});
+
 test("clock declarations and resourceAtMost choice/text conditions are supported", () => {
   const base = scenario();
   const scenes = base.scenes as RecordValue[];
@@ -133,4 +159,47 @@ test("constructor is rejected as an unknown fact instead of matching FACT_LABELS
     withStartChoice({ effects: [{ type: "addFact", fact: "constructor" }, { type: "goTo", scene: "done" }] }),
     /scenario: missing player-facing label for fact "constructor"/,
   );
+});
+
+test("inherited optional when, outcome, and clocks do not enter parsed content", () => {
+  const base = scenario();
+  const keys = ["when", "outcome", "clocks"] as const;
+  const descriptors = new Map(keys.map((key) => [key, Object.getOwnPropertyDescriptor(Object.prototype, key)] as const));
+  try {
+    Object.defineProperty(Object.prototype, "when", {
+      configurable: true,
+      enumerable: false,
+      value: [{ type: "resourceAtLeast", resource: "supplies", value: 0 }],
+      writable: true,
+    });
+    Object.defineProperty(Object.prototype, "outcome", {
+      configurable: true,
+      enumerable: false,
+      value: { status: "completed", summary: "inherited outcome" },
+      writable: true,
+    });
+    Object.defineProperty(Object.prototype, "clocks", {
+      configurable: true,
+      enumerable: false,
+      value: [{ id: "deadline", resource: "supplies", max: 0 }],
+      writable: true,
+    });
+
+    const parsed = validateScenario(base);
+    assert.equal(parsed.clocks, undefined);
+    assert.equal(parsed.scenes[0]!.text[0]!.when, undefined);
+    assert.equal(parsed.choices[0]!.when, undefined);
+    assert.equal(parsed.choices[0]!.outcome, undefined);
+    assert.equal(Object.keys(parsed).includes("clocks"), false);
+    assert.equal(Object.keys(parsed.scenes[0]!.text[0]!).includes("when"), false);
+    assert.equal(Object.keys(parsed.choices[0]!).includes("when"), false);
+    assert.equal(Object.keys(parsed.choices[0]!).includes("outcome"), false);
+  } finally {
+    const objectPrototype = Object.prototype as Record<string, unknown>;
+    for (const key of keys) {
+      const descriptor = descriptors.get(key);
+      if (descriptor === undefined) delete objectPrototype[key];
+      else Object.defineProperty(Object.prototype, key, descriptor);
+    }
+  }
 });

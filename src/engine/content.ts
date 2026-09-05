@@ -37,6 +37,22 @@ function required(value: Record<string, unknown>, key: string, path: string): un
   return value[key];
 }
 
+function ownOptional<T>(value: object, key: string): T | undefined {
+  return Object.hasOwn(value, key) ? (value as Record<string, unknown>)[key] as T | undefined : undefined;
+}
+
+/** Shadow a polluted Object.prototype while keeping omitted fields non-enumerable. */
+function shadowOptional<T extends object>(value: T, key: string): void {
+  if (!Object.hasOwn(value, key)) {
+    Object.defineProperty(value, key, {
+      configurable: true,
+      enumerable: false,
+      value: undefined,
+      writable: true,
+    });
+  }
+}
+
 function stringValue(value: unknown, path: string): string {
   if (typeof value !== "string" || value.length === 0) fail(path, "must be a non-empty string");
   return value;
@@ -167,11 +183,14 @@ function effect(value: unknown, path: string): Effect {
 function textLine(value: unknown, path: string): TextLineData {
   if (!isRecord(value)) fail(path, "must be an object");
   exactKeys(value, ["text", "when"], path);
-  const when = value.when === undefined ? undefined : conditions(value.when, `${path}.when`);
-  return {
+  const whenValue = ownOptional<unknown>(value, "when");
+  const when = whenValue === undefined ? undefined : conditions(whenValue, `${path}.when`);
+  const parsed: TextLineData = {
     text: stringValue(required(value, "text", path), `${path}.text`),
     ...(when === undefined ? {} : { when }),
   };
+  shadowOptional(parsed, "when");
+  return parsed;
 }
 
 function scene(value: unknown, path: string): Scene {
@@ -202,20 +221,25 @@ function outcome(value: unknown, path: string): NonNullable<ChoiceData["outcome"
 function choice(value: unknown, path: string): Choice {
   if (!isRecord(value)) fail(path, "must be an object");
   exactKeys(value, ["id", "scene", "label", "description", "when", "effects", "outcome"], path);
-  const when = value.when === undefined ? undefined : conditions(value.when, `${path}.when`);
+  const whenValue = ownOptional<unknown>(value, "when");
   const effectsValue = required(value, "effects", path);
   if (!Array.isArray(effectsValue)) fail(`${path}.effects`, "must be an array");
   const effects = effectsValue.map((entry, index) => effect(entry, `${path}.effects[${index}]`));
-  const parsedOutcome = value.outcome === undefined ? undefined : outcome(value.outcome, `${path}.outcome`);
-  return {
+  const parsedWhen = whenValue === undefined ? undefined : conditions(whenValue, `${path}.when`);
+  const outcomeValue = ownOptional<unknown>(value, "outcome");
+  const parsedOutcome = outcomeValue === undefined ? undefined : outcome(outcomeValue, `${path}.outcome`);
+  const parsed: Choice = {
     id: idValue(required(value, "id", path), `${path}.id`),
     scene: idValue(required(value, "scene", path), `${path}.scene`),
     label: stringValue(required(value, "label", path), `${path}.label`),
     description: stringValue(required(value, "description", path), `${path}.description`),
-    ...(when === undefined ? {} : { when }),
+    ...(parsedWhen === undefined ? {} : { when: parsedWhen }),
     effects,
     ...(parsedOutcome === undefined ? {} : { outcome: parsedOutcome }),
   };
+  shadowOptional(parsed, "when");
+  shadowOptional(parsed, "outcome");
+  return parsed;
 }
 
 function clock(value: unknown, path: string): ClockData {
@@ -249,7 +273,7 @@ function validateScenario(value: unknown): Scenario {
   }
   if (Object.keys(initialResources).length === 0) fail("scenario.initialResources", "must contain a resource");
 
-  const clocksValue = value.clocks;
+  const clocksValue = ownOptional<unknown>(value, "clocks");
   if (clocksValue !== undefined && !Array.isArray(clocksValue)) fail("scenario.clocks", "must be an array");
   const clocks = clocksValue === undefined
     ? []
@@ -299,13 +323,16 @@ function validateScenario(value: unknown): Scenario {
     // balance. This catches two subtractive effects that cannot both succeed
     // without assuming that every scene starts with initialResources.
     const conditionFloors = new Map<string, number>();
-    for (const conditionValue of choiceValue.when ?? []) {
+    for (const conditionValue of ownOptional<readonly Condition[]>(choiceValue, "when") ?? []) {
       if (conditionValue.type === "resourceAtLeast") {
         conditionFloors.set(conditionValue.resource, Math.max(conditionFloors.get(conditionValue.resource) ?? 0, conditionValue.value));
       }
     }
-    const relativeBalances: Record<string, number> = {};
-    const hasSetBalance: Record<string, boolean> = {};
+    // Resource identifiers are authored data and may legally use names such
+    // as "constructor". Null-prototype maps keep inherited Object members
+    // from being mistaken for prior symbolic balances.
+    const relativeBalances: Record<string, number> = Object.create(null) as Record<string, number>;
+    const hasSetBalance: Record<string, boolean> = Object.create(null) as Record<string, boolean>;
     for (const effectValue of choiceValue.effects) {
       if (effectValue.type === "setFlag") flags.add(effectValue.flag);
       if (effectValue.type === "addFact") facts.add(effectValue.fact);
@@ -345,15 +372,16 @@ function validateScenario(value: unknown): Scenario {
         }
       }
     }
-    if (choiceValue.outcome === undefined && goToCount !== 1) {
+    const choiceOutcome = ownOptional<NonNullable<ChoiceData["outcome"]>>(choiceValue, "outcome");
+    if (choiceOutcome === undefined && goToCount !== 1) {
       fail(`scenario.choices[${index}]`, "a non-terminal choice must have exactly one goTo effect");
     }
-    if (choiceValue.outcome !== undefined && goToCount !== 0) {
+    if (choiceOutcome !== undefined && goToCount !== 0) {
       fail(`scenario.choices[${index}]`, "a terminal choice cannot have a goTo effect");
     }
   }
   for (const [index, choiceValue] of choices.entries()) {
-    for (const conditionValue of choiceValue.when ?? []) {
+    for (const conditionValue of ownOptional<readonly Condition[]>(choiceValue, "when") ?? []) {
       if ((conditionValue.type === "resourceAtLeast" || conditionValue.type === "resourceAtMost") && !Object.hasOwn(initialResources, conditionValue.resource)) {
         fail(`scenario.choices[${index}].when`, `unknown resource ${JSON.stringify(conditionValue.resource)}`);
       }
@@ -364,7 +392,7 @@ function validateScenario(value: unknown): Scenario {
   }
   for (const [sceneIndex, sceneValue] of scenes.entries()) {
     for (const [lineIndex, line] of sceneValue.text.entries()) {
-      for (const conditionValue of line.when ?? []) {
+      for (const conditionValue of ownOptional<readonly Condition[]>(line, "when") ?? []) {
         if ((conditionValue.type === "resourceAtLeast" || conditionValue.type === "resourceAtMost") && !Object.hasOwn(initialResources, conditionValue.resource)) {
           fail(`scenario.scenes[${sceneIndex}].text[${lineIndex}].when`, `unknown resource ${JSON.stringify(conditionValue.resource)}`);
         }
@@ -388,21 +416,34 @@ function validateScenario(value: unknown): Scenario {
     scenes: scenes.map((sceneValue) => ({
       id: sceneValue.id,
       title: sceneValue.title,
-      text: sceneValue.text.map((line) => ({
-        text: line.text,
-        ...(line.when === undefined ? {} : { when: line.when.map((conditionValue) => ({ ...conditionValue })) }),
-      })),
+      text: sceneValue.text.map((line) => {
+        const lineWhen = ownOptional<readonly Condition[]>(line, "when");
+        const parsedLine: TextLineData = {
+          text: line.text,
+          ...(lineWhen === undefined ? {} : { when: lineWhen.map((conditionValue) => ({ ...conditionValue })) }),
+        };
+        shadowOptional(parsedLine, "when");
+        return parsedLine;
+      }),
     })),
-    choices: choices.map((choiceValue) => ({
-      id: choiceValue.id,
-      scene: choiceValue.scene,
-      label: choiceValue.label,
-      description: choiceValue.description,
-      ...(choiceValue.when === undefined ? {} : { when: choiceValue.when.map((conditionValue) => ({ ...conditionValue })) }),
-      effects: choiceValue.effects.map((effectValue) => ({ ...effectValue })),
-      ...(choiceValue.outcome === undefined ? {} : { outcome: { ...choiceValue.outcome } }),
-    })),
+    choices: choices.map((choiceValue) => {
+      const choiceWhen = ownOptional<readonly Condition[]>(choiceValue, "when");
+      const choiceOutcome = ownOptional<NonNullable<ChoiceData["outcome"]>>(choiceValue, "outcome");
+      const parsedChoice: Choice = {
+        id: choiceValue.id,
+        scene: choiceValue.scene,
+        label: choiceValue.label,
+        description: choiceValue.description,
+        ...(choiceWhen === undefined ? {} : { when: choiceWhen.map((conditionValue) => ({ ...conditionValue })) }),
+        effects: choiceValue.effects.map((effectValue) => ({ ...effectValue })),
+        ...(choiceOutcome === undefined ? {} : { outcome: { ...choiceOutcome } }),
+      };
+      shadowOptional(parsedChoice, "when");
+      shadowOptional(parsedChoice, "outcome");
+      return parsedChoice;
+    }),
   };
+  shadowOptional(parsed, "clocks");
   // Ensure that every fact reachable through data remains a plain authored value.
   if ([...facts].some((fact) => typeof fact !== "string" || fact.length === 0)) fail("scenario", "facts must be non-empty strings");
   for (const fact of facts) {
