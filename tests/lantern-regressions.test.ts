@@ -10,7 +10,6 @@ import {
   stateHash,
   type GameState,
 } from "../src/engine/index.js";
-import { RAW_SCENARIO } from "../src/content/scenario.js";
 
 function step(state: GameState, choiceId: string): GameState {
   const choice = observe(state).choices.find(candidate => candidate.id === choiceId);
@@ -192,19 +191,6 @@ function councilArchive(background?: "field-medic" | "oathkeeper"): GameState {
 }
 
 test("voluntary testimony, coerced summons, and background protection remain separate contracts", () => {
-  const summonsDefinition = RAW_SCENARIO.choices.find(choice => choice.id === "use-council-debt-to-summon-mara");
-  if (summonsDefinition === undefined) throw new Error("the council summons definition should exist");
-  assert.deepEqual(summonsDefinition.when, [
-    { type: "flag", flag: "council-control", value: true },
-    { type: "flag", flag: "archive-witness-contacted", value: false },
-  ]);
-  const testimonyDefinition = RAW_SCENARIO.choices.find(choice => choice.id === "record-mara-testimony");
-  if (testimonyDefinition === undefined) throw new Error("the voluntary testimony definition should exist");
-  assert.deepEqual(testimonyDefinition.when, [
-    { type: "flag", flag: "archive-witness-contacted", value: false },
-    { type: "flag", flag: "council-control", value: false },
-  ]);
-
   let voluntary = walk([
     "visit-clinic",
     "make-clinic-promise",

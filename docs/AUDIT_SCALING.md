@@ -17,8 +17,9 @@ status, and terminal kind/summary. A flag absent from the state is normalized to
 The key is sound for this engine's closed vocabulary. Conditions read only
 flags and resources, and effects write only scene, flags, resources, and
 facts. If two states have the same key, their legal choice IDs, conditional
-scene text, and every reduced successor key are the same. A flag omitted at
-scene `s` cannot be read before a future scene where it becomes retained. Facts
+scene text, and every reduced successor key are the same. Every successor's
+retained flags are a subset of its predecessor's static future read set, so
+an omitted flag cannot later change legality or conditional text. Facts
 and history affect the public facts/journal projection but do not gate an
 action or change an effect. The audit keeps one engine state as a
 representative for those fields and checks every collision's relevant text,
@@ -51,7 +52,7 @@ audit produced:
 | Wall time (`npx tsx -e ... auditScenario()`) | about 18 seconds |
 
 The archived full traversal for the original Stage 5 source is recorded as
-713,703 states with 168 no-completion states; an older 2,179 source record is
+713,703 states with 168 no-completion states at `d1cd95c`; the older `2179a18` source is
 recorded as 727,927 states with zero no-completion states. This branch did not
 rerun either old implementation and includes the later Archive repair commit,
 so these are raw historical/current measurements rather than an apples-to-
