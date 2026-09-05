@@ -27,4 +27,8 @@ This is an initial expansion check, not a controlled improvement comparison. Rep
 
 ## Evidence
 
-Pending final audit integration and frozen live runs. The public site continues to serve the previously accepted small game until the candidate's checks pass and main is pushed.
+On content correction `756b295`, the local browser served by the stateless Vercel handler completed the exact stranded-route regression in 22 actions. A reload after `keep-mara-hidden` resumed the Archive hall with 15 journal entries. Returning to Jalen, obtaining the ledger and counterseal, negotiating the provisional record, and closing the case produced a completed receipt with revision/journal count 22. Save download and completed reload passed. At a 390-pixel viewport, the document width was 375 pixels; no browser errors were reported. Screenshots were inspected at `/tmp/af9-lantern-initial.png`, `/tmp/af9-lantern-hall.png` and `/tmp/af9-lantern-mobile.png`. The downloaded checkpoint is `/tmp/af9-lantern-completed.save`. These are local mechanical/browser checks, not blind-player feedback or a production deployment of the expansion.
+
+A local capacity measurement on the same source repeatedly visited and left the seal workroom. Checkpoints at revisions 110, 510 and 1,010 restored to identical state hashes. Serialized request sizes were 9,325, 40,325 and 79,097 bytes; restore times were approximately 1.84, 10.44 and 31.95 ms in this run. This tests repeated navigation, not distinct authored encounters or hosted latency. The handler's 256 KiB request limit remains a finite long-session constraint to address before claiming world-scale persistence. Measurement script: `/tmp/af9-long-checkpoint.mts`.
+
+Final audit integration and frozen live runs remain pending. The public site continues to serve the previously accepted small game until the candidate's checks pass and main is pushed.
