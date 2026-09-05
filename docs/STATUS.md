@@ -1,38 +1,30 @@
 # Current work
 
-Updated: 2026-09-04 (America/Vancouver). Full goal remains active.
+Updated: 2026-09-04 (America/Vancouver). The full Skyrim-breadth/BG3-depth goal remains active and far beyond the current game.
 
-## Verified state
+## Accepted foundation
 
-- Public GitHub repository: https://github.com/michaelcrosato/adventure-forge-9, default branch `main`.
-- Founding documents preserved in commit `15ada58`; consolidated plan committed in `4581f73`.
-- Reviewed PLANb first and the three reference plans. TypeScript/Node and subscription-first order selected.
-- Node 22.22.1 and Codex CLI 0.153.3 available. Managed ChatGPT authentication and isolated App Server initialization passed without a model turn.
-- `npm run verify` passes all 16 tests. Browser rescue/cargo endings and mobile layout checked; terminal rescue completed.
+- Public repository: https://github.com/michaelcrosato/adventure-forge-9 (`main`). Original briefs archived in `15ada58`; consolidated plan in `4581f73`.
+- Stage 1: deterministic engine and real keyless Codex subscription play/interview, with separately verified isolation and preserved original evidence. See EVIDENCE.md and SUBSCRIPTION.md.
+- Stage 2: Lowsail/Red Sluice, 11 scenes, 44 authored choices including exits, four named inhabitants, three resolution families, and changed returns. Twenty tests, exhaustive 2,429-state traversal, terminal/browser and save/load verification passed. First authentic blind play passed. See STAGE2.md.
+- Cycle 1: limited evidence supports explicit road-cost wording after two baseline and two candidate games. Later contrary feedback limits any broad reading. See CYCLE1.md.
+- Cycle 3: limited evidence supports explicit clinic-to-council travel after two known baseline and two fresh candidate games on `34af626`. All encountered the clinic choice; abrupt-move reports fell 1/2 to 0/2, with median clarity/enjoyment 4.5/4.5 to 5/5. See CYCLE3.md. These two retained normal-play improvements meet the initial foundation sequence; they do not establish the final scale or depth.
 
-## Active milestone
+## Unresolved evidence and active work
 
-Stage 1 accepted on frozen commit `04b492b`: live specialist capability audit passed; one fresh blind subscription player completed the rescue and gave its original interview in the same conversation. Integrity and deterministic replay passed. Hashed exports are outside the repository; see EVIDENCE.md.
+Cycle 2 A/B failed their declared global rating gate and did not encounter the depleted chamber in normal play. A focused screen test found both B readers understood the supply shortfall, but one questioned medicine/silverleaf naming and the order's seal. It failed the full focused criterion. Terminology revision C is being prepared on a separate trusted checkout; all failed/null results remain in CYCLE2.md. Specialist screen tests cannot grant gameplay acceptance or replace authentic interviews.
 
-Stage 2 now active: complete Lowsail/Red Sluice small game with three resolutions, meaningful resource or obligation costs, and a changed return. The first player understood the rescue choice but was uncertain about the downstream medicine loss; authored clinic consequences are an explicit requirement for the next game. This is not yet an improvement comparison.
+Stage 5 candidate: Lantern Archive, one linked investigation area, consequential player backgrounds through existing data vocabulary, multiple evidence approaches, hearing tradeoffs, and consequences in Lowsail. Prepared in an isolated branch before integration. Original small-game endings must remain valid; continuing must close their actual resource/obligation effects before travel. No new area is accepted or live tested yet.
 
-Stage 2 is accepted: 11 scenes, 44 authored choices (including exits), three resolution families, and four named inhabitants. Twenty tests, exhaustive 2,429-state traversal, terminal/browser and save/load checks pass. Its first fresh blind player completed, gave an authentic same-session interview, and passed integrity/replay validation. Ratings were clarity 5 and enjoyment 5; slight ambiguity about canal scouting supplied the next improvement question. See STAGE2.md for original evidence.
+An independent engine performance candidate will avoid repeatedly replaying histories for privately constructed immutable states while preserving full checks for external saves/objects. It is not integrated yet. No world-scale performance claim follows from that optimization.
 
-Stage 3 / Cycle 1 is complete. Two fresh baselines reported road ambiguity; two candidates did not, with ratings no lower and no new defects. The parsed source comparison proved unchanged mechanics. The limited four-session result supports keeping explicit cost wording; see CYCLE1.md for nuance and original evidence.
+Current main's source freeze for Cycle 3 has ended; both runs are closed and exported. The exact frozen source remains at commit `34af626` and trusted checkout `/tmp/af9-cycle3-verified`. Future live runs require their own source freeze.
 
-Stage 4 / Cycle 2 is active. CYCLE2.md predeclares the complete chamber-requirements correction and an exposure-aware comparison. No source should change in a checkout used by a running player.
+## Required next work
 
-Cycle 2 Candidates A and B did not pass the declared global rating gate; neither reached the depleted chamber in normal play. B cleared the explicit medicine/clinic confusion but one reader reported abrupt clinic-to-council travel. All six Cycle 2 records remain preserved. The predeclared focused comprehension check now directly compares depleted-chamber projections. Do not claim two accepted improvement cycles yet.
+1. Record the focused terminology result honestly, preserving original evidence and failures.
+2. Review and integrate the connected-area candidate and engine optimization, with all existing regressions, cross-area witnesses, character counterfactuals, replay/save and traversal checks. Do not weaken checks to fit content.
+3. Verify human play surfaces and collect authentic fresh cross-area feedback on a frozen build.
+4. Expand authored systems and areas in reviewed waves, including long sessions, cross-area consequences and measured breadth/depth. The full completion audit remains outstanding.
 
-Assignments: Luna/max engine and mechanical proofs; Luna/max human player surfaces; Luna/max subscription boundary probe and adapter. Manager owns integration, evidence runner, publication, and quality decisions.
-
-## Acceptance still required
-
-1. Implement and mechanically verify the full small game, including all three resolution witnesses.
-2. Verify terminal/browser play, freeze source, and collect fresh blind feedback.
-3. Complete two predeclared, comparable feedback-led improvement cycles.
-4. Continue systems and authored world expansion toward the full scale/depth requirement.
-
-## Continuation audit
-
-This initial goal turn has made progress: created and published authoritative repository state and started implementation. There is no previous stopped live run to resume. Later continuations must inspect actual worktree and process handles; never infer a running job from this file.
+Manager owns integration, evidence, publication and acceptance. Luna/max remains the primary development benchmark; corrections and observed timing belong in AGENT_BENCHMARK.md. Inspect actual worktrees, agents and process handles at each continuation rather than inferring running work from this document.
