@@ -37,4 +37,25 @@ Run two fresh Candidate B conversations at seeds 1 and 2 against the same frozen
 
 Retain B only if full requirements and conditional consequences match engine counterfactuals, no new defects appear, median clarity/enjoyment are no lower than the original baseline, and no B interview explicitly leaves the clinic/evacuation medicine relationship unclear. Without comparable depleted-state exposure, the chamber explanation remains mechanically verified and experience-untested regardless of ratings. If B fails, keep the cycle unresolved and design a focused comprehension check instead of claiming success.
 
-Candidate B results pending.
+## Candidate B result and focused follow-up declaration
+
+Candidate B: commit `ea6caf3df73f471c6b55d5e0ccb477db5ddf9534`, build `af9-cadd1c63271dee5b118a40f0`, source `b3e63350b7aa0451e6bb6a99be4ed2af2ed872a98b2a81d39fa1428d20415796`. Twenty tests and [CI](https://github.com/michaelcrosato/adventure-forge-9/actions/runs/33936537821) passed. Engine counterfactuals confirm repair treats the clinic with water=2/medicine=0, while medicated evacuation rescues eight families with water=0/medicine=1 and no clinic-aided flag.
+
+| Version / seed | Run ID | Clarity | Enjoyment | Depleted chamber reached |
+| --- | --- | --- | --- | --- |
+| Candidate B / 1 | `2026-09-05T01-33-46-695Z-9d633670` | 4 | 4 | No |
+| Candidate B / 2 | `2026-09-05T01-33-46-705Z-a4cd9fd4` | 5 | 5 | No |
+
+Both attempts completed shared repair in ten actions, with original same-thread interviews and integrity/replay acceptance. No technical failures, retries or observed defects. Both stated willingness to replay. Elapsed times: 57.170 and 53.975 seconds. Exports: `cycle2-candidate-b-seed{1,2}.tar.gz` with sidecars. No explicit clinic/evacuation medicine confusion remained. B seed 1 instead reported: “Promising the clinic immediately moved to the council hall without an explicit travel choice.” B seed 2 briefly weighed the road tradeoff but its structured confusion array was empty.
+
+Decision: B also fails the declared rating gate (clarity median 4.5 versus baseline 5). Do not claim acceptance by that rule. The depleted explanation is still untested in normal play. All baseline/A/B results remain above, including the unrelated transition issue. The prescribed next action is a focused comprehension check; no unchanged full-game reruns are dispatched to seek a better score.
+
+### Focused comprehension protocol
+
+Declared before specialist calls. Show fresh isolated readers only the public projection of the depleted chamber: `visit-clinic → make-clinic-promise → refuse-council-control → borrow-repair-tools → pay-scouts → read-stolen-order`. Each has supplies=0, medicine=2, tools=1 and the clinic promise. Compare the trusted baseline `f66ecd2` with B's game content. Use seeds 1 and 2, same Luna/max and verified subscription boundary; two fresh conversations per version. This is a specialist screen-comprehension test, not a normal playthrough, and cannot grant live-game acceptance or replace any original interview.
+
+First ask neutrally for the situation, available ways forward, any apparent mismatch and a listed choice. Then collect chosen choice ID, whether shared repair is available, whether the scene fully explains its requirements, the missing requirement if known, and an explanation. Correct answers and scoring targets never enter player context. Preserve original free response before structured extraction, exact projection, action prefix, game source/build identity, harness source, provider settings, errors and manifest outside the repository. Never execute source received in a case file.
+
+Interpretation: verify that readers select a legal action, identify repair as unavailable, and can ground its absence in the missing supply. Report whether they regard the requirements as explained, alongside their original reasoning. Candidate prose must match engine counterfactuals. If both candidate readers correctly explain the missing supply and available kit alternative without a new misunderstanding, this can support retaining the factual guidance for this particular state. It does not establish overall enjoyment or resolve the global rating result. If baseline readers do equally well, report no comprehension advantage; if candidates fail, revise the explanatory design rather than declaring success.
+
+Focused results pending. Broader abrupt travel remains an open issue for campaign navigation.
