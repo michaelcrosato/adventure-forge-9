@@ -115,3 +115,21 @@ locked dependencies and complete source manifest are recorded in
 two-million-state run and checked process closure remain beside that probe.
 There are now 35 worktrees and the same two local branches; these are live
 preservation counts, not revisions to the four cleanup batches.
+
+The static projection adds three detached source roles:
+`/tmp/af9-packed-static-historical-139e48`,
+`/tmp/af9-packed-static-current-7428b75` and
+`/tmp/af9-packed-static-trusted-current-7428b75`. The two probes contain only
+the three tested verifier modules from clean `6b77030`; the current trusted
+checkout has no overlay. All have their own locked dependencies. Historical
+trusted replay reuses the separate clean
+`/tmp/af9-symbolic-affinity-trusted-139e48` source.
+
+The historical static report and independent replay check are complete. Both
+current capacity failures are preserved; the eight-million-class run reuses
+the same current probe without changing any source or adding a checkout.
+The corresponding source-preparation manifests and root checks are indexed in
+`SYMBOLIC_REACHABILITY_EXPERIMENT.md`. The refreshed inventory has 38 worktrees
+and the same two local branches. All three diagnostic processes are closed.
+These deliberately retained sources still need an eventual reconstructible
+archive/disposition; final cleanup and publication are not complete.

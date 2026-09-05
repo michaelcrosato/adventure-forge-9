@@ -22,6 +22,29 @@ campaign completion. An initial adoption review incorrectly proposed retaining
 the failing full family campaign invocation; correction separates the quotient
 algorithm's own obligations from the intrinsic engine/reachability requirements.
 
+The static projection worker supplied a scenario-bound helper and finite
+fixtures. Manager/peer review corrected a circular class oracle, unioned legal
+choice comparisons and test-name filtering, then added independent completion
+classification and negative-path checks. The manager's first trap fixture
+violated the authored-content requirement for at least one choice; that failed
+run is preserved. A guarded unavailable exit repairs the fixture. Clean
+`6b77030` passes all 26 focused checks in 2.32 seconds. The historical packed
+static graph completes in 1.40 seconds, matches 169,922 classes / 332,402 edges,
+and passes a separate all-190 trusted-engine witness checker in 0.49 seconds.
+This is accepted historical control evidence, with metadata coverage limited
+to the replayed paths and separate engine regressions.
+
+The same static scope fails the current two-million-class cap in 7.50 seconds.
+A reviewed capacity-only diagnostic also fails at eight million classes in
+37.63 seconds; all 96 shared logical checkpoints match. The prepared current
+checker is not executed on either incomplete report. Two independent read-only
+reviews support the existing monotone false-gate analyzer as a next candidate,
+provided the key includes the retained-mask identity, all pruning justifiers
+remain, resettable flags cannot prune and collisions fail closed on divergent
+control behavior. No next candidate source or campaign run is claimed here.
+These measurements are verification runtimes, not worker authoring time,
+service cost or an equivalent-task model ranking.
+
 Reference: `gpt-5.6-luna`, reasoning `max`, as requested. These are development workers, not blind playtesters. Service cost and exact per-worker token counts are unavailable; no dollar estimates are claimed.
 
 | Task | Accepted output | Manager/peer corrections | Timing evidence |

@@ -282,3 +282,36 @@ violation. See `LOCAL_FLAG_STABILITY_AUDIT.md` for the exact counterexample,
 measurements and preserved artifacts. Symbolic reachability and exhaustive
 prefix partitioning are under independent feasibility review; no new method
 or limit has been adopted and no fresh Stage 8 players have been dispatched.
+
+## Packed static control audit experiment
+
+The separate experiment now has a complete historical validation. Clean
+`6b77030` adds an explicit static future-read flag scope, retains every resource,
+scene, lifecycle and ending, and stores full representative codes and actual
+parent paths. Build and 26 focused checks pass. On historical `139e48a`, its
+169,922 control classes and 332,402 transitions exactly match the accepted
+static audit; dead ends, unfinished states without completion and unreachable
+content are all zero. All 25 scene, 131 choice and 34 terminal-choice paths
+also pass a separate clean trusted-engine checker with full replay, save,
+observation, revision, hash and receipt checks. This does not enumerate every
+full flag/history state or prove metadata equality beyond the tested paths.
+
+Current source is frozen at documentation head `7428b75`, game source
+`2f6212d`, build `af9-dce7b1dc57b6d6febcc9bb72`. Its separate probe has exactly
+the tested verifier files, and all 12 current engine/content files match the
+tested experiment. The current static graph hits two million classes in
+7.50 seconds / 795,528 KiB maximum RSS. A separately reviewed capacity-only
+measurement, on the same source, hits eight million classes in 37.63 seconds /
+2,862,832 KiB maximum RSS. Every one of the smaller run's 96 logical progress
+checkpoints matches the larger prefix. Neither finishes backward completion
+analysis or witness replay; the prepared current independent checker is not
+run on incomplete output.
+
+Reports and root provenance checks are under
+`/tmp/af9-packed-static-current-7428b75*` and
+`/tmp/af9-packed-static-current-8m-7428b75*`, with the exact root-check and
+manifest paths indexed in `SYMBOLIC_REACHABILITY_EXPERIMENT.md`. The release
+family guard and main verifier source are unchanged. The next proof review
+concerns the existing permanent monotone false-gate analysis, with retained
+mask identity and collision checks; no new phase implementation has started.
+Full current verification and the predeclared three fresh players remain open.

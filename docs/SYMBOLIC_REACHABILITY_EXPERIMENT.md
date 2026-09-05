@@ -1030,3 +1030,180 @@ unchanged. The next review concerns a conservative static future-read flag
 quotient, with every resource, scene, lifecycle and ending retained. This would
 be a separately declared proof representation, not all-flag-state coverage;
 no such source change or campaign run has yet been made.
+
+### Static future-read packed control classes
+
+Clean experiment `6b77030ec2399c1414ee8e277fb8432f442276b2` adds an opt-in
+`stateScope: "static-future-flags"`; the default remains `all-flags`.
+`PackedControlProjection` derives static playing and terminal text flag masks
+from the model's validated immutable scenario. Every resource, scene, status
+and ending bit remains exact. The helper validates the complete code before
+masking, freezes its public flag records and checks authored successor-mask
+containment. It does not use state-specific pruning. Index keys normalize only
+irrelevant flags; the graph keeps full actual representatives and parent paths.
+Public membership consequently describes a control class, not independently
+traversed full-flag values or full-history equivalence.
+
+The closed-DSL argument is that every current text/choice flag read is retained,
+and every authored destination's future reads are contained in its source's
+closure. Effects write flags to constants and preserve exact resource
+arithmetic. Equal projected inputs therefore have the same legal choice IDs,
+conditional text and projected successors, preserving terminal identity,
+dead ends and completion. Resettable flags remain whenever they may be read.
+Facts, history, revisions and hashes remain outside this control tuple and
+retain their separate engine/replay obligations.
+
+The three frozen verifier files have SHA-256 values:
+
+| File | SHA-256 |
+| --- | --- |
+| `packed-model.ts` | `7a48c708400ebf771125c78f890a4b5f5d4627fefdf4a0e62fd48ecd1e58aeb8` |
+| `packed-projection.ts` | `9ed68147c7e5b466301e9c9f405094beca18ae477004958b2c1c9367c85aa807` |
+| `packed-reachability.ts` | `1446f653ad6c2032143ce2f09ce47467a32015d66a969bf8f395361648f77698` |
+
+Build, 17 packed checks and nine existing audit-scaling checks pass in
+2.32 seconds / 331,252 KiB maximum RSS, with unchanged clean source before
+and after. The finite oracle independently derives classes from authored
+scene closure and decoded tuples, compares every member's exact legal set,
+and calculates backward completion independently. Negative fixtures cover
+unread flags, loops, a guarded dead end, departure without completion, terminal
+text, resettable flags, maximum safe resources and malformed codes. Preserve
+`/tmp/af9-packed-static-focused-tests-v2.log` (SHA-256
+`0dc2c8198415e2b502a484f6acbf1b8513536ab7fd6144325cd91525da614a99`)
+and `/tmp/af9-packed-static-test-provenance-v2.json` (SHA-256
+`b2fd9d2d5130ed02ba1a26bf07fe5492a5ac66f93fd39fe190a2fb1ede21cdcb`).
+The V1 run failed because the manager's trap scene had no authored choice;
+its corrected fixture has one unavailable guarded exit. The original V1 log
+and provenance remain intact; this was a fixture validation error.
+
+#### Complete historical comparison
+
+`/tmp/af9-packed-static-historical-139e48` contains only the three tested
+modules over detached historical `139e48a`, with its own locked dependencies.
+All 11 non-verifier source/configuration files match the separate clean trusted
+historical checkout. The independent authored-closure preparation agrees with
+the historical static audit's masks; the full packed layout remains 544 bits,
+25 scenes, nine resources, 54 flags and 34 ending pairs.
+
+The frozen profile/runner declare projected control-class identity and scope,
+bind the expected projection before traversal, and retain every full-code
+witness comparison. Configuration is two million states, eight million edges,
+1,536 MiB heap, 120-second checked time and external TERM at 150 seconds plus
+KILL after five. The complete manifest is
+`/tmp/af9-packed-static-historical-manifest-v1.json` (SHA-256
+`6f842671683057b725a9d19b8cd2d0c5b98c7f63cc881d4c67072b9dc6784f2c`).
+Source and projection preparations are
+`/tmp/af9-packed-static-historical-source-preparation-v1.json` and
+`/tmp/af9-packed-static-projection-preparation-v1.json`; the independently
+derived projection hash is
+`7dca295cf5b340811c45fc3fd1f47799eb829a39e056e3ed9ea214a5cf1ccf1d`.
+
+The report `/tmp/af9-packed-static-historical-139e48.json` is complete:
+169,922 control classes, 332,402 transitions and 134,108 completable classes.
+Dead ends, unfinished states without completion and unreachable content are
+zero. Classes and transitions exactly match the accepted historical static
+audit. All 190 paths cover 25 scenes, 131 choices and 34 terminal choices;
+2,065 path steps produce 2,255 full state/legal/save/hash/observation checks,
+13,896 transition checks and 68 receipt checks. Every path also passes the
+engine replay API. External runtime is 1.40 seconds / 188,440 KiB maximum RSS;
+exit code zero, null signal and absent wrapper PID 1273180 confirm closure.
+The report, progress, finalization and log share that filename prefix.
+
+Root provenance check `/tmp/af9-packed-static-historical-root-check-v1.json`
+has SHA-256
+`4567b71ddc0ecc2b60c605eb1ca4918816aced0bb511a2cf181ce4f444768881`.
+Its checker-pending field predates the subsequent independent success. The
+separate checker `/tmp/af9-check-packed-static-historical-v1.mts` (SHA-256
+`628d428b3507fdb1879df08b95c5f3efc800bb53c112d0f5f1386626ddfe0247`)
+imports only the separate clean trusted historical engine/content. It checks
+source/projection bindings, all exact coverage IDs and all 190 manual and
+engine-API replays with full state, observation, save, revision, hash and
+receipt comparisons. Its complete output is
+`/tmp/af9-packed-static-historical-independent-check-v1.json` (SHA-256
+`5459f7b3b168bb65351f8d8ec5e408a5c34364927c8a5f3b217ddef7d30c3c96`).
+It exits zero in 0.49 seconds / 106,136 KiB maximum RSS. This independently
+replays every recorded witness; it does not re-enumerate every full class and
+edge through the trusted engine. The finite oracle and closed-DSL argument
+remain necessary, and this result does not validate the failed BDD variants.
+
+#### Current campaign: both capacity diagnostics incomplete
+
+Probe `/tmp/af9-packed-static-current-7428b75` and separate clean trusted root
+`/tmp/af9-packed-static-trusted-current-7428b75` are detached at
+`7428b75481323d5ca4dd22decca4b67b43fc56d2`. All 12 engine/content files match
+the tested experiment and main. The probe adds only the three exact verifier
+modules. Current game source remains `2f6212d`, with build
+`af9-dce7b1dc57b6d6febcc9bb72`, 29 scenes, 166 choices and 36 terminal choices.
+The independently derived full layout has 605 bits, ten resources, 62 flags
+and 36 ending pairs. Preparation artifacts are
+`/tmp/af9-packed-static-current-source-preparation-v1.json`,
+`/tmp/af9-packed-static-current-layout-v1.json` and
+`/tmp/af9-packed-static-current-projection-v1.json`. The latter's expected
+projection hash is
+`45a42eae6ea7c275ed17e872f2339b8974cd8130e9e53f7040ba691085055244`.
+
+The first run reuses the frozen historical profile/runner and limits, with
+current source/layout/projection bindings in
+`/tmp/af9-packed-static-current-manifest-v1.json` (SHA-256
+`2213a1abac8c6161ef8c6aa6996247afc056d17fd1a08d1acb4e6e9f6badcfc9`).
+It fails the two-million-state guard in 7.50 seconds / 795,528 KiB maximum RSS.
+Last sampled progress is depth 21, 1,179,648 visited, 1,987,156 discovered and
+3,494,359 transitions. These sampled counts precede the actual cap failure.
+Report/progress/finalization/log prefix is
+`/tmp/af9-packed-static-current-7428b75`. Root check
+`/tmp/af9-packed-static-current-root-check-v1.json` (SHA-256
+`b1e1216ba7c34e1dc4fe705c8bc231efededdd3de0faf26bbf809e5b95ba5445`)
+confirms all bindings, exit one, null signal and absent PID 1274789.
+
+A reviewed capacity-only diagnostic increases the ceiling to eight million
+classes, 32 million edges and a 4,096 MiB heap, retaining the same checked and
+external time limits. This changes workload extent, not the logical proof
+requirements or production family guard. It reuses the exact current probe;
+new external scripts and manifest preserve the smaller attempt unchanged.
+The manifest is `/tmp/af9-packed-static-current-8m-manifest-v1.json` (SHA-256
+`4d281ea21ab7ddae81b99e2f2396e5e0eedff99ef42c52ac5901e6598e8f75f2`).
+Configuration hash is
+`4a808cdd97c206a78e37eca71974c86ba5f443e397ca08d4338ceb726f086557`.
+
+It fails the eight-million-state guard in 37.63 seconds / 2,862,832 KiB maximum
+RSS. Last sampled progress is depth 24, 5,554,176 visited, 7,991,257 discovered
+and 16,086,823 transitions. Every logical field in all 96 smaller-run progress
+checkpoints exactly matches the larger prefix, excluding elapsed time/RSS.
+Report/progress/finalization/log prefix is
+`/tmp/af9-packed-static-current-8m-7428b75`. Root check
+`/tmp/af9-packed-static-current-8m-root-check-v1.json` (SHA-256
+`11395aaeb9434c04fce0e1c29c6bbe2b7c7a1d0603de5c09c0a5a1b716bf8275`)
+confirms all bindings, exit one, null signal and absent PID 1275421.
+
+Neither current run reaches backward completion analysis or witness replay.
+The failure finalizations also flag the absent final projection summary;
+this accompanies the explicit state-cap error and is not a changed source
+binding. The current two-million-class checker
+`/tmp/af9-check-packed-static-current-v1.mts` (SHA-256
+`6f97fa0e81d8a099675668dca5d3d493d1b9abc6a38e9e79c42e60fe0d0ab83a`)
+passes typecheck/help but is not run on incomplete output. It is prepared for
+231 current witness IDs, not historical count equality; it has not been
+silently retargeted to the larger attempt.
+
+#### Next proof review
+
+Two independent read-only reviews found no counterexample to the existing
+permanent monotone false-gate analyzer within the closed DSL. A proposed
+packed key must include the retained flag mask's identity as well as the
+normalized code; every resource, lifecycle and ending remains exact. All true
+pruning justifiers must be retained, and globally resettable flags must never
+justify pruning. Current legal/resource-satisfied routes alone cannot define
+the future closure. Validate full codes before masking, preserve full witness
+representatives, check retained-mask containment across legal transitions,
+and fail closed if colliding states differ in legal choices, conditional text,
+faults or projected successors.
+
+Historical `139e48a` lacks the current state-specific analyzer API. Any generic
+verifier-only extraction must be scenario-bound and source-hashed; it cannot
+silently import a newer trusted engine or fall back to another scope. A
+complete comparison should map the accepted 169,922-state static graph into
+the candidate classes, checking every static transition, group congruence and
+uniform completion classification, then replay all 190 historical witnesses.
+The reduced count is unknown and is not required to equal the static count.
+No phase-projection source or campaign run has been made. Current acceptance,
+main adoption, full verification, fresh players and publication remain open.

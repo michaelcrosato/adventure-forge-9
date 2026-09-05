@@ -89,9 +89,25 @@ hexadecimal index keys now pass all 11 focused packed checks at clean
 `9f75bca`; all original 45 historical progress checkpoints match. The same
 344,064-visited checkpoint takes 1.209 seconds instead of 133.308 seconds.
 The candidate then hits the two-million-state cap (4.90 seconds / 735,488 KiB
-maximum RSS), without a complete graph. Static future-read flag projection
-is under independent review; no capacity increase is selected. The unmasked default remains unchanged;
-no complete symbolic campaign coverage or release adoption is accepted.
+maximum RSS), without a complete graph. A conservative static future-read
+scope is now implemented at clean experiment `6b77030`; build, 17 packed
+checks and nine existing audit-scaling checks pass. The separate historical
+run completes at exactly 169,922 control classes / 332,402 transitions,
+matching the accepted historical static audit, with zero mechanical issues.
+All 190 witnesses pass a separate trusted-engine replay checker. External
+traversal/replay time is 1.40 seconds / 188,440 KiB maximum RSS; the independent
+checker takes another 0.49 seconds. These are control-class counts, not
+full-flag or full-history equivalence. The current campaign still hits two
+million classes (7.50 seconds / 795,528 KiB maximum RSS), then a separately
+reviewed eight-million-class capacity diagnostic also fails (37.63 seconds /
+2,862,832 KiB maximum RSS). All 96 logical checkpoints from the smaller run
+match the larger run's prefix; neither completes backward analysis or replay.
+Both failures and every source/artifact binding are preserved. Read-only
+reviews support investigating the existing permanent monotone false-gate
+analysis with explicit retained-mask identity and collision congruence checks;
+no phase-projection implementation or run has been made. The default all-flag
+scope and production audit remain unchanged; no current campaign coverage or
+release adoption is accepted.
 The production family guard is unchanged. See
 `SYMBOLIC_REACHABILITY_EXPERIMENT.md`. Final copy rendering and all 115 non-audit checks pass, but the
 full audit remains open. The 52-action browser and original failure evidence
