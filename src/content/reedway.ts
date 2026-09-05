@@ -27,10 +27,44 @@ export const REEDWAY_SCENES = [
     text: [
       {
         text: "The raised causeway links Ilyra's clinic annex, Orin's worker landing and Sera Vale's stranded barge. The shores remain open; paths lead back to both Lowsail and Blackglass.",
+        when: [{ type: "flag", flag: "blackglass-resolved", value: true }],
+      },
+      {
+        text: "The raised causeway links Ilyra's clinic annex, Orin's worker landing and Sera Vale's stranded barge. The Archive case remains open; the landing is the road back while you decide whether to carry a verdict upriver.",
+        when: [
+          { type: "flag", flag: "archive-started", value: true },
+          { type: "flag", flag: "archive-verdict-recorded", value: false },
+          { type: "flag", flag: "archive-returned", value: false },
+          { type: "flag", flag: "blackglass-resolved", value: false },
+        ],
+      },
+      {
+        text: "The raised causeway links Ilyra's clinic annex, Orin's worker landing and Sera Vale's stranded barge. The Archive verdict is decided; the Lowsail record is the road back while Blackglass waits for its pressure crossing.",
+        when: [
+          { type: "flag", flag: "archive-verdict-recorded", value: true },
+          { type: "flag", flag: "archive-returned", value: false },
+          { type: "flag", flag: "blackglass-resolved", value: false },
+        ],
+      },
+      {
+        text: "The Archive decision and Blackglass account are already carried; the Reedway shores remain open for this journey.",
+        when: [
+          { type: "flag", flag: "archive-returned", value: true },
+          { type: "flag", flag: "blackglass-resolved", value: true },
+        ],
       },
       {
         text: "One regulator survived on Sera's barge. Ilyra offers two medicine for restoring the sterilizer; Orin offers two supplies for restoring heavy transport. Visit both before deciding. You can also arrange patient care and worker relief without repairing either machine.",
         when: [
+          { type: "flag", flag: "reedway-regulator-recovered", value: false },
+          { type: "flag", flag: "reedway-clinic-powered", value: false },
+          { type: "flag", flag: "reedway-ferry-powered", value: false },
+        ],
+      },
+      {
+        text: "The regulator is off Sera's barge and still unassigned. Ilyra's clinic and Orin's ferry are waiting for the same part; choose its destination.",
+        when: [
+          { type: "flag", flag: "reedway-regulator-recovered", value: true },
           { type: "flag", flag: "reedway-clinic-powered", value: false },
           { type: "flag", flag: "reedway-ferry-powered", value: false },
         ],
@@ -76,7 +110,7 @@ export const REEDWAY_SCENES = [
     title: "The Stranded Barge",
     text: [
       {
-        text: "Salvager Sera Vale has lashed the barge to a willow stump. Its cargo is ruined, but one pressure regulator survived above the waterline. Sera owns the claim and needs the work to keep her crew paid.",
+        text: "Sera Vale, the Archive keeper who also owns this salvage claim, has lashed the barge to a willow stump. Its cargo is ruined, but one pressure regulator survived above the waterline. She is responsible for the crew and needs this work to keep them paid.",
       },
       {
         text: "Milo Fen sits beside the winch, cradling a crushed hand. Sera has bound it in sailcloth; he needs a proper dressing and support.",
@@ -230,6 +264,25 @@ export const REEDWAY_CHOICES = [
     effects: [{ type: "goTo", scene: "reedway-commons" }],
   },
   {
+    id: "return-to-open-archive-from-reedway",
+    scene: "reedway-commons",
+    label: "Return to the open Archive case",
+    description: "Return to the Archive landing with the regional account intact. The case remains open and the Blackglass pressure clock has not started.",
+    when: [
+      { type: "flag", flag: "archive-started", value: true },
+      { type: "flag", flag: "archive-verdict-recorded", value: false },
+    ],
+    effects: [{ type: "goTo", scene: "lantern-landing" }],
+  },
+  {
+    id: "return-to-archive-record-from-reedway",
+    scene: "reedway-commons",
+    label: "Return to the Archive record",
+    description: "Return to the Lowsail record with the verdict intact. Revisit the regional account whenever you are ready.",
+    when: [{ type: "flag", flag: "archive-verdict-recorded", value: true }],
+    effects: [{ type: "goTo", scene: "lowsail-reckoning" }],
+  },
+  {
     id: "visit-reedway-barge",
     scene: "reedway-commons",
     label: "Visit the stranded barge",
@@ -255,6 +308,7 @@ export const REEDWAY_CHOICES = [
     scene: "reedway-commons",
     label: "Return to Lowsail",
     description: "Return to the town with your pressure account. You can finish the journey there or come back to the shores.",
+    when: [{ type: "flag", flag: "blackglass-resolved", value: true }],
     effects: [{ type: "goTo", scene: "lowsail-after-blackglass" }],
   },
   {
@@ -262,6 +316,7 @@ export const REEDWAY_CHOICES = [
     scene: "reedway-commons",
     label: "Return to Blackglass Quay",
     description: "Revisit the settled works and the people waiting at the quay.",
+    when: [{ type: "flag", flag: "blackglass-resolved", value: true }],
     effects: [{ type: "goTo", scene: "blackglass-quay" }],
   },
   {

@@ -8,7 +8,7 @@ export const LANTERN_SCENES = [
     title: "Lantern Archive Landing",
     text: [
       {
-        text: "The Lantern Archive stands above the canal in a house of blue glass. Archivist Sera Vale notices a faded counterseal above Tovan's local mark on the stolen order. She needs two independent pieces of evidence to call a hearing against the upstream authority, Prefect Oren Vask.",
+        text: "The Lantern Archive stands above the canal in a house of blue glass. Archivist Sera Vale, who also owns the stranded Reedway barge and answers for its crew, notices a faded counterseal above Tovan's local mark on the stolen order. She needs two independent pieces of evidence to call a hearing against the upstream authority, Prefect Oren Vask.",
       },
       {
         text: "Nessa's shared repair gives the order a maintenance trail that can be checked.",
@@ -22,6 +22,59 @@ export const LANTERN_SCENES = [
         text: "Bram's family manifest makes the diversion's human cost impossible to file as a mere clerical error.",
         when: [{ type: "flag", flag: "evacuation-plan", value: true }],
       },
+      {
+        text: "The Archive case is open, and Reedway remains a parallel account. You can visit Sera's crew before returning here to investigate; the Blackglass pressure clock has not started.",
+        when: [
+          { type: "flag", flag: "archive-started", value: true },
+          { type: "flag", flag: "archive-verdict-recorded", value: false },
+          { type: "flag", flag: "archive-returned", value: false },
+          { type: "flag", flag: "blackglass-resolved", value: false },
+        ],
+      },
+      {
+        text: "Before you enter Reedway, Sera's stranded barge holds one regulator. Ilyra's clinic sterilizer and Orin's worker ferry both need it; the choice is waiting at the commons.",
+        when: [
+          { type: "flag", flag: "archive-started", value: true },
+          { type: "flag", flag: "archive-verdict-recorded", value: false },
+          { type: "flag", flag: "archive-returned", value: false },
+          { type: "flag", flag: "blackglass-resolved", value: false },
+          { type: "flag", flag: "reedway-regulator-recovered", value: false },
+          { type: "flag", flag: "reedway-clinic-powered", value: false },
+          { type: "flag", flag: "reedway-ferry-powered", value: false },
+        ],
+      },
+      {
+        text: "Before you enter Reedway, you carry its single regulator, still unassigned. Ilyra's clinic and Orin's worker ferry each need it; choose one at the commons.",
+        when: [
+          { type: "flag", flag: "archive-started", value: true },
+          { type: "flag", flag: "archive-verdict-recorded", value: false },
+          { type: "flag", flag: "archive-returned", value: false },
+          { type: "flag", flag: "blackglass-resolved", value: false },
+          { type: "flag", flag: "reedway-regulator-recovered", value: true },
+          { type: "flag", flag: "reedway-clinic-powered", value: false },
+          { type: "flag", flag: "reedway-ferry-powered", value: false },
+        ],
+      },
+      {
+        text: "Before you enter Reedway, the recovered regulator powers Ilyra's clinic sterilizer. Orin's ferry remains without the part; the regional account is waiting at the commons.",
+        when: [
+          { type: "flag", flag: "archive-started", value: true },
+          { type: "flag", flag: "archive-verdict-recorded", value: false },
+          { type: "flag", flag: "archive-returned", value: false },
+          { type: "flag", flag: "blackglass-resolved", value: false },
+          { type: "flag", flag: "reedway-clinic-powered", value: true },
+        ],
+      },
+      {
+        text: "Before you enter Reedway, the recovered regulator powers Orin's worker ferry. Ilyra's clinic remains without the part; the regional account is waiting at the commons.",
+        when: [
+          { type: "flag", flag: "archive-started", value: true },
+          { type: "flag", flag: "archive-verdict-recorded", value: false },
+          { type: "flag", flag: "archive-returned", value: false },
+          { type: "flag", flag: "blackglass-resolved", value: false },
+          { type: "flag", flag: "reedway-ferry-powered", value: true },
+        ],
+      },
     ],
   },
   {
@@ -29,11 +82,15 @@ export const LANTERN_SCENES = [
     title: "Lantern Archive Hall",
     text: [
       {
-        text: "Sera Vale lays the stolen order under a glass weight. Jalen Rook knows where the night ledger is kept; the seal workroom can trace the hand that authorized the diversion; Mara Venn is hidden below the stacks.",
+        text: "Sera Vale lays the stolen order under a glass weight. As the Archive keeper and Reedway's salvage claimant, she keeps both records in view. Jalen Rook knows where the night ledger is kept; the seal workroom can trace the hand that authorized the diversion; Mara Venn is hidden below the stacks.",
       },
       {
         text: "You have enough evidence to call a hearing. Removing Vask requires the night ledger, his counterseal, and either Mara's account or a canalwright's valve reconstruction. You may adjourn to investigate further; choosing a verdict is final.",
         when: [{ type: "resourceAtLeast", resource: "archive-evidence", value: 2 }],
+      },
+      {
+        text: "The case remains open. Step back to the landing if you want to visit Reedway before returning to the evidence; no verdict has been recorded.",
+        when: [{ type: "flag", flag: "archive-verdict-recorded", value: false }],
       },
       {
         text: "Nessa's repair log is the cleanest way into the ledger. It also gives Mara a reason to believe the Archive will protect her.",
@@ -41,7 +98,22 @@ export const LANTERN_SCENES = [
       },
       {
         text: "Your council seal opens the official file. In return for your cooperation, Sera will assume one of your outstanding obligations. You keep the seal as a custody receipt.",
-        when: [{ type: "flag", flag: "council-control", value: true }, { type: "flag", flag: "council-seal", value: true }],
+        when: [
+          { type: "flag", flag: "council-control", value: true },
+          { type: "flag", flag: "council-seal", value: true },
+          { type: "flag", flag: "reedway-salvager-hostile", value: false },
+          { type: "flag", flag: "archive-ledger-evidence", value: false },
+          { type: "resourceAtLeast", resource: "debt", value: 1 },
+        ],
+      },
+      {
+        text: "After the regulator seizure, Sera refuses to assume your council debt for the official file. The public stacks remain available, but the seal cannot buy her personal credit.",
+        when: [
+          { type: "flag", flag: "council-control", value: true },
+          { type: "flag", flag: "council-seal", value: true },
+          { type: "flag", flag: "reedway-salvager-hostile", value: true },
+          { type: "flag", flag: "archive-ledger-evidence", value: false },
+        ],
       },
       {
         text: "Mara knows you installed the council's ration rule and refuses an informal deposition. A professional guarantee can earn her trust; a council summons will compel her at the cost of another debt, with her name unprotected.",
@@ -146,6 +218,52 @@ export const LANTERN_SCENES = [
     text: [
       {
         text: "The Archive's lantern notice reaches Lowsail before the next market bell. You can finish this journey by closing the Archive case, or continue the same journey at Blackglass Works with the record.",
+        when: [
+          { type: "flag", flag: "archive-verdict-recorded", value: true },
+          { type: "flag", flag: "archive-returned", value: false },
+          { type: "flag", flag: "blackglass-resolved", value: false },
+        ],
+      },
+      {
+        text: "The Reedway commons is open before you decide whether to continue this journey at Blackglass. You can return here with its account intact.",
+        when: [
+          { type: "flag", flag: "archive-verdict-recorded", value: true },
+          { type: "flag", flag: "archive-returned", value: false },
+          { type: "flag", flag: "blackglass-resolved", value: false },
+        ],
+      },
+      {
+        text: "Reedway's single regulator remains on Sera's barge. Ilyra's clinic sterilizer and Orin's worker ferry both need it; the commons can be visited before your next decision.",
+        when: [
+          { type: "flag", flag: "archive-verdict-recorded", value: true },
+          { type: "flag", flag: "reedway-regulator-recovered", value: false },
+          { type: "flag", flag: "reedway-clinic-powered", value: false },
+          { type: "flag", flag: "reedway-ferry-powered", value: false },
+        ],
+      },
+      {
+        text: "You carry Reedway's single regulator, still unassigned. Ilyra's clinic and Orin's worker ferry each need it; the commons can be visited before your next decision.",
+        when: [
+          { type: "flag", flag: "archive-verdict-recorded", value: true },
+          { type: "flag", flag: "reedway-regulator-recovered", value: true },
+          { type: "flag", flag: "reedway-clinic-powered", value: false },
+          { type: "flag", flag: "reedway-ferry-powered", value: false },
+        ],
+      },
+      {
+        text: "The Reedway regulator powers Ilyra's clinic sterilizer; Orin's ferry remains without the part. The commons remains open for the regional account.",
+        when: [{ type: "flag", flag: "archive-verdict-recorded", value: true }, { type: "flag", flag: "reedway-clinic-powered", value: true }],
+      },
+      {
+        text: "The Reedway regulator powers Orin's worker ferry; Ilyra's clinic remains without the part. The commons remains open for the regional account.",
+        when: [{ type: "flag", flag: "archive-verdict-recorded", value: true }, { type: "flag", flag: "reedway-ferry-powered", value: true }],
+      },
+      {
+        text: "The Archive decision and Blackglass account are already carried. Review this record, then return to the settled Lowsail account.",
+        when: [
+          { type: "flag", flag: "archive-returned", value: true },
+          { type: "flag", flag: "blackglass-resolved", value: true },
+        ],
       },
       {
         text: "The notice certifies Nessa's shared repair and gives her a standing claim against another diversion.",
@@ -201,7 +319,21 @@ export const LANTERN_CHOICES = [
     scene: "lantern-landing",
     label: "Enter the Archive hall",
     description: "Put the stolen order before Sera Vale and begin the investigation.",
+    when: [{ type: "flag", flag: "archive-verdict-recorded", value: false }],
     effects: [{ type: "goTo", scene: "archive-hall" }],
+  },
+  {
+    id: "explore-reedway-before-archive",
+    scene: "lantern-landing",
+    label: "Visit Reedway before the hearing",
+    description: "Visit Sera Vale's crew, Ilyra and Orin at the Reedway commons before investigating the open Archive case. Return here without starting the Blackglass pressure clock.",
+    when: [
+      { type: "flag", flag: "archive-started", value: true },
+      { type: "flag", flag: "archive-verdict-recorded", value: false },
+      { type: "flag", flag: "archive-returned", value: false },
+      { type: "flag", flag: "blackglass-resolved", value: false },
+    ],
+    effects: [{ type: "goTo", scene: "reedway-commons" }],
   },
   {
     id: "leave-lantern-landing",
@@ -258,6 +390,7 @@ export const LANTERN_CHOICES = [
     when: [
       { type: "flag", flag: "council-control", value: true },
       { type: "flag", flag: "council-seal", value: true },
+      { type: "flag", flag: "reedway-salvager-hostile", value: false },
       { type: "flag", flag: "archive-ledger-evidence", value: false },
       { type: "resourceAtLeast", resource: "debt", value: 1 },
     ],
@@ -369,6 +502,14 @@ export const LANTERN_CHOICES = [
     description: "End the investigation without asking the Archive to decide the case.",
     effects: [{ type: "addFact", fact: "archive-case-opened" }],
     outcome: { status: "departed", summary: "You leave the Lantern Archive with the order unresolved. Vask's claim survives the silence." },
+  },
+  {
+    id: "pause-archive-investigation",
+    scene: "archive-hall",
+    label: "Pause and return to the landing",
+    description: "Step back to the Archive landing while the case remains open. You can visit Reedway and resume the investigation before choosing a verdict.",
+    when: [{ type: "flag", flag: "archive-verdict-recorded", value: false }],
+    effects: [{ type: "goTo", scene: "lantern-landing" }],
   },
   {
     id: "secure-jalen-amnesty",
@@ -508,6 +649,7 @@ export const LANTERN_CHOICES = [
     description: "Expose the official with Mara's signed testimony. Vask falls, but the witness's name enters the public record; risk +1.",
     when: [
       { type: "resourceAtLeast", resource: "archive-evidence", value: 2 },
+      { type: "flag", flag: "archive-verdict-recorded", value: false },
       { type: "flag", flag: "archive-ledger-evidence", value: true },
       { type: "flag", flag: "archive-seal-evidence", value: true },
       { type: "flag", flag: "archive-witness-testimony", value: true },
@@ -515,6 +657,7 @@ export const LANTERN_CHOICES = [
     ],
     effects: [
       { type: "setFlag", flag: "archive-verdict-exposed", value: true },
+      { type: "setFlag", flag: "archive-verdict-recorded", value: true },
       { type: "setFlag", flag: "archive-witness-exposed", value: true },
       { type: "adjustResource", resource: "risk", delta: 1 },
       { type: "addFact", fact: "archive-vask-exposed" },
@@ -529,6 +672,7 @@ export const LANTERN_CHOICES = [
     description: "Expose the official while Sera seals Mara's name behind the Archive's protection.",
     when: [
       { type: "resourceAtLeast", resource: "archive-evidence", value: 2 },
+      { type: "flag", flag: "archive-verdict-recorded", value: false },
       { type: "flag", flag: "archive-ledger-evidence", value: true },
       { type: "flag", flag: "archive-seal-evidence", value: true },
       { type: "flag", flag: "archive-witness-testimony", value: true },
@@ -536,6 +680,7 @@ export const LANTERN_CHOICES = [
     ],
     effects: [
       { type: "setFlag", flag: "archive-verdict-exposed", value: true },
+      { type: "setFlag", flag: "archive-verdict-recorded", value: true },
       { type: "addFact", fact: "archive-vask-exposed" },
       { type: "addFact", fact: "archive-witness-protected" },
       { type: "goTo", scene: "lowsail-reckoning" },
@@ -548,12 +693,14 @@ export const LANTERN_CHOICES = [
     description: "Use a canalwright's pressure proof and the two documents to expose Vask without putting Mara in the case.",
     when: [
       { type: "resourceAtLeast", resource: "archive-evidence", value: 2 },
+      { type: "flag", flag: "archive-verdict-recorded", value: false },
       { type: "flag", flag: "archive-ledger-evidence", value: true },
       { type: "flag", flag: "archive-seal-evidence", value: true },
       { type: "flag", flag: "archive-technical-proof", value: true },
     ],
     effects: [
       { type: "setFlag", flag: "archive-verdict-exposed", value: true },
+      { type: "setFlag", flag: "archive-verdict-recorded", value: true },
       { type: "setFlag", flag: "archive-witness-omitted", value: true },
       { type: "addFact", fact: "archive-vask-exposed" },
       { type: "addFact", fact: "archive-witness-omitted" },
@@ -567,6 +714,7 @@ export const LANTERN_CHOICES = [
     description: "Use the safe-conduct oath to make Vask answer while Mara remains protected.",
     when: [
       { type: "resourceAtLeast", resource: "archive-evidence", value: 2 },
+      { type: "flag", flag: "archive-verdict-recorded", value: false },
       { type: "flag", flag: "archive-ledger-evidence", value: true },
       { type: "flag", flag: "archive-seal-evidence", value: true },
       { type: "flag", flag: "archive-oath-witness", value: true },
@@ -574,6 +722,7 @@ export const LANTERN_CHOICES = [
     ],
     effects: [
       { type: "setFlag", flag: "archive-verdict-exposed", value: true },
+      { type: "setFlag", flag: "archive-verdict-recorded", value: true },
       { type: "setFlag", flag: "archive-witness-protected", value: true },
       { type: "setFlag", flag: "oathkeeper-obligation", value: false },
       { type: "setFlag", flag: "oathkeeper-vow-discharged", value: true },
@@ -590,10 +739,12 @@ export const LANTERN_CHOICES = [
     description: "Protect Mara by sealing her testimony. Vask keeps his post and the order's authority remains available.",
     when: [
       { type: "resourceAtLeast", resource: "archive-evidence", value: 2 },
+      { type: "flag", flag: "archive-verdict-recorded", value: false },
       { type: "flag", flag: "archive-witness-testimony", value: true },
     ],
     effects: [
       { type: "setFlag", flag: "archive-verdict-sealed", value: true },
+      { type: "setFlag", flag: "archive-verdict-recorded", value: true },
       { type: "setFlag", flag: "archive-witness-protected", value: true },
       { type: "addFact", fact: "archive-case-sealed" },
       { type: "addFact", fact: "archive-witness-protected" },
@@ -607,12 +758,14 @@ export const LANTERN_CHOICES = [
     description: "File the ledger and seal as a protected lead. Do not expose Vask or ask Mara to testify today.",
     when: [
       { type: "resourceAtLeast", resource: "archive-evidence", value: 2 },
+      { type: "flag", flag: "archive-verdict-recorded", value: false },
       { type: "flag", flag: "archive-ledger-evidence", value: true },
       { type: "flag", flag: "archive-seal-evidence", value: true },
       { type: "flag", flag: "archive-witness-testimony", value: false },
     ],
     effects: [
       { type: "setFlag", flag: "archive-verdict-negotiated", value: true },
+      { type: "setFlag", flag: "archive-verdict-recorded", value: true },
       { type: "setFlag", flag: "archive-witness-omitted", value: true },
       { type: "addFact", fact: "archive-record-negotiated" },
       { type: "addFact", fact: "archive-witness-omitted" },
@@ -646,6 +799,10 @@ export const LANTERN_CHOICES = [
     scene: "lowsail-reckoning",
     label: "Finish this journey: close the Archive case",
     description: "Close the Archive case here and finish this journey with Lowsail living with the evidence, protection, and risk you chose.",
+    when: [
+      { type: "flag", flag: "archive-returned", value: false },
+      { type: "flag", flag: "blackglass-resolved", value: false },
+    ],
     effects: [
       { type: "setFlag", flag: "archive-returned", value: true },
       { type: "addFact", fact: "archive-case-closed" },
@@ -653,10 +810,33 @@ export const LANTERN_CHOICES = [
     outcome: { status: "completed", summary: "You close the Lantern Archive case after carrying its verdict back to Lowsail. The order, the witness, and the town's water now share one record." },
   },
   {
+    id: "explore-reedway-before-blackglass",
+    scene: "lowsail-reckoning",
+    label: "Visit the Reedway shores",
+    description: "Visit Sera Vale's crew at Reedway before continuing at Blackglass, or revisit the shores after the record has been carried. Return here with the Archive decision intact.",
+    when: [{ type: "flag", flag: "archive-verdict-recorded", value: true }],
+    effects: [{ type: "goTo", scene: "reedway-commons" }],
+  },
+  {
+    id: "return-to-lowsail-from-archive-record",
+    scene: "lowsail-reckoning",
+    label: "Return to the settled Lowsail account",
+    description: "Leave the Archive record and return to Lowsail's settled account after Blackglass.",
+    when: [
+      { type: "flag", flag: "archive-returned", value: true },
+      { type: "flag", flag: "blackglass-resolved", value: true },
+    ],
+    effects: [{ type: "goTo", scene: "lowsail-after-blackglass" }],
+  },
+  {
     id: "leave-lowsail-reckoning",
     scene: "lowsail-reckoning",
     label: "Leave Lowsail with the record open",
     description: "Leave the town before accepting the Archive's final account.",
+    when: [
+      { type: "flag", flag: "archive-returned", value: false },
+      { type: "flag", flag: "blackglass-resolved", value: false },
+    ],
     effects: [{ type: "addFact", fact: "archive-case-opened" }],
     outcome: { status: "departed", summary: "You leave Lowsail with the Lantern record open. The town keeps the consequences without your final answer." },
   },

@@ -331,6 +331,10 @@ export const BLACKGLASS_CHOICES = [
     scene: "lowsail-reckoning",
     label: "Continue this journey at Blackglass Works",
     description: "Carry the closed Archive record to Blackglass Works and continue the same journey through its pressure works.",
+    when: [
+      { type: "flag", flag: "archive-returned", value: false },
+      { type: "flag", flag: "blackglass-resolved", value: false },
+    ],
     effects: [
       { type: "setFlag", flag: "archive-returned", value: true },
       { type: "addFact", fact: "archive-case-closed" },
