@@ -27,6 +27,14 @@ export interface FutureReadAnalysis {
   readonly retainedFlagsByScene: ReadonlyMap<string, readonly string[]>;
   /** Flags read by visible scene text when no further choice can be taken. */
   readonly terminalTextFlagsByScene: ReadonlyMap<string, readonly string[]>;
+  /** Flags written only to true that may be used as permanent phase gates. */
+  readonly monotoneFlags: readonly string[];
+  /** Monotone false-gate flags that can occur in each static scene closure. */
+  readonly phaseFlagsByScene: ReadonlyMap<string, readonly string[]>;
+  /** Resolve the future read set for a particular current state. */
+  readonly retainedFlagsForState: (
+    state: Pick<AuditStateProjection, "scene" | "status" | "flags">
+  ) => readonly string[];
 }
 
 /**
@@ -44,26 +52,68 @@ export function analyzeFutureReads(scenario: Scenario): FutureReadAnalysis {
   }
 
   const scenesById = new Map(scenario.scenes.map((scene) => [scene.id, scene] as const));
+  const monotoneFlags = [...findMonotoneFlags(scenario)].sort();
+  const monotoneFlagSet = new Set(monotoneFlags);
   const reachableScenesByScene = new Map<string, readonly string[]>();
   const retainedFlagsByScene = new Map<string, readonly string[]>();
   const terminalTextFlagsByScene = new Map<string, readonly string[]>();
+  const phaseFlagsByScene = new Map<string, readonly string[]>();
   for (const scene of scenario.scenes) {
     const reachable = staticSceneClosure(scene.id, choicesByScene, scenesById);
     reachableScenesByScene.set(scene.id, [...reachable].sort());
 
     const retainedFlags = new Set<string>();
+    const phaseFlags = new Set<string>();
     for (const sceneId of reachable) {
       const futureScene = scenesById.get(sceneId);
       if (futureScene === undefined) continue;
       for (const line of futureScene.text) addFlagReads(line.when, retainedFlags);
-      for (const choice of choicesByScene.get(sceneId) ?? []) addFlagReads(choice.when, retainedFlags);
+      for (const choice of choicesByScene.get(sceneId) ?? []) {
+        addFlagReads(choice.when, retainedFlags);
+        for (const condition of choice.when ?? []) {
+          if (condition.type === "flag" && condition.value === false && monotoneFlagSet.has(condition.flag)) {
+            phaseFlags.add(condition.flag);
+          }
+        }
+      }
     }
     retainedFlagsByScene.set(scene.id, [...retainedFlags].sort());
+    phaseFlagsByScene.set(scene.id, [...phaseFlags].sort());
 
     const terminalTextFlags = new Set<string>();
     for (const line of scene.text) addFlagReads(line.when, terminalTextFlags);
     terminalTextFlagsByScene.set(scene.id, [...terminalTextFlags].sort());
   }
+
+  // A cache entry is valid for every state with the same current values for
+  // the monotone false gates that can occur in this scene's static closure.
+  // Historical true flags outside that mask cannot affect this resolver.
+  const retainedFlagsCache = new Map<string, Map<string, readonly string[]>>();
+  const retainedFlagsForState = (
+    state: Pick<AuditStateProjection, "scene" | "status" | "flags">,
+  ): readonly string[] => {
+    if (state.status !== "playing") return terminalTextFlagsByScene.get(state.scene) ?? [];
+    const phaseFlags = phaseFlagsByScene.get(state.scene) ?? [];
+    const mask = monotoneMask(state.flags, phaseFlags);
+    let sceneCache = retainedFlagsCache.get(state.scene);
+    if (sceneCache === undefined) {
+      sceneCache = new Map<string, readonly string[]>();
+      retainedFlagsCache.set(state.scene, sceneCache);
+    }
+    const cached = sceneCache.get(mask);
+    if (cached !== undefined) return cached;
+
+    const retainedFlags = stateSpecificFutureReads(
+      state.scene,
+      state.flags,
+      choicesByScene,
+      scenesById,
+      monotoneFlagSet,
+    );
+    const resolved = Object.freeze([...retainedFlags].sort());
+    sceneCache.set(mask, resolved);
+    return resolved;
+  };
 
   const reachableScenes = reachableScenesByScene.get(scenario.initialScene) ?? [];
   const retainedFlags = retainedFlagsByScene.get(scenario.initialScene) ?? [];
@@ -74,7 +124,80 @@ export function analyzeFutureReads(scenario: Scenario): FutureReadAnalysis {
     reachableScenesByScene,
     retainedFlagsByScene,
     terminalTextFlagsByScene,
+    monotoneFlags,
+    phaseFlagsByScene,
+    retainedFlagsForState,
   };
+}
+
+function findMonotoneFlags(scenario: Scenario): Set<string> {
+  const writes = new Map<string, Set<boolean>>();
+  for (const choice of scenario.choices) {
+    for (const effect of choice.effects) {
+      if (effect.type !== "setFlag") continue;
+      const values = writes.get(effect.flag);
+      if (values === undefined) writes.set(effect.flag, new Set([effect.value]));
+      else values.add(effect.value);
+    }
+  }
+  return new Set(
+    [...writes]
+      .filter(([, values]) => [...values].length > 0 && [...values].every((value) => value === true))
+      .map(([flag]) => flag),
+  );
+}
+
+function monotoneMask(flags: Readonly<Record<string, boolean>>, phaseFlags: readonly string[]): string {
+  let mask = 0n;
+  for (const [index, flag] of phaseFlags.entries()) {
+    if (Object.hasOwn(flags, flag) && flags[flag] === true) mask |= 1n << BigInt(index);
+  }
+  return mask.toString(16);
+}
+
+function stateSpecificFutureReads(
+  initialScene: string,
+  flags: Readonly<Record<string, boolean>>,
+  choicesByScene: ReadonlyMap<string, Scenario["choices"]>,
+  scenesById: ReadonlyMap<string, Scenario["scenes"][number]>,
+  monotoneFlags: ReadonlySet<string>,
+): Set<string> {
+  const reachable = new Set<string>([initialScene]);
+  const pending = [initialScene];
+  const retainedFlags = new Set<string>();
+  for (let index = 0; index < pending.length; index++) {
+    const sceneId = pending[index]!;
+    const scene = scenesById.get(sceneId);
+    if (scene === undefined) continue;
+    for (const line of scene.text) addFlagReads(line.when, retainedFlags);
+    for (const choice of choicesByScene.get(sceneId) ?? []) {
+      const pruningFlags: string[] = [];
+      for (const condition of choice.when ?? []) {
+        if (condition.type === "flag"
+          && condition.value === false
+          && monotoneFlags.has(condition.flag)
+          && Object.hasOwn(flags, condition.flag)
+          && flags[condition.flag] === true) {
+          pruningFlags.push(condition.flag);
+        }
+      }
+      if (pruningFlags.length > 0) {
+        // Keep every condition that independently proves this choice
+        // impossible. These flags are part of the phase identity even when
+        // the choice's destination and other reads disappear.
+        for (const flag of pruningFlags) retainedFlags.add(flag);
+        continue;
+      }
+      addFlagReads(choice.when, retainedFlags);
+      for (const effect of choice.effects) {
+        if (effect.type !== "goTo") continue;
+        if (reachable.has(effect.scene) || !scenesById.has(effect.scene)) continue;
+        reachable.add(effect.scene);
+        pending.push(effect.scene);
+      }
+    }
+  }
+  return retainedFlags;
 }
 
 function staticSceneClosure(
@@ -258,9 +381,15 @@ function assertCongruent(
   candidate: GameState,
   retainedFlags: RetainedFlagOrder,
   key: string,
-  retainedFor: (state: Pick<GameState, "scene" | "status">) => RetainedFlagOrder,
+  retainedFor: (state: Pick<GameState, "scene" | "status" | "flags">) => RetainedFlagOrder,
   resourceOrder: readonly string[],
 ): number {
+  const representativeRetainedFlags = retainedFor(representative);
+  const candidateRetainedFlags = retainedFor(candidate);
+  if (representativeRetainedFlags.join("\u0000") !== retainedFlags.join("\u0000")
+    || candidateRetainedFlags.join("\u0000") !== retainedFlags.join("\u0000")) {
+    throw new Error("Audit internal error: collision states use different retained flag sets");
+  }
   if (orderedFutureStateKey(representative, retainedFlags, resourceOrder) !== key
     || orderedFutureStateKey(candidate, retainedFlags, resourceOrder) !== key) {
     throw new Error("Audit internal error: collision key does not describe both states");
@@ -280,9 +409,13 @@ function assertCongruent(
       const representativeNext = choose(representative, choice.id, representativeView.revision);
       const candidateNext = choose(candidate, choice.id, candidateView.revision);
       successors++;
-      const successorFlags = retainedFor(representativeNext);
-      if (orderedFutureStateKey(representativeNext, successorFlags, resourceOrder)
-        !== orderedFutureStateKey(candidateNext, successorFlags, resourceOrder)) {
+      const representativeSuccessorFlags = retainedFor(representativeNext);
+      const candidateSuccessorFlags = retainedFor(candidateNext);
+      if (representativeSuccessorFlags.join("\u0000") !== candidateSuccessorFlags.join("\u0000")) {
+        throw new Error(`Audit successor retained flag sets diverged for equivalent choice ${choice.id}`);
+      }
+      if (orderedFutureStateKey(representativeNext, representativeSuccessorFlags, resourceOrder)
+        !== orderedFutureStateKey(candidateNext, candidateSuccessorFlags, resourceOrder)) {
         throw new Error(`Audit successor key diverged for equivalent choice ${choice.id}`);
       }
     }
@@ -330,15 +463,12 @@ export function auditScenario(maxStates = 250_000): ScenarioAudit {
   const futureReads = analyzeFutureReads(SCENARIO);
   const initial = start(1);
   const resourceOrder = Object.keys(initial.resources).sort((a, b) => a.localeCompare(b));
-  const retainedFlagsByScene = new Map(
-    [...futureReads.retainedFlagsByScene].map(([scene, flags]) => [scene, flags] as const),
-  );
   const terminalTextFlagsByScene = new Map(
     [...futureReads.terminalTextFlagsByScene].map(([scene, flags]) => [scene, flags] as const),
   );
-  const retainedFor = (state: Pick<GameState, "scene" | "status">): RetainedFlagOrder => {
+  const retainedFor = (state: Pick<GameState, "scene" | "status" | "flags">): RetainedFlagOrder => {
     if (state.status !== "playing") return terminalTextFlagsByScene.get(state.scene) ?? [];
-    return retainedFlagsByScene.get(state.scene) ?? [];
+    return futureReads.retainedFlagsForState(state);
   };
   const initialKey = orderedFutureStateKey(initial, retainedFor(initial), resourceOrder);
   const queue: CanonicalState[] = [{ state: initial, parentIndex: -1 }];
