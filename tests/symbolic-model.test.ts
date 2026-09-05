@@ -1054,8 +1054,8 @@ test("a wholly out-of-bound resource relation remains false rather than losing i
       terminal("finish", "done", "completed", "Finished."),
     ],
   };
-  for (const order of ["interleaved", "blocked"] as const) {
-    const model = new SymbolicModel(scenario, { token: 0 }, { order });
+  for (const order of ["interleaved", "blocked"] as const) for (const transitionMode of ["relational", "partitioned"] as const) {
+    const model = new SymbolicModel(scenario, { token: 0 }, { order, transitionMode });
     const choice = model.choices.find(choice => choice.id === "increase")!;
     assert.notEqual(model.bdd.and(model.initial, choice.enabled), 0);
     assert.notEqual(model.bdd.and(model.initial, choice.boundExit), 0);
@@ -1093,6 +1093,7 @@ function compactFixtureResult(
   assert.deepEqual(input.bdd.stats(), inputStats, "private generations leave the caller's node and cache tables unchanged");
   assert.deepEqual(input.bdd.satisfyingAssignment(input.initial), initialAssignment, "the original initial handle preserves its meaning");
   assert.deepEqual(result.model.fieldOrder, input.fieldOrder, "every copied generation preserves the field layout");
+  assert.equal(result.model.transitionMode, transitionMode, "every copied generation preserves the transition strategy");
   return Object.freeze({ input, result, progress: Object.freeze(progress) });
 }
 
@@ -1294,6 +1295,7 @@ test("compaction snapshots source, bounds, and construction options", () => {
   assert.notStrictEqual(result.model, model);
   assert.deepEqual(result.model.scenario, normalized, "compaction uses the normalized scenario snapshot");
   assert.deepEqual(result.model.fieldOrder, preservedOrder, "compaction uses the independent field-order snapshot");
+  assert.equal(result.model.transitionMode, "partitioned", "compaction uses the snapshotted transition strategy");
   assertCompactedCoverageMatchesOracle(ORDERED_SCENARIO, { stock: 2, tide: 2 }, "blocked", result);
 });
 
