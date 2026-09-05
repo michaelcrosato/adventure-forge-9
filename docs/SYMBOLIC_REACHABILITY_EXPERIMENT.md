@@ -563,3 +563,58 @@ Build plus all 32 focused checks pass on unchanged clean pre/post source in
 `/tmp/af9-symbolic-field-order-expanded-tests.log` and
 `/tmp/af9-symbolic-field-order-test-provenance.json`. No historical traversal
 with the permutation has completed yet.
+
+
+The frozen affinity permutation was run once against a separate detached
+historical `139e48a` checkout, with exact verifier modules from `42673ce`.
+Preflight caught and corrected an initial manifest that conflated the current
+75-field campaign with the historical 66-field probe; no traversal used that
+incorrect setup. The corrected probe retains its exact untracked verifier
+overlay status, while independent replay has a separate clean historical
+engine checkout. The final manifest is SHA-256
+`a04a2455201b9f13e6fae44f8ac6fbe39a5f78ca03cd4b445d195368073c35c8`.
+
+The single affinity run also fails at two million non-terminal nodes during
+forward round 22. Seven copies retain 184,888, 233,733, 303,404, 402,729,
+526,852, 685,963 and 891,685 non-terminal nodes. Runtime is 36,203 ms internally
+/ 36.44 seconds externally, with 858,600 KiB maximum RSS. Source, order,
+profiler, runner, bounds, config and manifest provenance match before/after;
+the child closes with exit 1. This does not improve completed coverage.
+Preserve every artifact in `/tmp/af9-symbolic-affinity-2m.PSVNFP/`, including
+`affinity-2m.json`, progress/finalization/log companions and `run-record.json`.
+No retry or fallback ordering was run.
+
+### Exact partitioned transitions
+
+The next isolated strategy exploits the current closed DSL's independent
+field updates. Every field relation depends only on that field's previous
+value and constants; preconditions read the complete pre-state. Image begins
+with the source predicate intersected with the enabled predicate. For each
+changed field it joins the field relation, existentially removes that field's
+old bits, then renames its new bits back to the current namespace. Preimage
+uses the dual per-field rename/elimination, applying the enabled predicate
+last. A factor may be skipped only when it equals identity under the enabled
+predicate. Other fields remain exact; no field, bit or correlation is dropped.
+The original full relation and authored arithmetic/bound failure masks remain.
+
+Intermediate status/ending combinations must not receive lifecycle filtering;
+the complete factor product restores the valid output lifecycle. The optional
+mode explicitly rejects predicates with next-bit support, since the equations
+require current-state predicates. Any future effect reading another field
+would require a new proof and implementation. Default mode remains relational.
+
+The implementation (`d8601b0`, integrated as `0454e9d`) received independent
+proof and code review. Root's combined source `6167cea` passes build and all
+34 focused checks on unchanged clean pre/post source, in 7.52 seconds /
+596,212 KiB maximum RSS. The expanded independent finite interpreter and
+complete fixture-domain image/preimage comparisons exercise both strategies,
+both bit layouts and default/reversed field orders. Forced compaction,
+real-engine witness/save/replay, non-injective resets, ordered resource faults,
+zero resource relations and snapshotted modes are covered. Preserve
+`/tmp/af9-symbolic-partitioned-expanded-tests.log` and
+`/tmp/af9-symbolic-partitioned-test-provenance.json`.
+
+One partitioned historical diagnostic is being prepared with the original
+default field order and the same two-million-node/500,000-cache/500,000-copy
+threshold and time/heap limits. The affinity attempt and every preceding
+failure remain separate. No complete symbolic campaign proof is accepted yet.

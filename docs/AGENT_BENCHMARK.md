@@ -195,3 +195,16 @@ Root also corrected the reviewer's heuristic description against the actual
 generator: pair weight uses exclusive condition membership, and the initial
 seed has an additional occurrence-count tie-breaker. The original candidate
 is retained unchanged for the next controlled diagnostic.
+
+The controlled affinity traversal is incomplete at forward round 22. Root
+preflight corrected the first manifest's current/historical source conflation
+and an inappropriate clean-probe requirement before any traversal. The final
+run has exact matching provenance and no retries. The partitioned transition
+implementation then received a separate proof/code review. Root expanded
+independent oracle/replay/failure/compaction tests across both transition
+strategies, both bit layouts and two field orders. All 34 focused checks pass
+on clean `6167cea` in 7.52 seconds / 596,212 KiB maximum RSS; no campaign or
+model-ranking conclusion follows. A separate read-only branch inventory
+identified 23 clean topics whose patches are represented in both integrated
+histories. Root revalidated, archived and removed them, retaining all active
+experiments, blind-player freezes and unresolved overlays.
