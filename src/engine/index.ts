@@ -33,12 +33,20 @@ const KNOWN_FLAGS = new Set<string>();
 const KNOWN_FACTS = new Set(SCENARIO.initialFacts);
 const SCENES = new Map(SCENARIO.scenes.map((scene) => [scene.id, scene]));
 const CHOICES = new Map(SCENARIO.choices.map((choice) => [choice.id, choice]));
+const ENGINE_PRODUCED_STATES = new WeakSet<object>();
+const choicesByScene = new Map<string, Choice[]>();
 for (const choice of SCENARIO.choices) {
+  const sceneChoices = choicesByScene.get(choice.scene);
+  if (sceneChoices === undefined) choicesByScene.set(choice.scene, [choice]);
+  else sceneChoices.push(choice);
   for (const effect of choice.effects) {
     if (effect.type === "setFlag") KNOWN_FLAGS.add(effect.flag);
     if (effect.type === "addFact") KNOWN_FACTS.add(effect.fact);
   }
 }
+const CHOICES_BY_SCENE = new Map<string, readonly Choice[]>(
+  [...choicesByScene.entries()].map(([scene, choices]) => [scene, Object.freeze(choices)] as const),
+);
 
 type RecordLike = Record<string, unknown>;
 
@@ -158,7 +166,11 @@ function freezeState(state: GameState): GameState {
     status: state.status,
     ...(frozenReceipt === undefined ? {} : { receipt: frozenReceipt }),
   };
-  return Object.freeze(frozen);
+  const result = Object.freeze(frozen);
+  // This identity cache is private and only receives freezeState's copied,
+  // deeply frozen output. Parsed, copied, or caller-owned objects never enter it.
+  ENGINE_PRODUCED_STATES.add(result);
+  return result;
 }
 
 function cloneState(state: GameState): GameState {
@@ -299,8 +311,13 @@ function requireReceipt(value: unknown, path: string): Receipt {
   };
 }
 
+function isEngineProducedState(value: unknown): value is GameState {
+  return typeof value === "object" && value !== null && ENGINE_PRODUCED_STATES.has(value);
+}
+
 function assertState(value: unknown, checkReceipt = true, checkHistory = true): asserts value is GameState {
   if (!isRecord(value)) throw new InvalidStateError("state: expected a plain object");
+  if (isEngineProducedState(value)) return;
   exactKeys(
     value,
     ["version", "buildId", "seed", "revision", "scene", "resources", "flags", "knownFacts", "history", "status", "receipt"],
@@ -353,7 +370,7 @@ function allConditionsMatch(conditions: readonly Condition[] | undefined, state:
 }
 
 function legalChoices(state: GameState): readonly Choice[] {
-  return SCENARIO.choices.filter((choice) => choice.scene === state.scene && allConditionsMatch(choice.when, state));
+  return (CHOICES_BY_SCENE.get(state.scene) ?? []).filter((choice) => allConditionsMatch(choice.when, state));
 }
 
 function applyEffects(state: GameState, effects: readonly Effect[]): Pick<GameState, "scene" | "resources" | "flags" | "knownFacts"> {
