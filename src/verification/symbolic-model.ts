@@ -18,6 +18,12 @@ interface Field {
   readonly next: readonly number[];
 }
 
+interface PartitionFactor {
+  readonly field: Field;
+  /** Successful input/output relation for this changed field only. */
+  readonly relation: number;
+}
+
 export interface SymbolicChoice {
   readonly id: string;
   readonly enabled: number;
@@ -31,6 +37,8 @@ export interface SymbolicOptions {
   readonly order?: "interleaved" | "blocked";
   /** Exact field permutation used for symbolic bit assignment. */
   readonly fieldOrder?: readonly string[];
+  /** Opt-in per-field image/preimage evaluation; relational remains the default. */
+  readonly transitionMode?: "relational" | "partitioned";
   readonly nodeLimit?: number;
   readonly cacheLimit?: number;
   /** Unary effect tables are deliberately limited in this first experiment. */
@@ -101,6 +109,7 @@ export class SymbolicModel {
   readonly currentVariables: readonly number[];
   readonly nextVariables: readonly number[];
   readonly fieldOrder: readonly string[];
+  readonly transitionMode: "relational" | "partitioned";
   readonly flags: readonly string[];
   readonly resources: readonly string[];
   private readonly fields = new Map<string, Field>();
@@ -112,6 +121,7 @@ export class SymbolicModel {
   private readonly resourceBounds: Readonly<Record<string, number>>;
   private readonly compileOptions: Readonly<Required<SymbolicOptions>>;
   private readonly choiceMembership: ReadonlySet<SymbolicChoice>;
+  private readonly partitionFactors = new Map<SymbolicChoice, readonly PartitionFactor[]>();
 
   constructor(input: unknown, bounds: Readonly<Record<string, number>>, options: SymbolicOptions = {}) {
     this.scenario = validateScenario(input);
@@ -159,10 +169,14 @@ export class SymbolicModel {
     const bitCount = orderedSpecs.reduce((count, spec) => count + width(spec.maximum), 0);
     const order = options.order ?? "interleaved";
     if (order !== "interleaved" && order !== "blocked") throw new Error("Unknown symbolic variable order");
+    const transitionMode = options.transitionMode ?? "relational";
+    if (transitionMode !== "relational" && transitionMode !== "partitioned") {
+      throw new Error("Unknown symbolic transition mode");
+    }
     this.resourceBounds = Object.freeze(Object.fromEntries(specs
       .filter(spec => spec.id.startsWith("resource:"))
       .map(spec => [spec.id.slice("resource:".length), spec.maximum])));
-    this.compileOptions = Object.freeze({ order, fieldOrder, maxDomain,
+    this.compileOptions = Object.freeze({ order, fieldOrder, transitionMode, maxDomain,
       nodeLimit: options.nodeLimit ?? 250_000, cacheLimit: options.cacheLimit ?? 100_000 });
     this.variableCount = bitCount * 2;
     this.bdd = new Bdd(this.variableCount, this.compileOptions);
@@ -181,6 +195,7 @@ export class SymbolicModel {
     this.currentVariables = Object.freeze(currentVariables);
     this.nextVariables = Object.freeze(nextVariables);
     this.fieldOrder = fieldOrder;
+    this.transitionMode = transitionMode;
     this.toCurrent = new Map(nextVariables.map((variable, index) => [variable, currentVariables[index]!]));
     this.toNext = new Map(currentVariables.map((variable, index) => [variable, nextVariables[index]!]));
     let domain = 1;
@@ -317,9 +332,25 @@ export class SymbolicModel {
       relation = this.bdd.and(constraint, relation);
     }
     relation = this.bdd.and(enabled, relation);
-    return Object.freeze({ id: choice.id, enabled, relation,
+    const result = Object.freeze({ id: choice.id, enabled, relation,
       arithmeticError: this.bdd.and(enabled, arithmeticError),
       boundExit: this.bdd.and(enabled, boundExit), terminal: choice.outcome !== undefined });
+    if (this.transitionMode === "partitioned") {
+      const factors: PartitionFactor[] = [];
+      for (const field of this.fields.values()) {
+        const factor = constraints.get(field.id);
+        if (factor === undefined) throw new Error(`Missing partition factor for ${field.id}`);
+        // The guard fixes a valid source state. Compare under that guard so a
+        // field written to its already-required value (or an unchanged field)
+        // does not introduce a needless identity factor.
+        const guardedFactor = this.bdd.and(enabled, factor);
+        const guardedIdentity = this.bdd.and(enabled, this.unchanged(field.id));
+        if (guardedFactor === guardedIdentity) continue;
+        factors.push(Object.freeze({ field, relation: factor }));
+      }
+      this.partitionFactors.set(result, Object.freeze(factors));
+    }
+    return result;
   }
 
   encode(state: SemanticState): number {
@@ -368,7 +399,60 @@ export class SymbolicModel {
     return this.bdd.and(this.validDomain, this.equal("scene", this.scenes.indexOf(id)));
   }
 
+  /**
+   * Partitioned transitions operate on a predicate over source/current bits.
+   * Existentially eliminating every next bit is an exact support test: the
+   * result can equal the original handle only when the predicate is
+   * independent of all next variables. This deliberately fails closed rather
+   * than silently treating a mixed-phase predicate as a source predicate.
+   */
+  private assertCurrentOnly(root: number, operation: "image" | "preimage"): void {
+    if (this.bdd.exists(root, this.nextVariables) !== root) {
+      throw new Error(`Partitioned ${operation} requires a current-only predicate`);
+    }
+  }
+
+  private factorsFor(choice: SymbolicChoice): readonly PartitionFactor[] {
+    const factors = this.partitionFactors.get(choice);
+    if (factors === undefined) throw new Error("Missing partition factors for symbolic choice");
+    return factors;
+  }
+
+  /** Exact sequential image of independent changed-field relations. */
+  private partitionedImage(source: number, choice: SymbolicChoice): number {
+    this.assertChoiceOwner(choice);
+    let result = this.bdd.and(source, choice.enabled);
+    for (const factor of this.factorsFor(choice)) {
+      if (result === 0) return 0;
+      result = this.bdd.and(result, factor.relation);
+      result = this.bdd.exists(result, factor.field.current);
+      const rename = new Map<number, number>(factor.field.next.map((variable, index) => [variable, factor.field.current[index]!]));
+      result = this.bdd.rename(result, rename);
+    }
+    // Every skipped field is identity on an enabled source. Every changed
+    // field has an exact bounded factor, so the final result is already in
+    // the valid output domain; no full-frame lifecycle gate is inserted.
+    return result;
+  }
+
+  /** Exact sequential preimage of independent changed-field relations. */
+  private partitionedPreimage(target: number, choice: SymbolicChoice): number {
+    this.assertChoiceOwner(choice);
+    let result = target;
+    for (const factor of this.factorsFor(choice)) {
+      const rename = new Map<number, number>(factor.field.current.map((variable, index) => [variable, factor.field.next[index]!]));
+      result = this.bdd.rename(result, rename);
+      result = this.bdd.andExists(result, factor.relation, factor.field.next);
+    }
+    return this.bdd.and(result, choice.enabled);
+  }
+
   image(source: number, choice?: SymbolicChoice): number {
+    if (this.transitionMode === "partitioned") {
+      this.assertCurrentOnly(source, "image");
+      if (choice !== undefined) return this.partitionedImage(source, choice);
+      return this.choices.reduce((result, option) => this.bdd.or(result, this.partitionedImage(source, option)), 0);
+    }
     if (choice !== undefined) {
       this.assertChoiceOwner(choice);
       if (this.bdd.and(source, choice.enabled) === 0) return 0;
@@ -378,6 +462,11 @@ export class SymbolicModel {
   }
 
   preimage(target: number, choice?: SymbolicChoice): number {
+    if (this.transitionMode === "partitioned") {
+      this.assertCurrentOnly(target, "preimage");
+      if (choice !== undefined) return this.partitionedPreimage(target, choice);
+      return this.choices.reduce((result, option) => this.bdd.or(result, this.partitionedPreimage(target, option)), 0);
+    }
     if (choice !== undefined) this.assertChoiceOwner(choice);
     const nextTarget = this.bdd.rename(target, this.toNext);
     const pre = (option: SymbolicChoice) => this.bdd.andExists(nextTarget, option.relation, this.nextVariables);
