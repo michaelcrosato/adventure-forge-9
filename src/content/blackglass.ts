@@ -59,6 +59,24 @@ export const BLACKGLASS_SCENES = [
         when: [{ type: "flag", flag: "blackglass-resolved", value: true }],
       },
       {
+        text: "Reedway's single regulator is still on Sera's barge. Ilyra needs it for her clinic sterilizer, while Orin needs the same part for his worker ferry. Both are waiting; visit both before you choose.",
+        when: [
+          { type: "flag", flag: "blackglass-resolved", value: true },
+          { type: "flag", flag: "reedway-clinic-powered", value: false },
+          { type: "flag", flag: "reedway-ferry-powered", value: false },
+          { type: "flag", flag: "reedway-regulator-recovered", value: false },
+        ],
+      },
+      {
+        text: "You have recovered Reedway's single regulator. Ilyra can use it for her clinic sterilizer or Orin for his worker ferry; both remain unpowered. Visit both before you choose.",
+        when: [
+          { type: "flag", flag: "blackglass-resolved", value: true },
+          { type: "flag", flag: "reedway-clinic-powered", value: false },
+          { type: "flag", flag: "reedway-ferry-powered", value: false },
+          { type: "flag", flag: "reedway-regulator-recovered", value: true },
+        ],
+      },
+      {
         text: "At the worker landing, Orin's ferry now hauls heavy freight with the regulator you recovered from the Reedway barge.",
         when: [{ type: "flag", flag: "reedway-ferry-powered", value: true }],
       },
@@ -232,6 +250,24 @@ export const BLACKGLASS_SCENES = [
         text: "You stand at Lowsail's quay. Blackglass has a working pressure line, and the account you bring back will change who trusts the next crossing.",
       },
       {
+        text: "Reedway's single regulator is still on Sera's barge. Ilyra needs it for her clinic sterilizer, while Orin needs the same part for his worker ferry. Both are waiting; visit both before you choose.",
+        when: [
+          { type: "flag", flag: "blackglass-resolved", value: true },
+          { type: "flag", flag: "reedway-clinic-powered", value: false },
+          { type: "flag", flag: "reedway-ferry-powered", value: false },
+          { type: "flag", flag: "reedway-regulator-recovered", value: false },
+        ],
+      },
+      {
+        text: "You have recovered Reedway's single regulator. Ilyra can use it for her clinic sterilizer or Orin for his worker ferry; both remain unpowered. Visit both before you choose.",
+        when: [
+          { type: "flag", flag: "blackglass-resolved", value: true },
+          { type: "flag", flag: "reedway-clinic-powered", value: false },
+          { type: "flag", flag: "reedway-ferry-powered", value: false },
+          { type: "flag", flag: "reedway-regulator-recovered", value: true },
+        ],
+      },
+      {
         text: "Ilyra's annex has a working sterilizer powered by the regulator you recovered. The treatment benches can stay open after this journey.",
         when: [{ type: "flag", flag: "reedway-clinic-powered", value: true }],
       },
@@ -293,8 +329,8 @@ export const BLACKGLASS_CHOICES = [
   {
     id: "continue-to-blackglass",
     scene: "lowsail-reckoning",
-    label: "Carry the closed record to Blackglass Works",
-    description: "Close the Archive account exactly as recorded, then take its consequences upriver to the pressure works.",
+    label: "Continue this journey at Blackglass Works",
+    description: "Carry the closed Archive record to Blackglass Works and continue the same journey through its pressure works.",
     effects: [
       { type: "setFlag", flag: "archive-returned", value: true },
       { type: "addFact", fact: "archive-case-closed" },
@@ -690,8 +726,8 @@ export const BLACKGLASS_CHOICES = [
   {
     id: "close-blackglass-chapter-clean",
     scene: "lowsail-after-blackglass",
-    label: "Close the Blackglass account",
-    description: "Record the settled pressure line and carry the clean account into the next journey.",
+    label: "Finish this journey: clean Blackglass account",
+    description: "Record the settled pressure line and finish this journey here with Lowsail's clean account.",
     when: [{ type: "flag", flag: "blackglass-pressure-scarred", value: false }, { type: "resourceAtMost", resource: "risk", value: 2 }],
     effects: [{ type: "addFact", fact: "blackglass-chapter-closed" }],
     outcome: { status: "completed", summary: "You close the Blackglass account with the pressure line steady. The works are ready for another shift, and Lowsail has your report." },
@@ -699,8 +735,8 @@ export const BLACKGLASS_CHOICES = [
   {
     id: "close-blackglass-chapter-watched",
     scene: "lowsail-after-blackglass",
-    label: "Close the watched Blackglass account",
-    description: "Record a steady line after a conspicuous crossing. The pressure holds, but the watch will follow the route.",
+    label: "Finish this journey: watched Blackglass account",
+    description: "Record the steady line and finish this journey here. The pressure holds, but the watch will follow the route.",
     when: [{ type: "flag", flag: "blackglass-pressure-scarred", value: false }, { type: "resourceAtLeast", resource: "risk", value: 3 }],
     effects: [{ type: "addFact", fact: "blackglass-chapter-closed" }],
     outcome: { status: "completed", summary: "You close the Blackglass account with the pressure line steady but watched. The route holds, and every patrol now knows its cost." },
@@ -708,8 +744,8 @@ export const BLACKGLASS_CHOICES = [
   {
     id: "close-blackglass-chapter-scarred",
     scene: "lowsail-after-blackglass",
-    label: "Close the scarred Blackglass account",
-    description: "Record that the line holds after the hard crossing, including the risk and attention it leaves behind.",
+    label: "Finish this journey: scarred Blackglass account",
+    description: "Record the damaged line and finish this journey here. The pressure and watch will shape future returns.",
     when: [{ type: "flag", flag: "blackglass-pressure-scarred", value: true }],
     effects: [{ type: "addFact", fact: "blackglass-chapter-closed" }],
     outcome: { status: "completed", summary: "You close the Blackglass account after a scarred crossing. The line holds, but the watch and the pressure will shape every return." },

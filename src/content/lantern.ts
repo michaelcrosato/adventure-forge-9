@@ -145,7 +145,7 @@ export const LANTERN_SCENES = [
     title: "Lowsail After the Lanterns",
     text: [
       {
-        text: "The Archive's lantern notice reaches Lowsail before the next market bell. You have already closed the local account; now the town must live with what the record says.",
+        text: "The Archive's lantern notice reaches Lowsail before the next market bell. You can finish this journey by closing the Archive case, or continue the same journey at Blackglass Works with the record.",
       },
       {
         text: "The notice certifies Nessa's shared repair and gives her a standing claim against another diversion.",
@@ -644,8 +644,8 @@ export const LANTERN_CHOICES = [
   {
     id: "close-archive-case",
     scene: "lowsail-reckoning",
-    label: "Close the Archive case",
-    description: "Accept the Lantern record and let Lowsail live with the evidence, protection, and risk you chose.",
+    label: "Finish this journey: close the Archive case",
+    description: "Close the Archive case here and finish this journey with Lowsail living with the evidence, protection, and risk you chose.",
     effects: [
       { type: "setFlag", flag: "archive-returned", value: true },
       { type: "addFact", fact: "archive-case-closed" },
