@@ -10,6 +10,18 @@ The diagnostic took 133.54 seconds / 193,456 KiB maximum RSS before its checked
 elapsed guard; this is runtime evidence, not worker authoring time or a model
 ranking. A separate bounded lookup benchmark is investigating the slowdown.
 
+That benchmark identified a high-limb BigInt Map pathology and supported a
+small exact-hexadecimal indexing change. Peer review accepted its injectivity
+and runtime type guard; a second worker supplied the high-bit reconvergence
+fixture. Root added null/undefined membership cases and ran the complete 11
+packed checks on clean `9f75bca` (2.11 seconds). The historical run preserves all
+45 original logical checkpoints, reaching the shared 344,064-visited point in
+1.209 seconds versus 133.308 seconds. It then fails the two-million-state cap
+in 4.90 seconds, so neither the speed result nor the focused tests establish
+campaign completion. An initial adoption review incorrectly proposed retaining
+the failing full family campaign invocation; correction separates the quotient
+algorithm's own obligations from the intrinsic engine/reachability requirements.
+
 Reference: `gpt-5.6-luna`, reasoning `max`, as requested. These are development workers, not blind playtesters. Service cost and exact per-worker token counts are unavailable; no dollar estimates are claimed.
 
 | Task | Accepted output | Manager/peer corrections | Timing evidence |

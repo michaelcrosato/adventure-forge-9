@@ -83,8 +83,14 @@ the checked-time guard: 344,064 visited / 499,140 discovered states and
 maximum RSS). The 120-second check occurs at progress checkpoints; this run
 crossed it at 133.308 seconds, before the external 150-second timeout. Source
 and artifact provenance match, and the process is closed. No backward graph
-or witness replay completed. A bounded synthetic lookup benchmark is examining
-the progressive slowdown before selecting another change. The unmasked default remains unchanged;
+or witness replay completed. A bounded synthetic benchmark found pathological
+BigInt Map lookup growth for values differing only in high bits. Exact full
+hexadecimal index keys now pass all 11 focused packed checks at clean
+`9f75bca`; all original 45 historical progress checkpoints match. The same
+344,064-visited checkpoint takes 1.209 seconds instead of 133.308 seconds.
+The candidate then hits the two-million-state cap (4.90 seconds / 735,488 KiB
+maximum RSS), without a complete graph. Static future-read flag projection
+is under independent review; no capacity increase is selected. The unmasked default remains unchanged;
 no complete symbolic campaign coverage or release adoption is accepted.
 The production family guard is unchanged. See
 `SYMBOLIC_REACHABILITY_EXPERIMENT.md`. Final copy rendering and all 115 non-audit checks pass, but the

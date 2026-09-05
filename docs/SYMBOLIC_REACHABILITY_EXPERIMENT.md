@@ -975,3 +975,58 @@ are preserved; typecheck/help pass. It has not been run against the incomplete
 campaign report. A small synthetic lookup benchmark is investigating the
 progressive runtime increase; no capacity increase or alternate campaign run
 has been selected from this failure alone.
+
+### Exact hexadecimal lookup keys
+
+A bounded synthetic benchmark on Node v22.22.1 isolates pathological lookup
+growth for BigInts that vary only in high limbs: 1,000 / 5,000 / 10,000 keys
+take 9.8 / 240 / 908 ms for generation, insertion and two lookup passes; the
+50,000-key case exceeds its ten-second bound. Equivalent 50,000 hexadecimal
+keys take 25.6 ms with three lookup passes. These figures exclude hexadecimal
+conversion and reuse key objects; they are not end-to-end campaign speed
+estimates. Low-bit-varying and random full-width keys do not exhibit the same
+pathology. Preserve the original V1 timeout, V2 bounded cases and V3 narrow
+series under `/tmp/af9-bigint-map-*`. The V2 script SHA-256 is
+`1a4d7fdcb30affe76c3d257f3b70959bad81cd8b78ea825ef050efdc000aeb57`;
+V3 is `f35f85bea1efdd6ef0fa4debc147f20e76ef26cce17e21aa3dd0de91df33a3cc`.
+
+Clean experiment `9f75bcae58a6d15cc75ed9d27487266c64fb9401` changes only the
+graph index to `Map<string, number>` with full `code.toString(16)` keys.
+This encoding is injective; states and transitions remain BigInts, with no
+truncation, approximate hash or omitted flag. Public membership guards reject
+non-BigInt runtime inputs before conversion. Independent review accepts the
+identity argument. Build and all 11 focused packed checks pass in 2.11 seconds /
+323,164 KiB maximum RSS, including a new high-bit reconvergence/cycle/guard and
+membership fixture. The existing BDD/symbolic source is unchanged from the
+50-check baseline. Preserve `/tmp/af9-packed-hex-focused-tests-v1.log` (SHA-256
+`30bb3e17f4fdcd8fe967dc9e9372d56a05916bbc2027b707960888f1c4ac2bda`) and
+`/tmp/af9-packed-hex-test-provenance-v1.json`; clean source matches before/after.
+
+The separate `/tmp/af9-packed-hex-historical-139e48` probe uses its own locked
+dependencies and only the two exact tested modules. It reuses the same frozen
+V2 profiler/runner, layout and limits. Its manifest is
+`/tmp/af9-packed-hex-historical-manifest-v1.json` (SHA-256
+`8cbb421ec73512c202a3b87b45f393af5b38c2114b1047c7ce7899106418d3b4`).
+Packed representation/configuration remain unchanged; the compile-time index
+encoding is bound by the new source hash.
+
+The run hits the two-million-state guard in 4.90 seconds / 735,488 KiB maximum
+RSS. Its last sampled checkpoint is forward depth 25 with 1,474,560 visited,
+1,999,776 discovered and 2,390,475 transitions; these sampled counts precede
+the actual guard failure. Every logical field in all 45 original checkpoints
+matches the new prefix exactly. The final shared checkpoint is 344,064 visited /
+499,140 discovered / 617,814 transitions at 1,209 ms, versus 133,308 ms before.
+This establishes the measured prefix improvement, not complete coverage or a
+whole-graph speed ratio. Exit code one, null signal, absent PID 1265599 and all
+source/artifact bindings are independently checked in
+`/tmp/af9-packed-hex-historical-root-check-v1.json` (SHA-256
+`41e0bf90ebe124a6986210f5915cfc91fa4ef3e5b28bb19d5570ba88cb4d25cb`).
+
+The adapted checker `/tmp/af9-check-packed-hex-historical-v1.mts` (SHA-256
+`353af0d1d6344837bd1ade2f6b7b424d4b52ac05b8c1dbc8a62133beffa82ca3`)
+passes typecheck/help but is not run on this incomplete report. No backward
+traversal or witness replay completes, and the previous all-flag failure is
+unchanged. The next review concerns a conservative static future-read flag
+quotient, with every resource, scene, lifecycle and ending retained. This would
+be a separately declared proof representation, not all-flag-state coverage;
+no such source change or campaign run has yet been made.

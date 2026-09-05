@@ -106,3 +106,12 @@ The separate packed experiment adds detached
 tested `dcf3db9` and its own locked dependencies. At this preparation snapshot,
 34 worktrees remain with the same two local branches. Both new diagnostic
 overlays remain deliberately separate from prior evidence.
+
+The exact hexadecimal index candidate has a separate detached probe at
+`/tmp/af9-packed-hex-historical-139e48`, retaining the first packed failure
+unchanged. Its two verifier files match tested experiment `9f75bca`; its own
+locked dependencies and complete source manifest are recorded in
+`/tmp/af9-packed-hex-historical-source-preparation-v1.json`. The failed
+two-million-state run and checked process closure remain beside that probe.
+There are now 35 worktrees and the same two local branches; these are live
+preservation counts, not revisions to the four cleanup batches.
