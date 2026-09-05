@@ -77,8 +77,14 @@ use the full nonnegative safe-integer domain, and chunked reverse edges support
 completion analysis. Clean experiment `dcf3db9` passes build and all 50 focused
 checks (21.47 seconds / 1,271,900 KiB maximum RSS), including independent
 oracle/domain/replay and storage boundaries. A separate historical packed probe
-has its exact two modules and locked dependencies; its bounded harness and
-independent witness checker are being prepared before launch. The unmasked default remains unchanged;
+has its exact two modules and locked dependencies. Its first run stopped at
+the checked-time guard: 344,064 visited / 499,140 discovered states and
+617,814 transitions, still in forward depth 21 (133.54 seconds / 193,456 KiB
+maximum RSS). The 120-second check occurs at progress checkpoints; this run
+crossed it at 133.308 seconds, before the external 150-second timeout. Source
+and artifact provenance match, and the process is closed. No backward graph
+or witness replay completed. A bounded synthetic lookup benchmark is examining
+the progressive slowdown before selecting another change. The unmasked default remains unchanged;
 no complete symbolic campaign coverage or release adoption is accepted.
 The production family guard is unchanged. See
 `SYMBOLIC_REACHABILITY_EXPERIMENT.md`. Final copy rendering and all 115 non-audit checks pass, but the

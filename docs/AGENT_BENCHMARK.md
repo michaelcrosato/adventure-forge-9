@@ -1,5 +1,15 @@
 # Agent benchmark
 
+The packed historical harness review corrected save/restore comparison and
+replay gaps before launch. A reported layout-shape blocker was independently
+rechecked and withdrawn as stale. The independent checker needed further
+manager corrections for stale script paths, all-190 replay accounting and an
+incorrect provenance field. Its V3 typecheck/help pass, but the campaign run
+did not complete and therefore the independent replay check was not run.
+The diagnostic took 133.54 seconds / 193,456 KiB maximum RSS before its checked
+elapsed guard; this is runtime evidence, not worker authoring time or a model
+ranking. A separate bounded lookup benchmark is investigating the slowdown.
+
 Reference: `gpt-5.6-luna`, reasoning `max`, as requested. These are development workers, not blind playtesters. Service cost and exact per-worker token counts are unavailable; no dollar estimates are claimed.
 
 | Task | Accepted output | Manager/peer corrections | Timing evidence |

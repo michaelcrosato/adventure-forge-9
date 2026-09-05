@@ -938,4 +938,40 @@ is being prepared with two million explicit states, eight million edges,
 120-second checked time, external TERM at 150 seconds plus KILL after five,
 and a 1,536 MiB Node heap. A separate trusted-engine checker will require all
 25 scenes, 131 choices and 34 terminal-choice witnesses, with zero mechanical
-issues. No historical packed run has been launched yet.
+issues.
+
+The single first packed diagnostic is now preserved as
+`/tmp/af9-packed-historical-139e48.{json,progress.json,finalization.json,log}`.
+Its manifest is `/tmp/af9-packed-historical-manifest-v1.json` (SHA-256
+`b25e56849ab52889bf05bc8ec32092ddf76f23292b9a7fd722bc4e678bee3d61`).
+The final V2 profiler and runner correct complete-state/observation comparisons,
+replay all recorded paths, avoid receipt checks caused by scene/choice ID
+collisions, and preserve after-run provenance failures in finalization. A review
+claim about mismatched layout shapes was rechecked and withdrawn: both sides
+already compare the same four fields. Diagnostic completion means exhaustive
+traversal plus replay and matching provenance; defect-free acceptance separately
+requires zero issues and the exact 190 historical witness IDs.
+
+The run fails the checked elapsed guard in forward depth 21, after 344,064
+visited states, 499,140 discovered states and 617,814 transitions. The final
+checkpoint reports 133,308 ms; external time is 133.54 seconds and maximum
+RSS is 193,456 KiB. The configured 120-second guard is checked at progress
+checkpoints, so this is not a claim that runtime stayed below 120 seconds.
+The external 150-second timeout was not reached. Exit code is one, signal is
+null, and wrapper PID 1260468 is absent. No backward traversal or witness
+replay completed. Root independently checked every source/artifact binding in
+`/tmp/af9-packed-historical-root-check-v1.json` (SHA-256
+`60c8e47b3cf351a62c2d7085f811b3a2051371ebd703eead3c3278c374750e5a`).
+
+The separately prepared checker is
+`/tmp/af9-check-packed-historical-v3.mts` (SHA-256
+`9612373d305e998295f43e47a9d59a8d98973ad7bef711351e9bd0a7799b1de1`).
+It uses only the separate clean historical engine for all 190 manual and
+engine-API replays, with full save/state/observation/receipt checks, exact
+25/131/34 coverage IDs and zero graph defects. Review corrected stale V1
+script paths, a 34-versus-190 replay assertion, ending-only full replays and
+an assertion against a nonexistent provenance field. All earlier revisions
+are preserved; typecheck/help pass. It has not been run against the incomplete
+campaign report. A small synthetic lookup benchmark is investigating the
+progressive runtime increase; no capacity increase or alternate campaign run
+has been selected from this failure alone.
