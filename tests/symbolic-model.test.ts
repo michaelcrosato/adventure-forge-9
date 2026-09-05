@@ -1377,7 +1377,7 @@ test("generation copies carry nonempty pending unions in both passes and process
   }
 });
 
-test("allocation intervals avoid repeated copies for duplicate disabled choices and handle huge thresholds", () => {
+test("allocation intervals require newly allocated nodes and handle huge thresholds", () => {
   const fixture = (disabledChoices: number): RawScenario => ({
     version: 1, initialScene: "start", initialResources: { token: 1 }, initialFacts: [],
     scenes: [scene("start")],
@@ -1391,9 +1391,29 @@ test("allocation intervals avoid repeated copies for duplicate disabled choices 
   });
   for (const order of ["interleaved", "blocked"] as const) for (const transitionMode of ["relational", "partitioned"] as const) {
     const small = compactFixtureResult(fixture(1), { token: 1 }, order, undefined, transitionMode).result;
-    const large = compactFixtureResult(fixture(31), { token: 1 }, order, undefined, transitionMode).result;
+    const copies: { before: number; after: number }[] = [];
+    const originalCopy = Bdd.prototype.copyForestTo;
+    Bdd.prototype.copyForestTo = function(target, roots) {
+      const before = this.stats().uniqueEntries;
+      const result = originalCopy.call(this, target, roots);
+      copies.push({ before, after: target.stats().uniqueEntries });
+      return result;
+    };
+    let large: CompactReachabilityResult;
+    try {
+      large = compactFixtureResult(fixture(31), { token: 1 }, order, undefined, transitionMode).result;
+    } finally {
+      Bdd.prototype.copyForestTo = originalCopy;
+    }
     assert.ok(small.compactions > 0);
-    assert.equal(large.compactions, small.compactions, "duplicate zero-work choices do not provoke extra generations");
+    assert.equal(copies.length, large.compactions);
+    assert.ok(copies.length > 1);
+    // A disabled action can still allocate temporary nodes before yielding
+    // false. Hysteresis measures actual allocation, not the result's truth.
+    for (let index = 1; index < copies.length; index++) {
+      assert.ok(copies[index]!.before >= copies[index - 1]!.after + 1,
+        "each later copy requires at least the configured interval of new nodes");
+    }
     assert.equal(large.reachableCount, 2n);
     assert.equal(large.unreachableChoices.length, 31);
     const model = new SymbolicModel(fixture(1), { token: 1 }, { order, transitionMode });
