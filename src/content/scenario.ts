@@ -154,7 +154,7 @@ export const FACT_LABELS = {
   "archive-vask-exposed": "The Lantern record exposed Prefect Oren Vask's diversion.",
   "archive-case-sealed": "The Lantern case was sealed to protect its witness.",
   "archive-record-negotiated": "The Archive filed a provisional record without a public verdict.",
-  "archive-hearing-adjourned": "The Lantern hearing was adjourned while the witness question remained open.",
+  "archive-hearing-adjourned": "You adjourned the Lantern hearing to investigate further before choosing a verdict.",
   "archive-case-closed": "You closed the Lantern case after carrying its record back to Lowsail.",
 } as const satisfies Readonly<Record<string, string>>;
 
@@ -207,7 +207,7 @@ export const RAW_SCENARIO = {
           when: [{ type: "flag", flag: "water-released", value: true }],
         },
         {
-          text: "Before you take the order into the floodworks, you may declare the working mark you carry. It will change what Lowsail asks of you.",
+          text: "A working mark is an optional background that opens trained approaches. Choose one here before visiting the clinic, council, or workshop; visiting a location first begins a journey without a mark. Either way, you can resolve the water crisis and investigate the Archive.",
           when: [{ type: "flag", flag: "expedition-started", value: false }, { type: "flag", flag: "background-chosen", value: false }],
         },
         {

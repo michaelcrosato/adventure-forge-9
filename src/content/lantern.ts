@@ -32,7 +32,7 @@ export const LANTERN_SCENES = [
         text: "Sera Vale lays the stolen order under a glass weight. Jalen Rook knows where the night ledger is kept; the seal workroom can trace the hand that authorized the diversion; Mara Venn is hidden below the stacks.",
       },
       {
-        text: "You have enough separate evidence to call a hearing, but the choice of whose safety to spend will be final.",
+        text: "You have enough evidence to call a hearing. Removing Vask requires the night ledger, his counterseal, and either Mara's account or a canalwright's valve reconstruction. You may adjourn to investigate further; choosing a verdict is final.",
         when: [{ type: "resourceAtLeast", resource: "archive-evidence", value: 2 }],
       },
       {
@@ -353,7 +353,7 @@ export const LANTERN_CHOICES = [
     id: "call-lantern-hearing",
     scene: "archive-hall",
     label: "Call the Lantern hearing",
-    description: "Bring the gathered evidence before Sera Vale, Oren Vask, and the witness question.",
+    description: "Two evidence items can open a hearing. To remove Vask, gather the ledger, counterseal, and testimony or technical proof. You may return to investigate until you choose a verdict.",
     when: [
       { type: "resourceAtLeast", resource: "archive-evidence", value: 2 },
       { type: "flag", flag: "archive-verdict-exposed", value: false },
@@ -622,12 +622,10 @@ export const LANTERN_CHOICES = [
   {
     id: "adjourn-hearing-for-witness",
     scene: "lantern-hearing",
-    label: "Adjourn and seek the witness",
-    description: "Pause the hearing before a verdict and return to the Archive hall for Mara's account.",
+    label: "Adjourn and investigate further",
+    description: "Return to the Archive hall for missing evidence before choosing a verdict. Existing testimony and protection remain; adjourning costs no resources.",
     when: [
       { type: "resourceAtLeast", resource: "archive-evidence", value: 2 },
-      { type: "flag", flag: "archive-witness-contacted", value: false },
-      { type: "flag", flag: "archive-hearing-adjourned", value: false },
     ],
     effects: [
       { type: "setFlag", flag: "archive-hearing-adjourned", value: true },
