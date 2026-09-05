@@ -224,7 +224,7 @@ export const RAW_SCENARIO = {
           text: "Immediate costs: follow the canal adds 1 risk and spends 0 supplies. Paying the scouts spends 1 supply and adds 0 risk.",
         },
         {
-          text: "Later, keeping a supply can support a shared repair. Scouts let all eight families cross without medicine; without them, an injured family may be left behind.",
+          text: "Keep a supply if you want to repair the sluice. If you evacuate instead, scouts get all eight families across without medicine. Evacuation leaves the clinic without clean water.",
         },
       ],
     },
@@ -520,14 +520,14 @@ export const RAW_SCENARIO = {
       id: "follow-canal",
       scene: "sluice-road",
       label: "Follow the canal",
-      description: "Immediate cost: risk +1; supplies +0. Later, the kept supply can support a shared repair, but an unmarked evacuation may leave one injured family behind unless you spend medicine.",
+      description: "Risk +1; supplies unchanged. Keep a supply for repair. If you later evacuate without scouts, spend one medicine dose to bring all eight families across, or leave one wounded family behind. That dose cannot go to the fever ward.",
       effects: [{ type: "adjustResource", resource: "risk", delta: 1 }, { type: "goTo", scene: "red-sluice-gate" }],
     },
     {
       id: "pay-scouts",
       scene: "sluice-road",
       label: "Pay the canal scouts",
-      description: "Immediate cost: supplies -1; risk +0. Later, scouts let all eight families cross without medicine; with a borrowed kit, this spends the last supply needed for a shared repair.",
+      description: "Supplies -1; risk unchanged. If you later evacuate, all eight families can cross without medicine. With a borrowed kit, this spends the last supply required for repair.",
       when: [{ type: "resourceAtLeast", resource: "supplies", value: 1 }],
       effects: [
         { type: "adjustResource", resource: "supplies", delta: -1 },
