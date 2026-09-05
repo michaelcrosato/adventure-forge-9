@@ -132,3 +132,21 @@ Original evidence lives under `/home/micha/.local/share/adventure-forge-9/runs/`
 Independent review verified all three recorded runs against the clean trusted checkout, with exact source/build match and `sourceExecution: "none"`. Setup retained ChatGPT subscription auth, Luna/max, Codex CLI 0.153.3, unchanged neutral prompts and verified isolation: no workspace roots, environments, dynamic tools, shell, patch or search access. Each distinct gameplay thread retained both original interviews. No provider error, reroute or forbidden tool call occurred. The reviewer independently confirmed the path/exposure counts, original clarity concerns and every export checksum.
 
 Manager decision: accept this as the first bounded timed-traversal chapter under the declared basic expansion gate. Mechanical and rendered evidence establishes the brace's useful cost and the corrected forecasts. Natural play supports two completed quiet-route experiences, not the brace correction's improvement. No measured improvement claim passes its separate exposure gate. Continue addressing resource/timing density and optional-continuation clarity; do not rerun until a favorable set of ratings appears. Persistent regional travel and the full world/depth goal remain outstanding.
+
+## Later natural brace observation
+
+The first Reedway batch supplies one later, separately sourced use of the
+brace. Seed 3 at `998a214`, run `2026-09-05T06-35-21-540Z-2f16f93b` under
+`/home/micha/.local/share/adventure-forge-9/runs-stage7-998a214/`, reached
+the conduit gallery at revision 21 with Risk 2, Supplies 1 and Tide 1.
+Action event 583 selected `brace-the-conduit-ledge`; observation events
+557 and 584 show Risk remaining 2, Supplies falling to 0 and Tide rising
+to 2 at revision 22. The player then set the pressure cleanly and completed
+Blackglass. Original evidence, interview, verification and export are
+indexed in `STAGE7_REEDWAY.md`.
+
+This supplies one natural use of the relevant option after the original
+comparison, whose exposure remains 0/3. It is not a matched comparison or
+evidence that the brace caused an experience improvement. The interview
+still volunteered uncertainty about Nessa's assistance and optional
+continuation; it did not identify a blocking defect.
