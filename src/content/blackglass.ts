@@ -59,7 +59,7 @@ export const BLACKGLASS_SCENES = [
         when: [{ type: "flag", flag: "blackglass-resolved", value: true }],
       },
       {
-        text: "Reedway's single regulator is still on Sera's barge. Ilyra needs it for her clinic sterilizer, while Orin needs the same part for his worker ferry. Both are waiting; visit both before you choose.",
+        text: "Reedway's single regulator is still on Sera's barge. Ilyra needs it for her clinic sterilizer, while Orin needs the same part for his worker ferry. You can visit either shore before deciding.",
         when: [
           { type: "flag", flag: "blackglass-resolved", value: true },
           { type: "flag", flag: "reedway-clinic-powered", value: false },
@@ -68,7 +68,7 @@ export const BLACKGLASS_SCENES = [
         ],
       },
       {
-        text: "You have recovered Reedway's single regulator. Ilyra can use it for her clinic sterilizer or Orin for his worker ferry; both remain unpowered. Visit both before you choose.",
+        text: "You have recovered Reedway's single regulator. Ilyra can use it for her clinic sterilizer or Orin for his worker ferry; both remain unpowered. You can visit either shore before deciding.",
         when: [
           { type: "flag", flag: "blackglass-resolved", value: true },
           { type: "flag", flag: "reedway-clinic-powered", value: false },
@@ -250,7 +250,7 @@ export const BLACKGLASS_SCENES = [
         text: "You stand at Lowsail's quay. Blackglass has a working pressure line, and the account you bring back will change who trusts the next crossing.",
       },
       {
-        text: "Reedway's single regulator is still on Sera's barge. Ilyra needs it for her clinic sterilizer, while Orin needs the same part for his worker ferry. Both are waiting; visit both before you choose.",
+        text: "Reedway's single regulator is still on Sera's barge. Ilyra needs it for her clinic sterilizer, while Orin needs the same part for his worker ferry. You can visit either shore before deciding.",
         when: [
           { type: "flag", flag: "blackglass-resolved", value: true },
           { type: "flag", flag: "reedway-clinic-powered", value: false },
@@ -259,7 +259,7 @@ export const BLACKGLASS_SCENES = [
         ],
       },
       {
-        text: "You have recovered Reedway's single regulator. Ilyra can use it for her clinic sterilizer or Orin for his worker ferry; both remain unpowered. Visit both before you choose.",
+        text: "You have recovered Reedway's single regulator. Ilyra can use it for her clinic sterilizer or Orin for his worker ferry; both remain unpowered. You can visit either shore before deciding.",
         when: [
           { type: "flag", flag: "blackglass-resolved", value: true },
           { type: "flag", flag: "reedway-clinic-powered", value: false },
@@ -745,7 +745,7 @@ export const BLACKGLASS_CHOICES = [
     id: "close-blackglass-chapter-scarred",
     scene: "lowsail-after-blackglass",
     label: "Finish this journey: scarred Blackglass account",
-    description: "Record the damaged line and finish this journey here. The pressure and watch will shape future returns.",
+    description: "Record that the line holds after the hard crossing, including its risk and attention, and finish this journey here.",
     when: [{ type: "flag", flag: "blackglass-pressure-scarred", value: true }],
     effects: [{ type: "addFact", fact: "blackglass-chapter-closed" }],
     outcome: { status: "completed", summary: "You close the Blackglass account after a scarred crossing. The line holds, but the watch and the pressure will shape every return." },
