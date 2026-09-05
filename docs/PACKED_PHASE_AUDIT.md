@@ -186,12 +186,10 @@ The independent current checker remains preparation only:
 Typecheck/help pass. It requires complete output before importing the trusted
 engine and is prepared to replay all 231 current witness IDs; it was not run.
 
-No further capacity increase is selected. Read-only reviews are considering
-an exact backward symbolic property proof: first derive states with a completed
-route, then all predecessors of a playing state without such a route or of an
-arithmetic/bound-exit failure. Excluding the initial state from that bad set
-could prove safety/completion without enumerating every reachable state.
-Resource-bound exits must remain failures; all authored reachability still
-requires actual current-engine witnesses. This is a proposal under review,
-with no new implementation or campaign run. Full current verification, fresh
-players, publication, final scope acceptance and cleanup remain unfinished.
+No further packed capacity increase is selected. The backward symbolic property
+proof has since been implemented and tested; its historical completion
+predicate converges, but the combined safety predicate reaches the node cap.
+The separate current authored endpoint catalog has passed independent replay.
+See [BACKWARD_PROPERTY_AUDIT.md](BACKWARD_PROPERTY_AUDIT.md) for these distinct
+results and the next split-obligation implementation. Full current verification,
+fresh players, publication, final scope acceptance and cleanup remain unfinished.

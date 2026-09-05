@@ -2,9 +2,24 @@
 
 Updated: 2026-09-05 (America/Vancouver). The full Skyrim-breadth/BG3-depth goal remains active and far beyond the current game.
 
-Stage 7 is implemented and mechanically verified locally: four regional places connect resolved Lowsail/Blackglass hubs with free reversible travel, competing regulator allocations and once-only services (29 scenes, 160 choices). The conserved-parameter release audit passes at 243,426 families / 703,812 transitions, with all 160 choice witnesses replayed, 36 ending witnesses and no dead ends or missing completed paths. All 108 checks pass on `998a214`; independent historical comparisons and preserved failures support the documented change in proof representation. The same source completed a fresh 44-action browser journey, save restoration, changed hub returns and mobile checks, with a 5,608-byte final request. A clean trusted freeze at `/tmp/af9-stage7-verified` uses game build `af9-55d07242701a5613af8d0919`. All three fresh neutral Luna/max games at seeds 1–3 completed with original interviews, independent source/isolation/replay checks and verified exports. Only seed 2 entered Reedway and allocated the regulator (1/3, below the required 2/3); median clarity/enjoyment are both four and no player reported a defect. The region remains unaccepted and unpublished. The predeclared clarification is now verified at `8b2be2c`: all 108 checks pass, a 50-action browser journey checks the revised hub text and save restoration, and all four revised earlier completion choices work in the browser. A clean source freeze at `/tmp/af9-stage7-continuation-verified` uses build `af9-c4b63b33db556a8a2e83dc7d`; all three new neutral seed 1–3 players completed with original interviews and checked exports. Again only one entered Reedway and allocated its regulator; the regional 2/3 gate fails. Volunteered end/continue confusion fell from 2/3 to 0/3, meeting the predeclared narrow clarity criterion, with median clarity five and enjoyment four. This supports a limited wording observation, not increased exploration or a broad causal claim. Both failed regional exposure batches remain preserved; no identical rerun is planned. All prior choices and endings remain. Production remains the accepted Blackglass build.
+Stage 8 is integrated locally at game source `2f6212d`: earlier Reedway access,
+safe Archive pause/resume and decided-record revisits, and Sera's salvage credit
+consequence (29 scenes, 166 choices, 36 terminal-choice IDs). Final-copy browser
+checks and all 115 non-audit checks pass. Both earlier Stage 7 live batches
+missed the regional exposure gate at 1/3; Stage 8 has no fresh live acceptance.
+Production remains the accepted Blackglass source `139e48a`, public on Vercel
+and connected to GitHub main automatic deployment.
 
-Stage 8 is integrated locally, with final game copy at `2f6212d`: earlier Reedway access, safe Archive pause/resume and decided-record revisits, plus a personal credit consequence for Sera's salvage relationship (29 scenes, 166 choices). Eight independent behavioral checks and a 52-action stateless browser journey pass on `c64c47c`, including regional work during a partial case, both quest orders, Sera's refusal/recovery and save restoration. Final-copy browser uploads/ending clicks also pass, along with all 115 non-audit checks. The actual final request is 6,264 bytes. Full `npm run verify` on `c64c47c` failed the existing 250,000-family workload guard and one older static future-read assertion; the latter is corrected, and the complete original failure is retained. A separate diagnostic also hit 500,000 families without finishing. A proposed local-pruning optimization was rejected after a counterexample and negligible reduction. Coarse prefix partitions also hit their diagnostic guards. The isolated symbolic compiler now passes 36 focused checks at `68f8932`, including exact forest copying, owned-generation compaction, immutable full field permutations and opt-in partitioned transitions. Its two-million-node historical diagnostic still fails in forward round 22 after eight compactions. The single affinity-order attempt also fails at round 22; the partitioned attempt fails at round 21. Exact copying between choice calculations now passes independent partial-union, authored-order and allocation-interval checks. After a preserved missing-dependency setup failure, its runtime-ready historical attempt fails at forward round 24 after 17 copies. No symbolic campaign coverage is accepted. Stage 8 remains unaccepted and unpublished. See `STAGE8_PARALLEL_CAMPAIGN.md`. Production remains `139e48a`; the public page, new-game API and GitHub main automatic deployment were freshly verified.
+The release audit remains open. Experimental backward proof `5b2e320` passes
+all 47 BDD/symbolic checks. On the historical campaign its completion predicate
+converges in 1.37 seconds, but the combined safety calculation hits two million
+nodes during round nine (30.23 seconds total). A complete current witness
+catalog independently replays all 231 scene/choice/ending endpoints against
+main. This proves authored endpoint reachability, not universal safety. The separate-obligation implementation `830b29e` also passes all 50 checks,
+but its historical run hits the same node limit in the first non-completion
+obligation (37.64 seconds). Both reviewers accept an exact simplification of that seed as the next
+experiment; it has no implementation or run yet. See
+[BACKWARD_PROPERTY_AUDIT.md](BACKWARD_PROPERTY_AUDIT.md) for scope and evidence.
 
 ## Accepted foundation
 
@@ -30,99 +45,26 @@ All live batches, including the three continuation-candidate runs, are closed an
 
 ## Required next work
 
-Stage 8 follow-up: `bee7b6c` corrects the stale static future-read assertion;
-`2f6212d` integrates the final optional-visit and unfinished-case copy review.
-Build and 17 focused checks pass. The separate size-only run hit its 500,000
-guard after 287,397 visited families / 908,913 transitions; it is not complete
-coverage. Independent design/measurement and proof reviews are investigating
-state-local stable-flag pruning; its prototype is now rejected. It removed
-only seven keys from the same 100,000-state prefix and violated the existing
-active-field handoff invariant. Exact symbolic reachability and exhaustive
-prefix partitions were independently reviewed. Coarse partitions hit their
-100,000-family diagnostic caps. A bounded symbolic compiler experiment is
-selected in `/tmp/af9-symbolic-manager`, separate from main and the release
-audit. Its complete small-scenario comparisons and real-engine witness
-replay pass all 36 focused checks at `68f8932`, across default/reversed field
-orders, both blocked/interleaved bit layouts and both transition strategies.
-Exact forest copying and opt-in owned-generation compaction preserve every
-field, frontier and root owner in the independent finite fixtures. The
-historical diagnostic with two million nodes, 500,000 cache entries and a
-500,000-node compaction threshold still fails in forward round 22 after eight
-copies (49.74 seconds / 833,284 KiB maximum RSS). All incomplete variants and
-the corrected timeout overrun remain preserved. The single affinity-order
-diagnostic also fails at round 22 (36.44 seconds / 858,600 KiB maximum RSS),
-with exact source/provenance checks. The partitioned diagnostic with
-the original default order also fails at round 21 (38.04 seconds / 924,652 KiB
-maximum RSS). Copying between individual choice calculations now passes
-independent checks for nonempty pending-root handoff, exact authored choice
-order and allocation intervals. The clean 36-check run takes 12.72 seconds /
-1,240,784 KiB maximum RSS; two failed root stress-fixture attempts are retained
-with their corrections. After a preserved missing-dependency setup failure,
-the runtime-ready historical attempt fails at forward round 24 after 17
-copies (84.69 seconds / 1,368,956 KiB maximum RSS), with matching provenance.
-No backward traversal or witness replay completes. The predeclared copy-17
-inventory is now complete: the semantic root forest has 1,267,134 nodes,
-including 303,954 added by historical frontiers beyond the current/model union.
-It intentionally stops after copying and establishes no campaign coverage.
-An independently reviewed optional early per-choice mask is implemented in
-clean experiment `f83792e`; build and all 40 focused checks pass (20.77 seconds /
-1,078,428 KiB maximum RSS), with unchanged source provenance. The single
-historical masked diagnostic reaches forward round 26, then fails the same
-two-million-node guard after 18 copies (113.42 seconds / 1,155,468 KiB maximum
-RSS). Source and runner provenance match; no backward traversal or witness
-replay completes. Review rejected external frontier storage under the existing
-numeric-root/witness API. A separate compact exhaustive explicit-state prototype
-is now being implemented: BigInt keys retain every control value, resources
-use the full nonnegative safe-integer domain, and chunked reverse edges support
-completion analysis. Clean experiment `dcf3db9` passes build and all 50 focused
-checks (21.47 seconds / 1,271,900 KiB maximum RSS), including independent
-oracle/domain/replay and storage boundaries. A separate historical packed probe
-has its exact two modules and locked dependencies. Its first run stopped at
-the checked-time guard: 344,064 visited / 499,140 discovered states and
-617,814 transitions, still in forward depth 21 (133.54 seconds / 193,456 KiB
-maximum RSS). The 120-second check occurs at progress checkpoints; this run
-crossed it at 133.308 seconds, before the external 150-second timeout. Source
-and artifact provenance match, and the process is closed. No backward graph
-or witness replay completed. A bounded synthetic benchmark found pathological
-BigInt Map lookup growth for values differing only in high bits. Exact full
-hexadecimal index keys now pass all 11 focused packed checks at clean
-`9f75bca`; all original 45 historical progress checkpoints match. The same
-344,064-visited checkpoint takes 1.209 seconds instead of 133.308 seconds.
-The candidate then hits the two-million-state cap (4.90 seconds / 735,488 KiB
-maximum RSS), without a complete graph. A conservative static future-read
-scope is now implemented at clean experiment `6b77030`; build, 17 packed
-checks and nine existing audit-scaling checks pass. The separate historical
-run completes at exactly 169,922 control classes / 332,402 transitions,
-matching the accepted historical static audit, with zero mechanical issues.
-All 190 witnesses pass a separate trusted-engine replay checker. External
-traversal/replay time is 1.40 seconds / 188,440 KiB maximum RSS; the independent
-checker takes another 0.49 seconds. These are control-class counts, not
-full-flag or full-history equivalence. The current campaign still hits two
-million classes (7.50 seconds / 795,528 KiB maximum RSS), then a separately
-reviewed eight-million-class capacity diagnostic also fails (37.63 seconds /
-2,862,832 KiB maximum RSS). All 96 logical checkpoints from the smaller run
-match the larger run's prefix; neither completes backward analysis or replay.
-Both failures and every source/artifact binding are preserved. Permanent-phase
-projection is now implemented in clean experiment `9df0cf7`; 30 focused checks
-pass. Root found that retaining only currently true pruning justifiers can
-expand the successor read set. The corrected rule retains every monotone
-false-gate flag on a pruned choice, including false siblings. An independent
-complete historical comparison checks all 169,922 static states and 332,402
-edges against 156,103 phase classes / 298,433 edges, with identical completion
-classifications and zero issues. All 190 paths also pass separate trusted-engine
-replay. The current phase run still fails the two-million-state cap in
-21.32 seconds / 1,195,016 KiB maximum RSS, before backward analysis or replay.
-All evidence is preserved in `PACKED_PHASE_AUDIT.md`. Read-only reviews now
-consider backward symbolic safety/completion properties with separate explicit
-authored reachability witnesses; no such implementation or run has begun.
-The default all-flag
-scope and production audit remain unchanged; no current campaign coverage or
-release adoption is accepted.
-The production family guard is unchanged. See
-`SYMBOLIC_REACHABILITY_EXPERIMENT.md`. Final copy rendering and all 115 non-audit checks pass, but the
-full audit remains open. The 52-action browser and original failure evidence
-remain bound to `c64c47c`; final-copy checks are separate. Local browser,
-server and verification processes are closed.
+The Stage 8 behavior, browser and non-audit regressions are documented in
+[STAGE8_PARALLEL_CAMPAIGN.md](STAGE8_PARALLEL_CAMPAIGN.md). The original full
+verification failure and all incomplete scaling diagnostics remain preserved.
+Static packed projection completes the historical graph but fails even an
+eight-million-class current diagnostic. Conservative permanent-phase projection
+also completes historical comparison/replay, then hits the current two-million
+class guard. See [PACKED_PHASE_AUDIT.md](PACKED_PHASE_AUDIT.md) and
+[SYMBOLIC_REACHABILITY_EXPERIMENT.md](SYMBOLIC_REACHABILITY_EXPERIMENT.md).
+
+The backward property proof now completes the historical completion predicate
+but not its safety closure. Separate obligations are mathematically equivalent
+and use independent BDD managers, but the first non-completion closure alone
+still reaches the node cap. The next reviewed simplification removes states
+already covered by a separate failure closure while preserving the aggregate
+bad set. It has no implementation or campaign result yet. Independent finite
+checks and a bounded historical comparison must pass before current adoption.
+The complete current endpoint catalog has separate main-engine replay evidence
+in [BACKWARD_PROPERTY_AUDIT.md](BACKWARD_PROPERTY_AUDIT.md). The production audit
+and its guard remain unchanged; full verification and Stage 8 acceptance are
+still pending.
 
 1. Resolve Stage 8's measured audit workload failure without weakening the proof or removing regional activity. Compare the independently reviewed alternatives after rejecting local flag pruning; preserve its counterexample and every failed diagnostic. Full verification and a clean freeze are required before the three predeclared fresh players. The wording comparison is complete, with a narrow clarity observation but a second failed regional exposure gate (1/3). Keep both batches and all earlier endings; do not rerun identical players until a favorable result appears. See `STAGE7_REEDWAY.md` and `STAGE8_PARALLEL_CAMPAIGN.md`.
 2. Review persistent regional travel and safe earlier-area revisits as the next breadth step. Current chapters are mostly sequential; another sequential investigation area alone would not establish an explorable world.

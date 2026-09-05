@@ -320,3 +320,13 @@ with 30 focused checks. The current phase graph still hits two million states
 in 21.32 seconds / 1,195,016 KiB maximum RSS; source/artifact checks pass, but
 no backward analysis or witness replay completes. See `PACKED_PHASE_AUDIT.md`.
 Full current verification and the predeclared three fresh players remain open.
+
+The backward property follow-up now has clean implementations and finite
+oracle checks: 47 checks at `5b2e320`, then 50 with separate obligations at
+`830b29e`. Both historical safety calculations hit the node cap before a
+complete proof, despite converging completion predicates. A separate main-engine
+checker accepts all 231 current scene/choice/ending witness endpoints, with
+full checkpoint/receipt checks. This closes authored endpoint coverage only;
+universal safety and full release verification remain open. See
+[BACKWARD_PROPERTY_AUDIT.md](BACKWARD_PROPERTY_AUDIT.md). No Stage 8 players
+were dispatched and nothing new was published.

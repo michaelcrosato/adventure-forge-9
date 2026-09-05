@@ -148,3 +148,18 @@ The refreshed preservation inventory is 40 worktrees and the same two local
 branches. All comparison, diagnostic and test processes from this phase are
 closed. No archive batch's removal counts changed, and no prior probe was
 overwritten. Main adoption, publication and final cleanup remain pending.
+
+The backward-property experiment adds detached
+`/tmp/af9-symbolic-properties-historical-139e48`, with its own locked dependencies
+and exactly three verifier modules from clean tested `5b2e320`. The setup
+failure and real historical node-cap failure are preserved under separate
+output names; their processes are closed. The current authored witness
+catalog reuses the existing clean trusted checkout and was independently
+checked against main. See `BACKWARD_PROPERTY_AUDIT.md` for evidence scope and
+the worker's overwritten intermediate catalog limitation. A second fresh probe,
+`/tmp/af9-symbolic-obligations-historical-139e48`, contains the three exact split
+modules from clean `830b29e`. Its first non-completion closure also hits the
+node cap; the process is closed and all source bindings match. The inventory
+now has 42 worktrees and the same two local branches. No prior probe was
+changed or removed. The manager is clean after its 50-check freeze; the next
+simplification is read-only review. Final cleanup and publication remain pending.

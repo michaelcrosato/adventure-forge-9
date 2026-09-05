@@ -364,3 +364,24 @@ seconds / 1,271,900 KiB maximum RSS, with unchanged pre/post source evidence at
 existing BDD tests, so this is not a packed campaign performance result. A new
 historical source probe is prepared, but its run and full acceptance remain
 pending. No live player or model-speed ranking is claimed.
+
+The backward-property helper and independent raw-DSL oracle tests were split
+between two workers. Root corrected null-limit defaulting, added isolated
+arithmetic/intermediate-bound tests and current-only/observer failures, then
+froze `5b2e320`; all 47 checks pass in 20.78 seconds. Root's historical harness
+first imported the wrong scenario export; that setup failure is preserved.
+The corrected run completes the completion predicate but fails the combined
+safety node cap. Both workers independently approve exact obligation splitting. Root required
+exact fresh-domain anchors and independent same-width bound-mismatch tests;
+all 50 checks pass at `830b29e`. The historical first non-completion closure
+still hits the node cap, so no proof acceptance follows. An exact seed
+simplification is under read-only review. These are proof engineering
+results, not live-player evidence or a model-speed comparison.
+
+A third worker assembled all 231 current authored endpoint witnesses. Its
+intermediate parsing/newline failures and catalog rewrites were not preserved
+as immutable artifacts; root recorded that limitation and accepted the final
+catalog only after a separate main-engine checker passed every path, raw
+effect, checkpoint and receipt. That check takes 0.78 seconds / 107,956 KiB.
+The bounded 50,000-state search remains incomplete despite complete endpoint
+coverage. See `BACKWARD_PROPERTY_AUDIT.md`.

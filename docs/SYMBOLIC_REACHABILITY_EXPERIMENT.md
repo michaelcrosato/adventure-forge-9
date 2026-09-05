@@ -1212,3 +1212,16 @@ comparison and all 190 trusted-engine replays pass; the current phase run
 still hits two million states. See `PACKED_PHASE_AUDIT.md` for the exact rule,
 30-check freeze, preserved counterexample and run artifacts. Current acceptance,
 main adoption, full verification, fresh players and publication remain open.
+
+## Backward property proof and current endpoint catalog
+
+The isolated backward helper at `5b2e320` passes 47 focused checks. Historical
+completion converges in 18 rounds, but its combined safety closure fails the
+two-million-node limit during round nine. A separate current-engine witness
+catalog independently covers all 231 scene/choice/ending endpoints. Neither
+result establishes the missing universal current safety proof. Exact separate
+obligations at `830b29e` pass 50 focused checks but hit the historical node cap
+in the first non-completion closure. The next seed simplification is under
+read-only review; see
+[BACKWARD_PROPERTY_AUDIT.md](BACKWARD_PROPERTY_AUDIT.md) for all source/artifact
+bindings, the preserved setup failure, scope limits and next work.
