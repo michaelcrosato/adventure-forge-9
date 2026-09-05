@@ -205,7 +205,10 @@ export class SymbolicModel {
       if (effect.type === "goTo") destination = effect.scene;
       else if (effect.type === "setFlag") flagWrites.set(effect.flag, effect.value);
     }
-    let relation = enabled;
+    // Build the output/frame relation independently of the source guard, then
+    // apply the guard once. Conjunction is associative, so this preserves the
+    // relation exactly while avoiding large guard-specific intermediate BDDs.
+    let relation = 1;
     relation = this.bdd.and(relation, this.equal("scene", this.scenes.indexOf(destination), "next"));
     const status = choice.outcome?.status ?? "playing";
     const ending = choice.outcome === undefined ? 0
@@ -253,6 +256,7 @@ export class SymbolicModel {
       boundExit = this.bdd.or(boundExit, this.bdd.and(beforeFailure, failure.bound));
       beforeFailure = this.bdd.and(beforeFailure, this.bdd.not(this.bdd.or(failure.arithmetic, failure.bound)));
     }
+    relation = this.bdd.and(enabled, relation);
     return Object.freeze({ id: choice.id, enabled, relation,
       arithmeticError: this.bdd.and(enabled, arithmeticError),
       boundExit: this.bdd.and(enabled, boundExit), terminal: choice.outcome !== undefined });
