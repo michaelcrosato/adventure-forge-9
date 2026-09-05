@@ -44,7 +44,11 @@ export const BLACKGLASS_SCENES = [
       },
       {
         text: "Mara's coerced account follows you here. Nessa will ask for repair in deeds before she lends a hand.",
-        when: [{ type: "flag", flag: "archive-witness-coerced", value: true }],
+        when: [{ type: "flag", flag: "archive-witness-coerced", value: true }, { type: "flag", flag: "blackglass-nessa-aid", value: false }, { type: "flag", flag: "blackglass-resolved", value: false }],
+      },
+      {
+        text: "Nessa keeps her distance. The pressure line holds, but you left Mara's coerced summons unanswered.",
+        when: [{ type: "flag", flag: "archive-witness-coerced", value: true }, { type: "flag", flag: "blackglass-nessa-aid", value: false }, { type: "flag", flag: "blackglass-resolved", value: true }],
       },
       {
         text: "The pressure line is settled. Nessa and Orin wait for your account before the next boat leaves for Lowsail.",
@@ -131,7 +135,15 @@ export const BLACKGLASS_SCENES = [
     title: "Blackglass Barracks",
     text: [
       {
-        text: "Orin Pell keeps the workers above the sluice floor. Nessa has one dry rope and enough time for one careful lead before the channel surges.",
+        text: "Orin Pell keeps the workers above the sluice floor. Nessa checks one dry rope for the last turn into the control room.",
+      },
+      {
+        text: "There is still time to reach the handwheels before the surge.",
+        when: [{ type: "resourceAtMost", resource: "tide", value: 1 }],
+      },
+      {
+        text: "The next crossing will carry you past the surge. The line will need an emergency release; Nessa's help can keep it from drawing more attention.",
+        when: [{ type: "resourceAtLeast", resource: "tide", value: 2 }],
       },
       {
         text: "The evacuation line makes the workers ready to follow Orin's hand signals.",
