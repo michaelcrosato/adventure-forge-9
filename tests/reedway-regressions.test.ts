@@ -248,6 +248,30 @@ const COUNCIL_VOLUNTARY_ORIGIN = [
   "hold-valve-under-watch",
 ] as const;
 
+const UNTRAINED_SUPPLY_ORIGIN = [
+  "hear-council",
+  "take-council-seal",
+  "work-without-tools",
+  "follow-canal",
+  "read-stolen-order",
+  "give-red-sluice-to-council",
+  "release-council-water",
+  "report-council-rationing",
+  "sign-charter-and-open-archive",
+  "enter-lantern-hall",
+  "surrender-council-seal-for-ledger",
+  "trace-seal-chain",
+  "compare-seal-impressions",
+  "use-council-debt-to-summon-mara",
+  "call-lantern-hearing",
+  "seal-mara-testimony",
+  "continue-to-blackglass",
+  "begin-blackglass-crossing",
+  "take-council-catwalk",
+  "run-the-watchline",
+  "hold-valve-under-watch",
+] as const;
+
 test("free regional travel repeats from every inherited outcome and preserves a mid-activity checkpoint", () => {
   for (const [name, originFactory] of [
     ["shared", sharedLowResolved],
@@ -437,7 +461,7 @@ test("clinic and worker rewards fund distinct one-time services, including a non
   assert.equal(fieldMedicFerry.resources.supplies, 3);
   const ferryCompleted = step(toCommons(fieldMedicFerry), "close-reedway-ferry-account");
   assert.equal(ferryCompleted.status, "completed");
-  assert.match(ferryCompleted.receipt?.summary ?? "", /worker ferry hauling/i);
+  assert.match(ferryCompleted.receipt?.summary ?? "", /working freight ferry|worker ferry/i);
 
   const hauled = step(visit(fieldMedicFerry, "visit-reedway-workers"), "haul-reedway-relief-with-porters");
   assert.equal(hauled.resources.supplies, 1);
@@ -445,9 +469,20 @@ test("clinic and worker rewards fund distinct one-time services, including a non
   assertNoChoice(hauled, "haul-reedway-relief-with-porters");
 
   const genericCare = visit(fieldMedicFerry, "visit-reedway-clinic");
-  assertChoice(genericCare, "treat-reedway-patients-with-supplies");
-  const caredBySupplies = step(genericCare, "treat-reedway-patients-with-supplies");
-  assert.equal(caredBySupplies.resources.supplies, 1);
+  assertNoChoice(genericCare, "treat-reedway-patients-with-supplies");
+
+  const untrained = walk(UNTRAINED_SUPPLY_ORIGIN);
+  assert.equal(untrained.flags["background-field-medic"], undefined);
+  assert.equal(untrained.resources.supplies, 2);
+  const untrainedClinic = install(
+    step(visit(untrained, "visit-reedway-barge"), "force-reedway-regulator"),
+    "visit-reedway-clinic",
+    "install-reedway-regulator-at-clinic",
+  );
+  const genericUntrainedCare = visit(untrainedClinic, "visit-reedway-clinic");
+  assertChoice(genericUntrainedCare, "treat-reedway-patients-with-supplies");
+  const caredBySupplies = step(genericUntrainedCare, "treat-reedway-patients-with-supplies");
+  assert.equal(caredBySupplies.resources.supplies, 0);
   assert.equal(caredBySupplies.flags["reedway-patients-treated"], true);
   assertNoChoice(caredBySupplies, "treat-reedway-patients-with-supplies");
 
@@ -492,7 +527,7 @@ test("deckhand medicine and medic treatment cost one unit, restore cooperation, 
   assert.equal(treatedThenSeized.flags["reedway-salvager-hostile"], true);
   assert.ok(treatedThenSeized.knownFacts.includes("reedway-regulator-forced"));
   const reopened = visit(treatedThenSeized, "visit-reedway-barge");
-  assert.match(observe(reopened).text.join(" "), /treated before|later seizure|refusal/i);
+  assert.match(observe(reopened).text.join(" "), /earlier help.*afterward/i);
   const reopenedWorkers = visit(treatedThenSeized, "visit-reedway-workers");
   assertNoChoice(reopenedWorkers, "send-reedway-relief-with-sera");
   assertNoChoice(reopenedWorkers, "commission-reedway-relief-with-sera");
@@ -522,5 +557,5 @@ test("zero supplies and zero water can still recover by lien and close an instal
   assert.equal(completed.resources.debt, origin.resources.debt! + 1);
   assert.equal(completed.resources.risk, beforeRisk);
   assert.equal(completed.resources.tide, beforeTide);
-  assert.match(completed.receipt?.summary ?? "", /clinic annex sterilizer/i);
+  assert.match(completed.receipt?.summary ?? "", /sterilizer running|annex.*treatment benches/i);
 });
