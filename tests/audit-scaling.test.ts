@@ -352,7 +352,11 @@ test("the production future read set retains late Archive branches", () => {
   assert.ok(hallFlags.includes("archive-verdict-exposed"));
   assert.ok(hallFlags.includes("archive-witness-protected"));
   assert.ok(reckoningFlags.includes("archive-verdict-sealed"));
-  assert.equal(reckoningFlags.includes("archive-ledger-evidence"), false);
+  assert.ok(
+    analysis.reachableScenesByScene.get("lowsail-reckoning")?.includes("archive-hall"),
+    "the parallel Reedway return keeps the open Archive hall in the conservative closure",
+  );
+  assert.ok(reckoningFlags.includes("archive-ledger-evidence"));
 });
 
 test("future-read analysis fails closed when the content vocabulary grows", () => {
