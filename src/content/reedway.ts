@@ -54,7 +54,7 @@ export const REEDWAY_SCENES = [
         ],
       },
       {
-        text: "One regulator survived on Sera's barge. Ilyra offers two medicine for restoring the sterilizer; Orin offers two supplies for restoring heavy transport. Visit both before deciding. You can also arrange patient care and worker relief without repairing either machine.",
+        text: "One regulator survived on Sera's barge. Ilyra offers two medicine for restoring the sterilizer; Orin offers two supplies for restoring heavy transport. You can speak with either claimant before deciding. You can also arrange patient care and worker relief without repairing either machine.",
         when: [
           { type: "flag", flag: "reedway-regulator-recovered", value: false },
           { type: "flag", flag: "reedway-clinic-powered", value: false },
@@ -323,7 +323,7 @@ export const REEDWAY_CHOICES = [
     id: "close-reedway-clinic-account",
     scene: "reedway-commons",
     label: "Finish this journey: close the clinic account",
-    description: "Finish this journey by recording that the recovered regulator powers Ilyra's annex sterilizer and closing the Reedway account.",
+    description: "Finish your journey with Ilyra's annex sterilizer running. Any open Archive investigation ends unfinished.",
     when: [{ type: "flag", flag: "reedway-clinic-powered", value: true }],
     effects: [],
     outcome: {
@@ -335,7 +335,7 @@ export const REEDWAY_CHOICES = [
     id: "close-reedway-ferry-account",
     scene: "reedway-commons",
     label: "Finish this journey: close the ferry account",
-    description: "Finish this journey by recording that the recovered regulator powers Orin's heavy worker transport and closing the Reedway account.",
+    description: "Finish your journey with Orin's heavy worker transport running. Any open Archive investigation ends unfinished.",
     when: [{ type: "flag", flag: "reedway-ferry-powered", value: true }],
     effects: [],
     outcome: {

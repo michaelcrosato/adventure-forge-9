@@ -233,7 +233,7 @@ export const LANTERN_SCENES = [
         ],
       },
       {
-        text: "Reedway's single regulator remains on Sera's barge. Ilyra's clinic sterilizer and Orin's worker ferry both need it; the commons can be visited before your next decision.",
+        text: "Reedway's single regulator remains on Sera's barge. Ilyra's clinic sterilizer and Orin's worker ferry both need it. Paths from the commons lead to the barge and both claimants.",
         when: [
           { type: "flag", flag: "archive-verdict-recorded", value: true },
           { type: "flag", flag: "reedway-regulator-recovered", value: false },
@@ -242,7 +242,7 @@ export const LANTERN_SCENES = [
         ],
       },
       {
-        text: "You carry Reedway's single regulator, still unassigned. Ilyra's clinic and Orin's worker ferry each need it; the commons can be visited before your next decision.",
+        text: "You carry Reedway's single regulator, still unassigned. You can install it at Ilyra's clinic annex or Orin's worker landing; each needs the same part.",
         when: [
           { type: "flag", flag: "archive-verdict-recorded", value: true },
           { type: "flag", flag: "reedway-regulator-recovered", value: true },
