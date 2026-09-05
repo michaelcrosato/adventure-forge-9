@@ -24,7 +24,7 @@ export interface FutureInfluenceAnalysis {
   readonly activeResources: readonly string[];
   /** Declared resources that are not read or written by the reachable closure. */
   readonly conservedResources: readonly string[];
-  /** Flags read by reachable choice conditions, written by effects, or used to prune. */
+  /** Flags read by reachable conditions, written by effects, or used to prune. Globally unread markers are omitted. */
   readonly activeFlags: readonly string[];
   /** Flags read only by text in the reachable closure and outside activeFlags. */
   readonly conservedFlags: readonly string[];
@@ -37,6 +37,8 @@ interface ScenarioIndex {
   readonly choicesByScene: ReadonlyMap<string, readonly Scenario["choices"][number][]>;
   readonly resources: readonly string[];
   readonly clocksById: ReadonlyMap<string, string>;
+  /** Every flag read by any authored choice or scene-text condition. */
+  readonly futureReadFlags: ReadonlySet<string>;
   readonly monotoneFlags: ReadonlySet<string>;
   /**
    * Monotone false-gate flags in each static scene closure.  The analyzer's
@@ -57,7 +59,9 @@ export interface FutureInfluenceAnalyzer {
  * every condition except a currently true flag that is globally never written
  * false: such a choice can never become legal again and is permanently
  * omitted. Future writes are recorded, but never used to speculate that a
- * currently false gate will become true during this closure.
+ * currently false gate will become true during this closure. A flag that is
+ * never read by any authored choice or scene-text condition is a history
+ * marker only; its writes do not enter the future influence boundary.
  */
 export function analyzeFutureInfluence(
   scenario: Scenario,
@@ -261,12 +265,13 @@ function deepFreeze<T>(value: T): T {
 function indexScenario(scenario: Scenario): ScenarioIndex {
   const resources = Object.keys(scenario.initialResources).sort();
   const resourceSet = new Set(resources);
+  const futureReadFlags = new Set<string>();
 
   const scenesById = new Map<string, Scenario["scenes"][number]>();
   for (const scene of scenario.scenes) {
     if (scenesById.has(scene.id)) throw new Error(`Future influence found duplicate scene ${JSON.stringify(scene.id)}`);
     scenesById.set(scene.id, scene);
-    for (const line of scene.text) assertKnownConditions(line.when, resourceSet);
+    for (const line of scene.text) assertKnownConditions(line.when, resourceSet, futureReadFlags);
   }
   if (!scenesById.has(scenario.initialScene)) {
     throw new Error(`Future influence found unknown initial scene ${JSON.stringify(scenario.initialScene)}`);
@@ -284,29 +289,27 @@ function indexScenario(scenario: Scenario): ScenarioIndex {
   const choicesByScene = new Map<string, Scenario["choices"][number][]>();
   const choiceIds = new Set<string>();
   const flagWrites = new Map<string, Set<boolean>>();
-  const seenFlags = new Set<string>();
   for (const choice of scenario.choices) {
     if (choiceIds.has(choice.id)) throw new Error(`Future influence found duplicate choice ${JSON.stringify(choice.id)}`);
     choiceIds.add(choice.id);
     if (!scenesById.has(choice.scene)) {
       throw new Error(`Future influence found choice ${JSON.stringify(choice.id)} in unknown scene ${JSON.stringify(choice.scene)}`);
     }
-    assertKnownConditions(choice.when, resourceSet, seenFlags);
+    assertKnownConditions(choice.when, resourceSet, futureReadFlags);
     const sceneChoices = choicesByScene.get(choice.scene);
     if (sceneChoices === undefined) choicesByScene.set(choice.scene, [choice]);
     else sceneChoices.push(choice);
     for (const effect of choice.effects) {
-      assertKnownEffect(effect, resourceSet, scenesById, clocksById, seenFlags);
+      assertKnownEffect(effect, resourceSet, scenesById, clocksById);
       if (effect.type !== "setFlag") continue;
       const values = flagWrites.get(effect.flag);
       if (values === undefined) flagWrites.set(effect.flag, new Set([effect.value]));
       else values.add(effect.value);
-      seenFlags.add(effect.flag);
     }
   }
 
   const monotoneFlags = new Set<string>();
-  for (const flag of seenFlags) {
+  for (const flag of futureReadFlags) {
     const writes = flagWrites.get(flag);
     // Match the active audit's conservative rule: at least one authored
     // write, and every such write sets the flag true.
@@ -336,6 +339,7 @@ function indexScenario(scenario: Scenario): ScenarioIndex {
     choicesByScene,
     resources,
     clocksById,
+    futureReadFlags,
     monotoneFlags,
     phaseFlagsByScene,
   };
@@ -420,7 +424,9 @@ function addEffectInfluence(
   index: ScenarioIndex,
 ): void {
   if (effect.type === "setFlag") {
-    flags.add(effect.flag);
+    // A marker that is never read by a choice or text cannot influence this
+    // future closure, even though the engine still records its write.
+    if (index.futureReadFlags.has(effect.flag)) flags.add(effect.flag);
   } else if (effect.type === "setResource" || effect.type === "adjustResource") {
     resources.add(effect.resource);
   } else if (effect.type === "advanceClock") {
@@ -433,12 +439,12 @@ function addEffectInfluence(
 function assertKnownConditions(
   conditions: readonly Condition[] | undefined,
   resources: ReadonlySet<string>,
-  flags = new Set<string>(),
+  readFlags?: Set<string>,
 ): void {
   for (const condition of conditions ?? []) {
     switch (condition.type) {
       case "flag":
-        flags.add(condition.flag);
+        readFlags?.add(condition.flag);
         break;
       case "resourceAtLeast":
       case "resourceAtMost":
@@ -457,11 +463,9 @@ function assertKnownEffect(
   resources: ReadonlySet<string>,
   scenes: ReadonlyMap<string, Scenario["scenes"][number]>,
   clocks: ReadonlyMap<string, string>,
-  flags: Set<string>,
 ): void {
   switch (effect.type) {
     case "setFlag":
-      flags.add(effect.flag);
       return;
     case "setResource":
     case "adjustResource":

@@ -133,7 +133,7 @@ test("the active boundary includes distant condition/effect resources and clock 
   assert.deepEqual(result.reachableChoices, ["finish-distant-work", "spend-distant-supplies", "walk-to-distant"]);
   assert.deepEqual(result.activeResources, ["supplies", "tide"]);
   assert.deepEqual(result.conservedResources, ["display-only", "water"]);
-  assert.deepEqual(result.activeFlags, ["distant-work-done"]);
+  assert.deepEqual(result.activeFlags, []);
   assert.deepEqual(result.conservedFlags, ["weathered-sign"]);
   assert.deepEqual(result.pruningJustifiers, []);
 });
@@ -279,4 +279,46 @@ test("compiled analyses are deeply immutable and cannot poison the cache", () =>
   const second = analyzer(playing("start"));
   assert.strictEqual(second, first);
   assert.equal(second.reachableScenes.includes("poison"), false);
+});
+
+test("globally unread flag writers stay outside the future influence boundary", () => {
+  const scenario = structuredClone(BRANCH_SCENARIO) as Scenario;
+  const firstChoice = scenario.choices[0] as unknown as { effects: Array<Record<string, unknown>> };
+  firstChoice.effects.unshift({ type: "setFlag", flag: "unread-marker", value: true });
+
+  const result = analyzeFutureInfluence(scenario, playing("start"));
+  assert.equal(result.activeFlags.includes("unread-marker"), false);
+  assert.equal(result.conservedFlags.includes("unread-marker"), false);
+});
+
+test("a writer is retained when a later scene-text condition reads its flag", () => {
+  const scenario = structuredClone(BRANCH_SCENARIO) as Scenario;
+  const firstChoice = scenario.choices[0] as unknown as { effects: Array<Record<string, unknown>> };
+  firstChoice.effects.unshift({ type: "setFlag", flag: "late-text-marker", value: true });
+  const distant = scenario.scenes.find((scene) => scene.id === "distant") as unknown as { text: Array<unknown> };
+  distant.text.push({
+    text: "The later marker catches the light.",
+    when: [{ type: "flag", flag: "late-text-marker", value: true }],
+  });
+
+  const result = analyzeFutureInfluence(scenario, playing("start"));
+  assert.ok(result.activeFlags.includes("late-text-marker"));
+  assert.equal(result.conservedFlags.includes("late-text-marker"), false);
+});
+
+test("a writer is retained when a later choice condition reads its flag", () => {
+  const scenario = structuredClone(BRANCH_SCENARIO) as Scenario;
+  const firstChoice = scenario.choices[0] as unknown as { effects: Array<Record<string, unknown>> };
+  firstChoice.effects.unshift({ type: "setFlag", flag: "choice-marker", value: true });
+  const spendChoice = scenario.choices.find((choice) => choice.id === "spend-distant-supplies") as unknown as {
+    when?: Array<Record<string, unknown>>;
+  };
+  spendChoice.when = [
+    ...(spendChoice.when ?? []),
+    { type: "flag", flag: "choice-marker", value: true },
+  ];
+
+  const result = analyzeFutureInfluence(scenario, playing("start"));
+  assert.ok(result.activeFlags.includes("choice-marker"));
+  assert.equal(result.conservedFlags.includes("choice-marker"), false);
 });
