@@ -416,4 +416,21 @@ Two workers materialized the accepted current path data and its public-engine
 regression separately. Root corrected validated-content imports, separate
 origin provenance, future-compatible target totals and an omitted public
 resource-value comparison. Independent review accepted the final coverage.
-The worker build and 231-path test pass; root clean-freeze checks are pending.
+Clean main freeze `71fec09` passes the build and all 116 selected regular
+checks, including the 231-path regression, in 2.50 seconds overall; the test
+command takes 1.12 seconds / 114,940 KiB maximum RSS. Only the unchanged
+full-family scenario audit is excluded, so full verification remains open.
+Root separately confirms exact path-map parity with the accepted catalog.
+
+The implementation and finite-oracle workers added per-obligation compaction
+separately. Root removed a lingering initial-copy owner binding, and the
+independent reviewer accepted the final algebra and ownership checks. Clean
+`301c5e8` passes build and all 57 BDD/symbolic checks in 20.73 seconds overall;
+the test command takes 18.88 seconds / 942,812 KiB. The historical campaign
+diagnostic completes 426/549 obligations with 159 compactions, then reaches
+the checked time guard at 607.14 seconds / 1,229,396 KiB. Its maximum observed
+manager allocation is 1,191,157 nodes; the node cap is not reached. Root checks
+every source/artifact binding and compaction record. The reviewed next change
+groups all failure sources into one exact closure to reduce repeated work;
+its runtime cost is unproven. These are verification measurements, with no
+live-player or model-speed claim.

@@ -328,9 +328,68 @@ The next implementation periodically copies only the current bad-set root and
 its seed into another exact fresh manager during each obligation. Unlike the
 earlier forward experiment, this calculation needs no retained frontier history.
 Exact owner/domain/current-only checks, all predecessors and the fixed-point
-cap must survive every copy. Independent finite checks are in progress;
-there is no compacted-obligation campaign result yet. No further node, heap
-or time-limit increase is selected.
+cap survive every copy. No further node, heap or time-limit increase is selected.
+
+## Exact per-obligation compaction
+
+Clean experiment `301c5e88eb547b3b23ed609fb17359cd6d47792c` adds
+`obligationCompactEvery`, a nonnegative safe integer snapshotted once. Zero
+preserves the disabled behavior and summary shape. A positive interval copies
+the updated nonfixed closure, original seed and four static identity anchors
+from the current owner to a fresh equivalent model. Every copy validates
+distinct ownership, layout, scenario, transition mode, bounds/lifecycle anchors
+and current-only support before publishing the new owner. Fixed-point identity
+is checked before copying. The final callback owns the latest roots; no
+historical frontier or old owner is retained by the initial-copy binding.
+All completion and failure seeds, fault precedence and predecessor choices
+are unchanged. Zero seeds report zero compactions when enabled.
+
+Independent finite-oracle checks cover intervals one and two, direct/global
+and absorbed/scene modes, exact per-seed closures and aggregate bad membership,
+strong completion and `W`, repeated ownership changes, second-copy alias and
+bound defects, limits and observer failures. Independent review finds no
+correctness blocker. The clean build and all 57 BDD/symbolic checks pass in
+20.73 seconds overall; the test command takes 18.88 seconds / 942,812 KiB.
+
+The fresh historical probe
+`/tmp/af9-symbolic-compact-obligations-historical-139e48` uses its own locked
+dependencies and the exact three tested modules. Its manifest keeps the
+two-million-node, 500,000-cache, 128-round, 1,536 MiB heap and 600/630-second
+checked/external limits, with compaction every four nonfixed rounds. Source
+hash is `d2844d5f54a525704e2faddf7214df76209aea05d4942e8f43c6e5267174d61a`.
+The campaign run closes at the checked elapsed-time limit after 426/549
+obligations, including all 25 scene cones and 46 nonzero seeds. Every completed
+cone is disjoint from the initial state. It performs 159 compactions and
+observes at most 1,191,157 allocated nodes in any progress event. The last
+event is `bound-exit:cross-the-flooded-road`, round 18, at 1,186,309 nodes and
+606,904 ms; round 16 had copied 1,132,521 nodes down to 184,055. External
+runtime is 607.14 seconds / 1,229,396 KiB maximum RSS. This attempt reaches
+the time guard rather than the node guard; the full proof, post-proof
+consistency checks and historical comparison remain incomplete.
+
+Root verifies source/artifact/test bindings, the exact completed authored
+subset, progress-file parity, every compaction event and per-summary copy
+count, and closed/absent PID 1335580. There is no accepted historical or
+current property proof. The current-profile draft is syntax-checked only;
+it has no probe, manifest or campaign result.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `/tmp/af9-symbolic-compact-obligations-focused-tests-v1.json` | `d89f65e3a1bfd2f02979dd4a11bcfe690e4423cf8e361d0a1dccfb4691d3d58d` |
+| `/tmp/af9-symbolic-compact-obligations-focused-tests-v1.log` | `2abe56e8b9383d0280721ba36eb82d6d8cbadf5710f9ae8ca01c0d69dee78170` |
+| `/tmp/af9-symbolic-compact-obligations-historical-manifest-v1.json` | `6be6f0d4f0a5fc8ee7f18fbf1e9f19d27f94e9e35b284fa6724048d7779021c0` |
+| `/tmp/af9-symbolic-compact-obligations-historical-139e48.json` | `5375b8d38624471bff7f661238a333712516fb703845172af00a407ccdb5b9fd` |
+| `/tmp/af9-symbolic-compact-obligations-historical-139e48.finalization.json` | `aad161fced04bed604d8beb3848b9f3c58860c57d44ab856267529486f34c059` |
+| `/tmp/af9-symbolic-compact-obligations-historical-root-check-v1.json` | `2a96482014ae454516ebc9c43e0134dfdfd15d0e93ac580b620d9ea18c05f8ab` |
+
+The next reviewed change combines the original failure seeds into one exact
+failure cone: `Pre*(union F_i) = union Pre*(F_i)`. It retains every arithmetic,
+bound-exit, invalid-success and uncovered-enabled seed and its catalog metadata,
+without claiming that each individual cone was calculated. With scene
+non-completion partitioning, historical closure obligations become 26 rather
+than 549. Default per-choice behavior remains available for attribution. The
+union may itself be larger, so focused checks and a fresh bounded historical
+run must establish its cost. No memory or time allowance is increased.
 
 ## Repository endpoint regression
 
@@ -342,5 +401,16 @@ effects, legal choices, text, facts, public resources, journal, revisions,
 immutability, receipts, save/restore and full replay. Each run reports its actual
 build ID; the fixture's original build ID remains path provenance rather than
 a restriction against compatible future changes. Existing universal campaign
-and reserved-end/player tests remain separate. The worker build and new test
-pass for all 231 paths; root clean-freeze verification is pending.
+and reserved-end/player tests remain separate. Clean main freeze `71fec09`
+passes the build and all 116 selected regular checks, including all 231 paths,
+in 2.50 seconds overall. The test command takes 1.12 seconds / 114,940 KiB
+maximum RSS. The selection excludes only `tests/scenario.test.ts`, whose
+unchanged full-family audit still exceeds its workload guard; this is not a
+passing full `npm run verify`. Before/after source snapshots are identical.
+Root also checks that the committed fixture exactly matches the accepted
+catalog's path maps and its 29/166/36 authored target sets.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `/tmp/af9-authored-endpoints-non-audit-tests-v1.json` | `c558b595a7cdfd86763a87fd02a70fea254f5966aa4c9caa7e8604156457ba06` |
+| `/tmp/af9-authored-endpoints-non-audit-tests-v1.log` | `1c9e4c25c706574ee8a7701f526dcc21e31fa50a5ebe94eaea71b73bbeedd642` |

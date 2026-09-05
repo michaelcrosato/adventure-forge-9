@@ -175,3 +175,12 @@ no earlier overlay or report was overwritten. The inventory is 44 worktrees
 and the same two local branches. The accepted current endpoint paths are also
 materialized as repository test data, with their origin provenance retained.
 Verifier adoption, publication and final reconstructible cleanup remain open.
+
+Per-obligation compaction adds detached
+`/tmp/af9-symbolic-compact-obligations-historical-139e48`, with its own locked
+dependencies and three modules from clean tested `301c5e8`. The inventory now
+contains 45 worktrees and the same two local branches. The new historical
+run closes at the elapsed guard with separate artifacts and preserves all
+previous failures. Main's
+committed endpoint fixture and 116 selected regular checks pass at `71fec09`;
+the unchanged full-family audit remains outside that passing selection.

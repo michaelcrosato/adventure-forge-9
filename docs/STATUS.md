@@ -57,11 +57,17 @@ class guard. See [PACKED_PHASE_AUDIT.md](PACKED_PHASE_AUDIT.md) and
 The backward property proof completes historical completion and every scene
 non-completion cone, but an individual resource-bound failure cone still
 reaches the node cap. Periodically copying each current cone and its seed
-into an exact fresh manager is the next implementation; no frontier history
-is needed. Independent finite checks and a complete bounded historical
-comparison must pass before current adoption.
+into an exact fresh manager passes all 57 focused checks at clean `301c5e8`.
+The historical run performs 159 compactions and stays below the node cap,
+but reaches the time guard after the same 426/549 completed obligations.
+The next implementation combines all original failure sources into one exact
+cone to reduce repeated work. Focused checks and a complete bounded historical
+comparison must pass before a current campaign run or adoption.
 The complete current endpoint catalog has separate main-engine replay evidence
-in [BACKWARD_PROPERTY_AUDIT.md](BACKWARD_PROPERTY_AUDIT.md). The production audit
+in [BACKWARD_PROPERTY_AUDIT.md](BACKWARD_PROPERTY_AUDIT.md). Its committed
+231-path regression and all 116 selected regular checks pass on clean
+`71fec09`; only the unchanged full-family scenario audit is excluded.
+The production audit
 and its guard remain unchanged; full verification and Stage 8 acceptance are
 still pending.
 
