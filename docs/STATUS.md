@@ -18,7 +18,9 @@ Stage 2 now active: complete Lowsail/Red Sluice small game with three resolution
 
 Stage 2 is accepted: 11 scenes, 44 authored choices (including exits), three resolution families, and four named inhabitants. Twenty tests, exhaustive 2,429-state traversal, terminal/browser and save/load checks pass. Its first fresh blind player completed, gave an authentic same-session interview, and passed integrity/replay validation. Ratings were clarity 5 and enjoyment 5; slight ambiguity about canal scouting supplied the next improvement question. See STAGE2.md for original evidence.
 
-Stage 3 / Cycle 1 is active. CYCLE1.md predeclares a two-baseline/two-candidate comparison of road cost wording, with unchanged mechanics and neutral interviews. No source should change in a checkout used by a running player.
+Stage 3 / Cycle 1 is complete. Two fresh baselines reported road ambiguity; two candidates did not, with ratings no lower and no new defects. The parsed source comparison proved unchanged mechanics. The limited four-session result supports keeping explicit cost wording; see CYCLE1.md for nuance and original evidence.
+
+Stage 4 / Cycle 2 is active. CYCLE2.md predeclares the complete chamber-requirements correction and an exposure-aware comparison. No source should change in a checkout used by a running player.
 
 Assignments: Luna/max engine and mechanical proofs; Luna/max human player surfaces; Luna/max subscription boundary probe and adapter. Manager owns integration, evidence runner, publication, and quality decisions.
 

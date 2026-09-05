@@ -43,7 +43,7 @@ Decision: accept Stage 1 pipeline. Continue to the full small game; show the dow
 
 ## Improvement comparisons
 
-None completed. Define each comparison before fresh baseline/candidate sessions; keep original player responses and exact source snapshots. Do not infer improvement from implementation alone.
+The full small-game implementation and its accepted exploratory interview are recorded in [STAGE2.md](STAGE2.md). [CYCLE1.md](CYCLE1.md) predeclares and records the first prospective comparison. Keep original player responses and exact source snapshots; do not infer improvement from implementation alone.
 
 ## Integration recheck
 
