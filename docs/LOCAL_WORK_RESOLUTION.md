@@ -31,10 +31,25 @@ The source archive additionally preserves local non-build files. Old topic
 worktree paths cited in development notes now refer to these preserved
 snapshots; sealed historical player/verification paths were not removed.
 
-Remaining work includes the active symbolic proof and source dispositions for
-`blackglass-review`, `reedway-content`, the untracked relational-product test
-in `bdd-andexists`, and the superseded original `lantern-archive` branch.
-Their files are under independent read-only review and remain untouched.
-Historical diagnostic overlays and all blind-player source freezes remain
-available for exact provenance/replay checks. Publication, remaining cleanup
-and the final completion audit have not passed yet.
+The source dispositions for `blackglass-review`, `reedway-content`, the
+untracked relational-product test in `bdd-andexists`, and original
+`lantern-archive` are now resolved. Independent comparison found superseded
+drafts or duplicate tests; root checked the changed navigation contract
+against the current regressions and refreshed every overlay hash. The source
+review remains in
+`/home/micha/.local/share/adventure-forge-9/worktree-review-20260905/20260905T171140Z/`.
+
+Those four worktrees and three branch refs were then removed after a second
+complete source archive and verified Git bundle were created under
+`/home/micha/.local/share/adventure-forge-9/worktree-archives/20260905T172018Z/`.
+Its manifest SHA-256 is
+`40d2ead51c660f9dfbb9c14e803d3a06d5d2a4f04ee85255aac31000f6a5a71b`.
+The bundle includes main and all three removed branch tips; the detached
+Blackglass draft's base is proven an ancestor of main. Overlay files are in
+the source archives and detailed review archive. The cleanup result records
+42 remaining worktrees and 13 branches at that point, after 27 total worktree
+and 26 topic-branch removals across the two cleanup batches.
+
+The active symbolic proof, historical diagnostic overlays and blind-player
+source freezes remain available. Publication, remaining cleanup and the final
+completion audit have not passed yet.

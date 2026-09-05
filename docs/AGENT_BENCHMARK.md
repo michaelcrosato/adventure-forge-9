@@ -208,3 +208,13 @@ model-ranking conclusion follows. A separate read-only branch inventory
 identified 23 clean topics whose patches are represented in both integrated
 histories. Root revalidated, archived and removed them, retaining all active
 experiments, blind-player freezes and unresolved overlays.
+
+The one partitioned historical attempt is also incomplete, stopping in forward
+round 21 after ten copies. It does not advance coverage over the original
+relational traversal. Root identified that each current copy boundary spans a
+whole round of choice calculations and assigned an exact per-choice root
+handoff plus allocation-interval scheduling for implementation and independent
+review. Separately, static source comparisons resolved four old draft/test
+worktrees as superseded or duplicated. Root refreshed their overlay hashes,
+archived exact source and commits, and removed them; no unexplained dirty
+source was discarded.

@@ -618,3 +618,28 @@ One partitioned historical diagnostic is being prepared with the original
 default field order and the same two-million-node/500,000-cache/500,000-copy
 threshold and time/heap limits. The affinity attempt and every preceding
 failure remain separate. No complete symbolic campaign proof is accepted yet.
+
+
+The single partitioned historical diagnostic also fails closed: forward round
+21 reaches two million non-terminal nodes after ten copies. It takes about
+37,851 ms internally / 38.04 seconds externally, with 924,652 KiB maximum RSS.
+No backward traversal or witness replay completes. The timeout wrapper closes
+with exit 1 and no signal; source, bounds, mode, field order, profiler, runner,
+config and manifest checks match. Preserve
+`/tmp/af9-symbolic-partitioned-2m-139e48.json` and its progress/finalization/log
+companions, plus `/tmp/af9-symbolic-partitioned-2m-manifest.json` (SHA-256
+`8e51aaa1a04c1f5781c256f77fae840acfb90e0944d1da2bcb9a7cf7e88c62e3`).
+The report uses exact modules from `6167cea` with historical engine/content;
+no fallback run was launched.
+
+The next reviewed change targets the traversal's copy boundaries. The current
+`model.image(frontier)` and `model.preimage(completable)` each accumulate all
+131 historical choices before another copy can run. They are full-round
+operations, not single-choice products. Per-choice traversal accumulation can
+introduce safe copy boundaries while retaining the pending accumulator in the
+same atomic root bundle. Every choice must be reacquired from the new owner
+by index after copying. The proposed scheduling uses the existing threshold
+for the first copy, then allows that many newly allocated nodes beyond the
+retained forest before the next copy. This avoids copying on every boundary
+when live roots themselves exceed the initial threshold. The implementation
+and independent review are under way; no complete campaign proof follows yet.
