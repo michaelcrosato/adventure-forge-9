@@ -53,6 +53,9 @@ decision phase without changing the distinct historical outcome flags.
 - `close-archive-case` and `continue-to-blackglass` require
   archive-returned=false and blackglass-resolved=false. Later record visits
   do not repeat the already closed account or its continuation.
+- `leave-lowsail-reckoning` keeps its original open-record departure and
+  receives those same two phase guards. Its receipt must not claim an open
+  record after closure. Later visits retain global End and free return routes.
 - Add `return-to-lowsail-from-archive-record` from `lowsail-reckoning` to
   `lowsail-after-blackglass`, requiring archive-returned=true and
   blackglass-resolved=true. Reedway access also remains available there.
@@ -71,7 +74,8 @@ and distinguish an open case from a decided or already carried record.
 Show the regulator task before entry, distinguish a part still on the barge
 from a carried part, and stop requesting an installation once either facility
 has it. Keep explicit journey-ending labels and describe visits as optional.
-Do not direct the player along an evaluation route or promise free services
+Do not describe a first regional arrival as a revisit. Do not direct the
+player along an evaluation route or promise free services
 merely because travel is free.
 
 Establish Sera Vale's existing dual role explicitly: the Archive keeper also
