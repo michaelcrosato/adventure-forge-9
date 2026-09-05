@@ -1,0 +1,136 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { validateScenario } from "../src/engine/content.js";
+
+type RecordValue = Record<string, unknown>;
+
+function scenario(overrides: RecordValue = {}): RecordValue {
+  return {
+    version: 1,
+    initialScene: "start",
+    initialResources: { supplies: 0, ticks: 0 },
+    initialFacts: [],
+    scenes: [
+      { id: "start", title: "Start", text: [{ text: "The clock is quiet." }] },
+      { id: "done", title: "Done", text: [{ text: "The journey is done." }] },
+    ],
+    choices: [
+      {
+        id: "go",
+        scene: "start",
+        label: "Go",
+        description: "Go on.",
+        effects: [{ type: "goTo", scene: "done" }],
+      },
+      {
+        id: "close",
+        scene: "done",
+        label: "Close",
+        description: "Close the journey.",
+        effects: [],
+        outcome: { status: "completed", summary: "Done." },
+      },
+    ],
+    ...overrides,
+  };
+}
+
+function withStartChoice(patch: RecordValue): RecordValue {
+  const base = scenario();
+  const choices = base.choices as RecordValue[];
+  return {
+    ...base,
+    choices: [{ ...choices[0], ...patch }, choices[1]],
+  };
+}
+
+function withStartText(line: RecordValue): RecordValue {
+  const base = scenario();
+  const scenes = base.scenes as RecordValue[];
+  return {
+    ...base,
+    scenes: [{ ...scenes[0], text: [line] }, scenes[1]],
+  };
+}
+
+function assertUnknownMembership(fixture: RecordValue, expected: RegExp): void {
+  assert.throws(() => validateScenario(fixture), (error: unknown) => {
+    if (!(error instanceof Error)) return false;
+    assert.match(error.message, expected);
+    // A vocabulary/parser failure must not satisfy this regression by accident.
+    assert.doesNotMatch(error.message, /unknown property|unknown condition type|unknown effect type/);
+    return true;
+  });
+}
+
+test("ordinary resourceAtLeast and resource writers reject inherited constructor", () => {
+  assertUnknownMembership(
+    withStartChoice({ when: [{ type: "resourceAtLeast", resource: "constructor", value: 0 }] }),
+    /scenario\.choices\[0\]\.when: unknown resource "constructor"/,
+  );
+  assertUnknownMembership(
+    withStartChoice({ effects: [{ type: "setResource", resource: "constructor", value: 1 }, { type: "goTo", scene: "done" }] }),
+    /scenario\.choices\[0\]\.effects: unknown resource "constructor"/,
+  );
+  assertUnknownMembership(
+    withStartChoice({ effects: [{ type: "adjustResource", resource: "constructor", delta: 1 }, { type: "goTo", scene: "done" }] }),
+    /scenario\.choices\[0\]\.effects: unknown resource "constructor"/,
+  );
+});
+
+test("clock declarations and resourceAtMost choice/text conditions are supported", () => {
+  const base = scenario();
+  const scenes = base.scenes as RecordValue[];
+  const choices = base.choices as RecordValue[];
+  const parsed = validateScenario({
+    ...base,
+    clocks: [{ id: "deadline", resource: "ticks", max: 2 }],
+    scenes: [
+      {
+        ...scenes[0],
+        text: [{ text: "The clock still has room.", when: [{ type: "resourceAtMost", resource: "ticks", value: 1 }] }],
+      },
+      scenes[1],
+    ],
+    choices: [
+      { ...choices[0], when: [{ type: "resourceAtMost", resource: "ticks", value: 1 }] },
+      choices[1],
+    ],
+  }) as unknown as RecordValue;
+
+  assert.deepEqual(parsed.clocks, [{ id: "deadline", resource: "ticks", max: 2 }]);
+  const parsedScene = (parsed.scenes as RecordValue[])[0]!;
+  const parsedLine = (parsedScene.text as RecordValue[])[0]!;
+  assert.deepEqual((parsedLine.when as RecordValue[])[0], { type: "resourceAtMost", resource: "ticks", value: 1 });
+  assert.deepEqual(((parsed.choices as RecordValue[])[0]!.when as RecordValue[])[0], {
+    type: "resourceAtMost",
+    resource: "ticks",
+    value: 1,
+  });
+});
+
+test("constructor is rejected as an unknown resource in clock and resourceAtMost membership", () => {
+  assertUnknownMembership(
+    scenario({ clocks: [{ id: "deadline", resource: "constructor", max: 1 }] }),
+    /scenario\.clocks\[0\]\.resource: unknown resource "constructor"/,
+  );
+  assertUnknownMembership(
+    withStartChoice({ when: [{ type: "resourceAtMost", resource: "constructor", value: 0 }] }),
+    /scenario\.choices\[0\]\.when: unknown resource "constructor"/,
+  );
+  assertUnknownMembership(
+    withStartText({ text: "The clock is bounded.", when: [{ type: "resourceAtMost", resource: "constructor", value: 0 }] }),
+    /scenario\.scenes\[0\]\.text\[0\]\.when: unknown resource "constructor"/,
+  );
+});
+
+test("constructor is rejected as an unknown fact instead of matching FACT_LABELS.prototype", () => {
+  assertUnknownMembership(
+    scenario({ initialFacts: ["constructor"] }),
+    /scenario: missing player-facing label for fact "constructor"/,
+  );
+  assertUnknownMembership(
+    withStartChoice({ effects: [{ type: "addFact", fact: "constructor" }, { type: "goTo", scene: "done" }] }),
+    /scenario: missing player-facing label for fact "constructor"/,
+  );
+});
