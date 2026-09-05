@@ -14,7 +14,10 @@ import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
 import test from "node:test";
 import { Bdd } from "../src/verification/bdd.js";
+import { PackedModel } from "../src/verification/packed-model.js";
+import { packedReachability } from "../src/verification/packed-reachability.js";
 import { validateScenario, type Choice, type Condition, type Effect, type Scenario } from "../src/engine/content.js";
+import type { GameState } from "../src/engine/types.js";
 import {
   SymbolicModel,
   SymbolicTransitionError,
@@ -960,6 +963,107 @@ function assertSymbolicMatchesOracle(rawScenario: RawScenario, bounds: Readonly<
     }
   }
 }
+
+function assertPackedMatchesOracle(rawScenario: RawScenario, bounds: Readonly<Record<string, number>>): void {
+  const validated = validateScenario(rawScenario);
+  const graph = buildOracle(validated, bounds);
+  const model = new PackedModel(rawScenario);
+  const result = packedReachability(model, { stateLimit: 10_000, edgeLimit: 100_000 });
+  const keyFor = (code: bigint) => stateKey(model.decode(code), graph.resources, graph.flags);
+  assert.equal(result.exhaustive, true);
+  assert.deepEqual(new Set(result.states.map(keyFor)), new Set(graph.states.keys()));
+  assert.equal(result.stateCount, graph.states.size);
+  assert.equal(result.transitionCount, graph.edges.length);
+  assert.equal(result.completableCount, graph.completable.size);
+  assert.equal(result.deadEndCount, graph.deadEnds.size);
+  assert.equal(result.noCompletionCount, graph.noCompletion.size);
+  assert.equal(result.frontiers.length, graph.frontiers.length);
+  for (const [depth, [start, end]] of result.frontiers.entries()) {
+    assert.deepEqual(new Set(result.states.slice(start, end).map(keyFor)), new Set(graph.frontiers[depth]));
+  }
+  for (const [key, state] of graph.states) {
+    const code = model.encode(state);
+    assert.deepEqual(model.decode(code), state);
+    assert.equal(result.isReachable(code), true);
+    assert.equal(result.isCompletable(code), graph.completable.has(key));
+    assert.equal(result.isDeadEnd(code), graph.deadEnds.has(key));
+    assert.equal(result.isNoCompletion(code), graph.noCompletion.has(key));
+  }
+  const reachableScenes = new Set([...graph.states.values()].map(state => state.scene));
+  const reachableChoices = new Set(graph.edges.map(edge => edge.choiceId));
+  assert.deepEqual(result.unreachableScenes, validated.scenes.map(scene => scene.id).filter(id => !reachableScenes.has(id)));
+  assert.deepEqual(result.unreachableChoices, validated.choices.map(choice => choice.id).filter(id => !reachableChoices.has(id)));
+  assert.deepEqual(new Set(Object.keys(result.sceneWitnesses)), reachableScenes);
+  assert.deepEqual(new Set(Object.keys(result.choiceWitnesses)), reachableChoices);
+  assert.deepEqual(new Set(Object.keys(result.endingWitnesses)), new Set(validated.choices
+    .filter(choice => choice.outcome !== undefined && reachableChoices.has(choice.id)).map(choice => choice.id)));
+
+  const paths: Record<string, readonly string[]> = {};
+  for (const [id, path] of Object.entries(result.sceneWitnesses)) paths[`scene:${id}`] = path;
+  for (const [id, path] of Object.entries(result.choiceWitnesses)) paths[`choice:${id}`] = path;
+  for (const [id, path] of Object.entries(result.endingWitnesses)) paths[`ending:${id}`] = path;
+  for (const [key, path] of Object.entries(paths)) {
+    const end = replayOraclePath(validated, path, bounds, graph.endingPairs);
+    if (key.startsWith("scene:")) {
+      assert.equal(end.scene, key.slice(6));
+      const shortest = graph.frontiers.findIndex(frontier => frontier.some(state => graph.states.get(state)!.scene === end.scene));
+      assert.equal(path.length, shortest);
+    } else {
+      const id = key.slice(key.indexOf(":") + 1);
+      assert.equal(path.at(-1), id);
+      const sourceKeys = new Set(graph.edges.filter(edge => edge.choiceId === id).map(edge => edge.from));
+      const shortest = graph.frontiers.findIndex(frontier => frontier.some(state => sourceKeys.has(state)));
+      assert.equal(path.length, shortest + 1);
+    }
+  }
+  const replayed = replayThroughRealEngine(rawScenario, paths, bounds, "interleaved");
+  assertEngineReplayMatches(validated, graph, paths, replayed, bounds);
+  for (const [key, path] of Object.entries(paths)) {
+    const projected = model.project(replayed[key]!.state as GameState);
+    assert.deepEqual(projected, replayOraclePath(validated, path, bounds, graph.endingPairs));
+    assert.equal(result.isReachable(model.encode(projected)), true);
+  }
+
+  // Independently enumerate all lifecycle-valid combinations of the small
+  // fixture, including unreachable states. The packed model has a full safe-
+  // integer resource domain, so only arithmetic faults (not candidate bounds)
+  // can invalidate an otherwise enabled transition.
+  const safeBounds = Object.fromEntries(graph.resources.map(name => [name, Number.MAX_SAFE_INTEGER]));
+  const domain = allValidStates(validated, bounds);
+  const encodings = new Set<bigint>();
+  for (const state of domain) {
+    const code = model.encode(state);
+    encodings.add(code);
+    assert.deepEqual(model.decode(code), state);
+    assert.equal(result.isReachable(code), graph.states.has(stateKey(state, graph.resources, graph.flags)));
+    const legal = new Set(legalChoices(validated, state).map(choice => choice.id));
+    for (const choice of model.choices) {
+      const actual = model.transition(code, choice);
+      if (!legal.has(choice.id)) { assert.equal(actual.kind, "disabled"); continue; }
+      const authored = validated.choices.find(candidate => candidate.id === choice.id)!;
+      let expected: OracleState;
+      try {
+        expected = oracleTransition(validated, state, authored, safeBounds, graph.endingPairs);
+      } catch (error) {
+        assert.match(String(error), /oracle arithmetic error/);
+        assert.equal(actual.kind, "fault");
+        continue;
+      }
+      assert.equal(actual.kind, "success");
+      if (actual.kind !== "success") throw new Error("Expected successful packed transition");
+      assert.deepEqual(model.decode(actual.state), expected);
+    }
+  }
+  assert.equal(encodings.size, domain.length, "full tuple encoding has no collisions in the independent domain");
+}
+
+test("packed exact graph and transitions match the independent finite DSL oracle and real-engine replay", () => {
+  assertPackedMatchesOracle(ORDERED_SCENARIO, { stock: 2, tide: 2 });
+});
+
+test("packed completion, cycles and dead ends match independent state sets and shortest witnesses", () => {
+  assertPackedMatchesOracle(NO_COMPLETION_SCENARIO, { token: 1 });
+});
 
 test("symbolic model matches an independent finite oracle for every DSL operation and both variable orders", () => {
   assertSymbolicMatchesOracle(ORDERED_SCENARIO, { stock: 2, tide: 2 });
