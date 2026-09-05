@@ -16,10 +16,11 @@ remains accessible after the verdict and after Blackglass. Its existing
 scarce regulator, competing facilities and services provide the activity;
 no new empty location or synthetic world count is needed.
 
-Earlier Reedway supplies can now fund remaining Archive approaches or
-Blackglass preparation. Clinic medicine remains useful for Reedway care;
-the existing later chapters have no medicine consumer, so do not claim a
-new cross-chapter medicine benefit. Earlier water/evacuation resolution and
+Earlier Reedway supplies can now fund the Blackglass ledge brace or repair
+of Nessa's trust. The Archive has no supply consumer; its direct new regional
+consequence is Sera's personal credit favor. Clinic medicine remains useful
+for Reedway care; the existing later chapters have no medicine consumer, so
+do not claim a new cross-chapter medicine benefit. Earlier water/evacuation resolution and
 local closure costs must already be final before regional access. No new
 link returns to initial preparation or the sluice controls.
 
@@ -106,7 +107,7 @@ From the same council-origin prefix, compare cooperative and seized-regulator
 routes before opening the official file: the credit favor must differ while
 the public investigation remains completable. Treating Milo after seizure
 must restore the favor if still unused; a used favor cannot repeat or be
-revoked. Demonstrate one concrete early ferry-reward use in a later chapter
+revoked. Demonstrate one concrete early ferry-reward use in Blackglass
 and preserve shortages, regulator exclusivity, once-only rewards/services,
 all old outcomes and global completion routes.
 
