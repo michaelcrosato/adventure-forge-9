@@ -729,6 +729,9 @@ test("packed static classes preserve dead ends, stranded cycles and non-complete
       { id: "repeat", scene: "loop", label: "Repeat", description: "Stay in the loop.", effects: [{ type: "goTo", scene: "loop" }] },
       { id: "depart", scene: "loop", label: "Depart", description: "Depart from the loop.", effects: [],
         outcome: { status: "departed", summary: "Departed." } },
+      { id: "blocked-exit", scene: "trap", label: "Exit", description: "An unaffordable exit stays unavailable.",
+        when: [{ type: "resourceAtLeast", resource: "water", value: 1 }], effects: [],
+        outcome: { status: "completed", summary: "Escaped." } },
     ],
   };
   const model = new PackedModel(raw), projection = new PackedControlProjection(model);
