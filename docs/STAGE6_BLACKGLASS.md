@@ -1,6 +1,6 @@
 # Blackglass Works — timed traversal wave
 
-Status: isolated engine and content work in progress. Not integrated, live tested, published or accepted. The full requested world breadth and depth remain the completion target.
+Status: bounded clock engine integrated locally; Blackglass content remains isolated and under review. This wave is not live tested, published or accepted. The full requested world breadth and depth remain the completion target.
 
 The prior turn delivered the Archive expansion and verified its public deployment. This wave should add a different interaction: acting changes a tide/patrol window, routes carry different timing and risk costs, and a companion's willingness to help follows earlier choices. A new wrapper around ordinary choices, another evidence counter, or duplicated water/Archive context would not add that behavior.
 
@@ -45,4 +45,12 @@ This is a first timed-traversal chapter. It does not establish combat depth, a f
 - Independent read-only reviewer: clock bounds, adversarial input, trust boundary and replay/audit implications.
 - Manager: integration, narrative/causal review, full audit, live dispatch/evidence, browser verification and publication.
 
-No current clock/content candidate is accepted. Findings and exact artifacts will be added as work is reviewed.
+No current clock/content candidate has expansion acceptance.
+
+## Engine integration and review
+
+Clock source `a8c5db6` was reviewed and integrated as `c5382f3`, with independent membership regressions `3c704ef` integrated as `5f9f739`. The broad mutable-scenario engine factory was removed before integration. The existing private-state trust boundary and build-bound replay remain in place. Resources, required fields, flags and fact-label membership use own-property checks; an inherited `constructor` property cannot supply a missing resource or fact label.
+
+The integrated source passed all 53 checks in about 13.7 seconds, including the unchanged 76,117-state / 129,874-transition campaign audit. Log: `/tmp/af9-clocks-integrated-verify.log`. Follow-up test commit `339bf1c`, integrated as `9b9958f`, adds duplicate IDs, invalid numeric bounds/deltas, overflow-safe saturation near `MAX_SAFE_INTEGER`, and rejection of ordinary clock-resource writes anywhere in an effect sequence. All eight focused clock/membership tests passed after that integration. The shipped scenario still has no clock declaration; these checks do not yet establish gameplay clock/save traversal in Blackglass.
+
+Content review requires meaningful timing versus risk tradeoffs and an actual benefit from sealed/provisional Archive cover. It also identified text claiming a safe pressure setting after its window, free Nessa aid described as paid trust repair, and a council obligation described without the player taking that favor. Those corrections and ordinary return navigation remain with the content builder. Explicit clean/scarred pressure results are being separated from overall patrol risk. No production push has included this wave.
