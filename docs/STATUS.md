@@ -22,6 +22,8 @@ Stage 3 / Cycle 1 is complete. Two fresh baselines reported road ambiguity; two 
 
 Stage 4 / Cycle 2 is active. CYCLE2.md predeclares the complete chamber-requirements correction and an exposure-aware comparison. No source should change in a checkout used by a running player.
 
+Cycle 2 Candidate A did not pass retention: no depleted-chamber exposure, and slightly lower median clarity. All four records remain preserved. Candidate B is predeclared to clarify the separate clinic/evacuation medicine ambiguity; its two fresh sessions are next. Do not claim two accepted improvement cycles yet.
+
 Assignments: Luna/max engine and mechanical proofs; Luna/max human player surfaces; Luna/max subscription boundary probe and adapter. Manager owns integration, evidence runner, publication, and quality decisions.
 
 ## Acceptance still required
