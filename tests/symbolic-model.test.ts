@@ -1069,10 +1069,14 @@ function compactFixtureResult(
   order: "interleaved" | "blocked",
 ): { readonly input: SymbolicModel; readonly result: CompactReachabilityResult; readonly progress: readonly CompactProgressEvent[] } {
   const input = new SymbolicModel(scenario, bounds, { order, nodeLimit: 100_000, cacheLimit: 20_000 });
+  const inputStats = input.bdd.stats();
+  const initialAssignment = input.bdd.satisfyingAssignment(input.initial);
   const progress: CompactProgressEvent[] = [];
   const result = symbolicReachability(input, 64, (phase, step, owner) => {
     progress.push(Object.freeze({ phase, step, owner }));
   }, { compactAtNodes: 1 });
+  assert.deepEqual(input.bdd.stats(), inputStats, "private generations leave the caller's node and cache tables unchanged");
+  assert.deepEqual(input.bdd.satisfyingAssignment(input.initial), initialAssignment, "the original initial handle preserves its meaning");
   return Object.freeze({ input, result, progress: Object.freeze(progress) });
 }
 
@@ -1121,9 +1125,8 @@ function assertCompactedCoverageMatchesOracle(
   assert.deepEqual(result.unreachableScenes, validated.scenes.map((sceneValue) => sceneValue.id).filter((id) => !reachableSceneIds.includes(id)), `${order} compact unreachable scenes match`);
   assert.deepEqual(result.unreachableChoices, validated.choices.map((choice) => choice.id).filter((id) => !reachableChoiceIds.includes(id)), `${order} compact unreachable choices match`);
 
-  // A compacted BDD may choose a different satisfying assignment for a
-  // witness, so compare every authored witness semantically and replay its
-  // action path independently instead of comparing raw numeric handles.
+  // Check authored witnesses through an independent interpreter; numeric
+  // root handles are meaningful only within their owning manager.
   for (const [sceneId, path] of Object.entries(result.sceneWitnesses)) {
     const final = replayOraclePath(validated, path, bounds, graph.endingPairs);
     assert.equal(final.scene, sceneId, `${order} compact scene witness ${sceneId} reaches its scene`);
@@ -1131,7 +1134,7 @@ function assertCompactedCoverageMatchesOracle(
   for (const [choiceId, path] of Object.entries(result.choiceWitnesses)) {
     assert.equal(path.at(-1), choiceId, `${order} compact choice witness ${choiceId} ends with its choice`);
     const final = replayOraclePath(validated, path, bounds, graph.endingPairs);
-    assert.equal(final.status === "playing" || final.status === "completed" || final.status === "departed" || final.status === "dead", true);
+    assert.notEqual(owner.bdd.and(result.reachable, owner.encode(final)), 0, `${order} compact choice witness ends in the reachable set`);
   }
   for (const [choiceId, path] of Object.entries(result.endingWitnesses)) {
     assert.equal(path.at(-1), choiceId, `${order} compact ending witness ${choiceId} ends with its choice`);
@@ -1158,6 +1161,7 @@ function assertCompactAndDefaultWitnessSetsAgree(
 test("forced compaction preserves complete finite reachability, frontiers, and witness sets", () => {
   const fixtures: readonly { readonly label: string; readonly scenario: RawScenario; readonly bounds: Readonly<Record<string, number>> }[] = [
     { label: "ordered", scenario: ORDERED_SCENARIO, bounds: { stock: 2, tide: 2 } },
+    { label: "no-completed-route", scenario: NO_COMPLETION_SCENARIO, bounds: { token: 1 } },
     { label: "unreachable-unsafe-branch", scenario: UNREACHABLE_INVALID_SCENARIO, bounds: { stock: 2 } },
   ];
   for (const fixture of fixtures) {
@@ -1202,11 +1206,13 @@ test("the isolated real-engine replay adapter accepts the compact result owner a
 import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
 import { SCENARIO } from "./src/engine/content.ts";
-import { replay, start, stateHash } from "./src/engine/index.ts";
+import { replay, stateHash } from "./src/engine/index.ts";
 import { SymbolicModel, symbolicReachability } from "./src/verification/symbolic-model.ts";
 import { replaySymbolicPath, verifySymbolicWitnesses } from "./src/verification/symbolic-replay.ts";
 const { bounds } = JSON.parse(readFileSync(process.argv[2], "utf8"));
-const input = new SymbolicModel(SCENARIO, bounds, { order: "interleaved", nodeLimit: 100_000, cacheLimit: 20_000 });
+const reports = [];
+for (const order of ["interleaved", "blocked"]) {
+const input = new SymbolicModel(SCENARIO, bounds, { order, nodeLimit: 100_000, cacheLimit: 20_000 });
 const phases = [];
 const result = symbolicReachability(input, 64, (phase, step, owner) => {
   assert.equal(typeof step, "number");
@@ -1216,7 +1222,7 @@ const result = symbolicReachability(input, 64, (phase, step, owner) => {
 assert.notStrictEqual(result.model, input);
 assert.ok(result.compactions > 0);
 assert.ok(phases.includes("compact"));
-assert.throws(() => verifySymbolicWitnesses(input, result));
+assert.throws(() => verifySymbolicWitnesses(input, result), /different model owner/);
 const summary = verifySymbolicWitnesses(result.model, result);
 const path = result.choiceWitnesses["finish-rich"];
 assert.ok(path);
@@ -1224,18 +1230,23 @@ const adapted = replaySymbolicPath(result.model, path);
 const actual = replay(1, path.map((choiceId, expectedRevision) => ({ choiceId, expectedRevision })));
 assert.deepEqual(adapted, actual);
 assert.equal(stateHash(adapted), stateHash(actual));
-console.log(JSON.stringify({ compactions: result.compactions, summary, path, phases }));
+reports.push({ order, compactions: result.compactions, summary, path, phases });
+}
+console.log(JSON.stringify(reports));
 `);
     const stdout = execFileSync(process.execPath, ["--import", tsxLoader(), probePath, inputPath], {
       cwd: fixture.root,
       encoding: "utf8",
       maxBuffer: 16 * 1024 * 1024,
     });
-    const report = JSON.parse(stdout.trim()) as { compactions: number; summary: { choiceWitnesses: number }; path: readonly string[]; phases: readonly string[] };
-    assert.ok(report.compactions > 0);
-    assert.equal(report.summary.choiceWitnesses, 11);
-    assert.equal(report.path.at(-1), "finish-rich");
-    assert.ok(report.phases.includes("compact"));
+    const reports = JSON.parse(stdout.trim()) as { order: string; compactions: number; summary: { choiceWitnesses: number }; path: readonly string[]; phases: readonly string[] }[];
+    assert.deepEqual(reports.map(report => report.order), ["interleaved", "blocked"]);
+    for (const report of reports) {
+      assert.ok(report.compactions > 0);
+      assert.equal(report.summary.choiceWitnesses, 11);
+      assert.equal(report.path.at(-1), "finish-rich");
+      assert.ok(report.phases.includes("compact"));
+    }
   } finally {
     fixture.cleanup();
   }
@@ -1244,7 +1255,9 @@ console.log(JSON.stringify({ compactions: result.compactions, summary, path, pha
 test("compaction snapshots source, bounds, and construction options", () => {
   const source = cloneRawScenario(ORDERED_SCENARIO);
   const bounds: { stock: number; tide: number } = { stock: 2, tide: 2 };
-  const options: { order: "interleaved" | "blocked"; maxDomain: number } = { order: "blocked", maxDomain: 8 };
+  const options: { order: "interleaved" | "blocked"; maxDomain: number; nodeLimit: number; cacheLimit: number } = {
+    order: "blocked", maxDomain: 8, nodeLimit: 100_000, cacheLimit: 20_000,
+  };
   const normalized = validateScenario(cloneRawScenario(source));
   const model = new SymbolicModel(source, bounds, options);
   source.scenes[0]!.text[0]!.text = "mutated after construction";
@@ -1254,6 +1267,8 @@ test("compaction snapshots source, bounds, and construction options", () => {
   bounds.tide = 0;
   options.order = "interleaved";
   options.maxDomain = 1;
+  options.nodeLimit = 0;
+  options.cacheLimit = 0;
   const result = symbolicReachability(model, 64, undefined, { compactAtNodes: 1 });
   assert.notStrictEqual(result.model, model);
   assert.deepEqual(result.model.scenario, normalized, "compaction uses the normalized scenario snapshot");

@@ -338,6 +338,7 @@ function countStats(total: ReplayAccumulator[], scenes: number, choices: number,
 export function verifySymbolicWitnesses(model: SymbolicModel, result: SymbolicReachability): SymbolicWitnessSummary {
   assertFixedScenario(model);
   if (!isObject(result)) fail("reachability result must be an object");
+  if (result.model !== model) fail("reachability result belongs to a different model owner");
   if (result.exhaustive !== true) fail("reachability result is not exhaustive");
   const unreachableScenes = reportArray(result.unreachableScenes, "unreachableScenes");
   const unreachableChoices = reportArray(result.unreachableChoices, "unreachableChoices");

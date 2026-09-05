@@ -80,6 +80,9 @@ export class SymbolicModel {
   private readonly toCurrent: ReadonlyMap<number, number>;
   private readonly toNext: ReadonlyMap<number, number>;
   private readonly variableCount: number;
+  private readonly resourceBounds: Readonly<Record<string, number>>;
+  private readonly compileOptions: Readonly<Required<SymbolicOptions>>;
+  private readonly choiceMembership: ReadonlySet<SymbolicChoice>;
 
   constructor(input: unknown, bounds: Readonly<Record<string, number>>, options: SymbolicOptions = {}) {
     this.scenario = validateScenario(input);
@@ -120,8 +123,13 @@ export class SymbolicModel {
     const bitCount = specs.reduce((count, spec) => count + width(spec.maximum), 0);
     const order = options.order ?? "interleaved";
     if (order !== "interleaved" && order !== "blocked") throw new Error("Unknown symbolic variable order");
+    this.resourceBounds = Object.freeze(Object.fromEntries(specs
+      .filter(spec => spec.id.startsWith("resource:"))
+      .map(spec => [spec.id.slice("resource:".length), spec.maximum])));
+    this.compileOptions = Object.freeze({ order, maxDomain,
+      nodeLimit: options.nodeLimit ?? 250_000, cacheLimit: options.cacheLimit ?? 100_000 });
     this.variableCount = bitCount * 2;
-    this.bdd = new Bdd(this.variableCount, { nodeLimit: options.nodeLimit ?? 250_000, cacheLimit: options.cacheLimit ?? 100_000 });
+    this.bdd = new Bdd(this.variableCount, this.compileOptions);
     const currentVariables: number[] = [], nextVariables: number[] = [];
     let offset = 0;
     for (const spec of specs) {
@@ -157,6 +165,16 @@ export class SymbolicModel {
       flags: Object.fromEntries(this.flags.map(flag => [flag, false])),
     });
     this.choices = Object.freeze(this.scenario.choices.map(choice => this.compileChoice(choice)));
+    this.choiceMembership = new Set(this.choices);
+  }
+
+  /** Recompile this exact immutable specification into a distinct manager. */
+  fresh(): SymbolicModel {
+    return new SymbolicModel(this.scenario, this.resourceBounds, this.compileOptions);
+  }
+
+  private assertChoiceOwner(choice: SymbolicChoice): void {
+    if (!this.choiceMembership.has(choice)) throw new Error("Symbolic choice belongs to a different model");
   }
 
   private field(id: string): Field {
@@ -315,6 +333,7 @@ export class SymbolicModel {
 
   image(source: number, choice?: SymbolicChoice): number {
     if (choice !== undefined) {
+      this.assertChoiceOwner(choice);
       if (this.bdd.and(source, choice.enabled) === 0) return 0;
       return this.bdd.rename(this.bdd.andExists(source, choice.relation, this.currentVariables), this.toCurrent);
     }
@@ -322,6 +341,7 @@ export class SymbolicModel {
   }
 
   preimage(target: number, choice?: SymbolicChoice): number {
+    if (choice !== undefined) this.assertChoiceOwner(choice);
     const nextTarget = this.bdd.rename(target, this.toNext);
     const pre = (option: SymbolicChoice) => this.bdd.andExists(nextTarget, option.relation, this.nextVariables);
     return choice === undefined ? this.choices.reduce((result, option) => this.bdd.or(result, pre(option)), 0) : pre(choice);
@@ -354,6 +374,9 @@ export class SymbolicModel {
 
 export interface SymbolicReachability {
   readonly exhaustive: true;
+  /** Every numeric formula in this result belongs to this exact model. */
+  readonly model: SymbolicModel;
+  readonly compactions: number;
   readonly reachable: number;
   readonly completable: number;
   readonly deadEnds: number;
@@ -369,19 +392,66 @@ export interface SymbolicReachability {
   readonly endingWitnesses: Readonly<Record<string, readonly string[]>>;
 }
 
+export interface SymbolicReachabilityOptions {
+  /** Opt-in exact generation replacement between operations. No default compaction. */
+  readonly compactAtNodes?: number;
+}
+
+export type SymbolicProgressObserver = (
+  phase: "forward" | "backward" | "scenes" | "choices" | "compact",
+  step: number,
+  owner: SymbolicModel,
+) => void;
+
 /** An observer may throw to stop an incomplete diagnostic; no partial success is returned. */
 export function symbolicReachability(
   model: SymbolicModel,
   roundLimit = 128,
-  onProgress?: (phase: "forward" | "backward" | "scenes" | "choices", step: number) => void,
+  onProgress?: SymbolicProgressObserver,
+  options: SymbolicReachabilityOptions = {},
 ): SymbolicReachability {
   if (!Number.isSafeInteger(roundLimit) || roundLimit < 1) throw new Error("Invalid symbolic round limit");
-  const bdd = model.bdd;
-  const frontiers = [model.initial];
+  if (options === null || typeof options !== "object" || Array.isArray(options)) {
+    throw new Error("Invalid symbolic reachability options");
+  }
+  const compactAtNodes = options.compactAtNodes;
+  if (compactAtNodes !== undefined && (!Number.isSafeInteger(compactAtNodes) || compactAtNodes < 1)) {
+    throw new Error("Invalid symbolic compaction threshold");
+  }
+  // Start an opt-in traversal in a private generation, so the caller's model
+  // does not accumulate its first round of temporary nodes or lose cache data.
+  if (compactAtNodes !== undefined) model = model.fresh();
+  let bdd = model.bdd;
+  let frontiers = [model.initial];
   let reachable = model.initial, frontier = model.initial, forwardRounds = 0;
+  let completable = 0, legal = 0, compactions = 0;
+
+  function compactIfNeeded(): void {
+    if (compactAtNodes === undefined || bdd.stats().uniqueEntries < compactAtNodes) return;
+    // Clearing memo entries is exact and reduces coexistence during copying.
+    // The old node table/handles remain valid until the old manager is collected.
+    bdd.clearOperationCaches();
+    const nextModel = model.fresh();
+    nextModel.bdd.clearOperationCaches();
+    const copied = bdd.copyForestTo(nextModel.bdd, [reachable, frontier, completable, legal, ...frontiers]);
+    // Publish the entire root bundle and its owner only after copying succeeds.
+    reachable = copied[0]!;
+    frontier = copied[1]!;
+    completable = copied[2]!;
+    legal = copied[3]!;
+    frontiers = copied.slice(4);
+    model = nextModel;
+    bdd = nextModel.bdd;
+    compactions++;
+    onProgress?.("compact", compactions, model);
+    // Do not loop here if the retained forest itself exceeds the threshold.
+    // The node guard still bounds every copy and subsequent exact operation.
+  }
+
   while (true) {
     if (++forwardRounds > roundLimit) throw new Error("Symbolic forward limit exceeded; coverage incomplete");
-    onProgress?.("forward", forwardRounds);
+    compactIfNeeded();
+    onProgress?.("forward", forwardRounds, model);
     for (const choice of model.choices) {
       for (const [reason, predicate] of [["arithmetic-error", choice.arithmeticError], ["bound-exit", choice.boundExit]] as const) {
         const failed = bdd.and(frontier, predicate);
@@ -392,35 +462,41 @@ export function symbolicReachability(
     if (next === 0) break;
     reachable = bdd.or(reachable, next); frontier = next; frontiers.push(next);
   }
-  let completable = bdd.and(reachable, model.completed), backwardRounds = 0;
+  compactIfNeeded();
+  completable = bdd.and(reachable, model.completed);
+  let backwardRounds = 0;
   while (true) {
     if (++backwardRounds > roundLimit) throw new Error("Symbolic backward limit exceeded; coverage incomplete");
-    onProgress?.("backward", backwardRounds);
+    compactIfNeeded();
+    onProgress?.("backward", backwardRounds, model);
     const more = bdd.and(bdd.and(model.preimage(completable), reachable), bdd.not(completable));
     if (more === 0) break;
     completable = bdd.or(completable, more);
   }
-  let legal = 0;
   const sceneWitnesses: Record<string, readonly string[]> = Object.create(null);
   const choiceWitnesses: Record<string, readonly string[]> = Object.create(null);
   const endingWitnesses: Record<string, readonly string[]> = Object.create(null);
   const unreachableScenes: string[] = [];
   for (const [index, scene] of model.scenario.scenes.entries()) {
-    onProgress?.("scenes", index);
+    compactIfNeeded();
+    onProgress?.("scenes", index, model);
     const predicate = model.atScene(scene.id);
     if (bdd.and(reachable, predicate) === 0) unreachableScenes.push(scene.id);
     else sceneWitnesses[scene.id] = model.witness(predicate, frontiers);
   }
   const unreachableChoices: string[] = [];
-  for (const [index, choice] of model.choices.entries()) {
-    onProgress?.("choices", index);
+  for (let index = 0; index < model.choices.length; index++) {
+    compactIfNeeded();
+    onProgress?.("choices", index, model);
+    const choice = model.choices[index]!;
     legal = bdd.or(legal, choice.enabled);
     if (bdd.and(reachable, choice.enabled) === 0) { unreachableChoices.push(choice.id); continue; }
     const path = Object.freeze([...model.witness(choice.enabled, frontiers), choice.id]);
     choiceWitnesses[choice.id] = path;
     if (choice.terminal) endingWitnesses[choice.id] = path;
   }
-  return Object.freeze({ exhaustive: true, reachable, completable,
+  compactIfNeeded();
+  return Object.freeze({ exhaustive: true, model, compactions, reachable, completable,
     deadEnds: bdd.and(bdd.and(reachable, model.playing), bdd.not(legal)),
     noCompletion: bdd.and(bdd.and(reachable, model.playing), bdd.not(completable)),
     reachableCount: bdd.count(reachable, model.currentVariables), frontiers: Object.freeze(frontiers), forwardRounds, backwardRounds,
