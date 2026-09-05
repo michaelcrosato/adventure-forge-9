@@ -148,7 +148,11 @@ const ORDERED_SCENARIO: RawScenario = {
       effects: [
         // Later effects must still apply after this navigation effect.
         { type: "goTo", scene: "reset" },
+        // The final write, rather than the first write or a net delta alone,
+        // determines each field's successor value.
+        { type: "setFlag", flag: "ready", value: true },
         { type: "setFlag", flag: "ready", value: false },
+        { type: "setResource", resource: "stock", value: 2 },
         { type: "advanceClock", clock: "phase-clock", delta: 2 },
         { type: "adjustResource", resource: "stock", delta: -1 },
       ],
@@ -163,6 +167,18 @@ const ORDERED_SCENARIO: RawScenario = {
         { type: "setResource", resource: "stock", value: 1 },
         { type: "addFact", fact: "dry-tanks" },
       ],
+      [
+        { type: "flag", flag: "ready", value: true },
+        { type: "resourceAtLeast", resource: "stock", value: 2 },
+        { type: "resourceAtMost", resource: "tide", value: 2 },
+      ],
+    ),
+    terminal(
+      "finish-rich-copy",
+      "fork",
+      "completed",
+      "Rich work complete.",
+      [{ type: "setFlag", flag: "sealed", value: false }],
       [
         { type: "flag", flag: "ready", value: true },
         { type: "resourceAtLeast", resource: "stock", value: 2 },
@@ -295,12 +311,18 @@ function faultScenario(order: "bound-first" | "arithmetic-first"): RawScenario {
   const effects: RawEffect[] = order === "bound-first"
     ? [
       { type: "setResource", resource: "stock", value: 2 },
+      // The later reset must not hide the intermediate symbolic bound exit.
+      { type: "setResource", resource: "stock", value: 0 },
       { type: "adjustResource", resource: "water", delta: Number.MAX_SAFE_INTEGER },
+      { type: "setResource", resource: "water", value: 0 },
       { type: "goTo", scene: "done" },
     ]
     : [
       { type: "adjustResource", resource: "water", delta: Number.MAX_SAFE_INTEGER },
+      // The later reset must not hide the intermediate safe-integer overflow.
+      { type: "setResource", resource: "water", value: 0 },
       { type: "setResource", resource: "stock", value: 2 },
+      { type: "setResource", resource: "stock", value: 0 },
       { type: "goTo", scene: "done" },
     ];
   return {
@@ -571,6 +593,24 @@ function replayOraclePath(
   return state;
 }
 
+/** Facts are intentionally outside the symbolic state, but remain observable
+ * engine state and therefore need an independent replay expectation. */
+function factsForPath(scenario: Scenario, path: readonly string[]): readonly string[] {
+  const facts = [...scenario.initialFacts];
+  for (const choiceId of path) {
+    const choice = scenario.choices.find((candidate) => candidate.id === choiceId);
+    assert.ok(choice, `fact oracle choice ${choiceId} exists`);
+    for (const effect of choice.effects) {
+      if (effect.type === "addFact" && !facts.includes(effect.fact)) facts.push(effect.fact);
+    }
+  }
+  return facts;
+}
+
+function cloneRawScenario(scenario: RawScenario): RawScenario {
+  return JSON.parse(JSON.stringify(scenario)) as RawScenario;
+}
+
 function tsxLoader(): string {
   return createRequire(import.meta.url).resolve("tsx");
 }
@@ -615,14 +655,61 @@ function materializeEngineFixture(scenario: RawScenario): { root: string; cleanu
   return { root, cleanup: () => rmSync(root, { recursive: true, force: true }) };
 }
 
+interface EngineReceipt {
+  readonly kind: "completed" | "departed" | "dead";
+  readonly summary: string;
+  readonly revision: number;
+  readonly stateHash: string;
+}
+
+interface EngineActionRecord {
+  readonly choiceId: string;
+  readonly fromRevision: number;
+  readonly toRevision: number;
+}
+
+interface EngineStateRecord {
+  readonly version: 1;
+  readonly buildId: string;
+  readonly seed: number;
+  readonly revision: number;
+  readonly scene: string;
+  readonly resources: Readonly<Record<string, number>>;
+  readonly flags: Readonly<Record<string, boolean>>;
+  readonly knownFacts: readonly string[];
+  readonly history: readonly EngineActionRecord[];
+  readonly status: string;
+  readonly receipt?: EngineReceipt;
+}
+
+interface EngineObservation {
+  readonly revision: number;
+  readonly sceneId: string;
+  readonly title: string;
+  readonly text: readonly string[];
+  readonly facts: readonly string[];
+  readonly journal: readonly { choice: string; from: string; to: string }[];
+  readonly resources: Readonly<Record<string, number>>;
+  readonly choices: readonly { id: string; label: string; description: string }[];
+  readonly status: string;
+  readonly receipt?: EngineReceipt;
+}
+
 interface EngineReplay {
   readonly scene: string;
   readonly status: string;
   readonly resources: Readonly<Record<string, number>>;
   readonly flags: Readonly<Record<string, boolean>>;
+  readonly knownFacts: readonly string[];
+  readonly revision: number;
+  readonly receipt?: EngineReceipt;
   readonly history: readonly string[];
   readonly stateHash: string;
   readonly restoredHash: string;
+  readonly state: EngineStateRecord;
+  readonly restoredState: EngineStateRecord;
+  readonly observation: EngineObservation;
+  readonly restoredObservation: EngineObservation;
 }
 
 function replayThroughRealEngine(scenario: RawScenario, paths: Readonly<Record<string, readonly string[]>>): Record<string, EngineReplay> {
@@ -633,20 +720,42 @@ function replayThroughRealEngine(scenario: RawScenario, paths: Readonly<Record<s
     writeFileSync(inputPath, JSON.stringify(paths));
     writeFileSync(probePath, `
 import { readFileSync } from "node:fs";
-import { replay, restore, save, stateHash } from "./src/engine/index.ts";
+import { observe, replay, restore, save, stateHash } from "./src/engine/index.ts";
 const paths = JSON.parse(readFileSync(process.argv[2], "utf8"));
 const result = {};
 for (const [key, path] of Object.entries(paths)) {
   const state = replay(1, path.map((choiceId, expectedRevision) => ({ choiceId, expectedRevision })));
   const restored = restore(save(state));
+  const observation = observe(state);
+  const restoredObservation = observe(restored);
+  const snapshot = (value) => ({
+    version: value.version,
+    buildId: value.buildId,
+    seed: value.seed,
+    revision: value.revision,
+    scene: value.scene,
+    resources: value.resources,
+    flags: value.flags,
+    knownFacts: value.knownFacts,
+    history: value.history,
+    status: value.status,
+    ...(value.receipt === undefined ? {} : { receipt: value.receipt }),
+  });
   result[key] = {
     scene: state.scene,
     status: state.status,
     resources: state.resources,
     flags: state.flags,
+    knownFacts: state.knownFacts,
+    revision: state.revision,
+    ...(state.receipt === undefined ? {} : { receipt: state.receipt }),
     history: state.history.map((entry) => entry.choiceId),
     stateHash: stateHash(state),
     restoredHash: stateHash(restored),
+    state: snapshot(state),
+    restoredState: snapshot(restored),
+    observation,
+    restoredObservation,
   };
 }
 console.log(JSON.stringify(result));
@@ -676,12 +785,39 @@ function assertEngineReplayMatches(
     const actual = replayed[key];
     assert.ok(actual, `real engine replay exists for ${key}`);
     assert.deepEqual(actual.history, path, `${key} retains the authored witness history`);
+    assert.equal(actual.revision, path.length, `${key} revision follows the replay prefix length`);
+    assert.equal(actual.state.revision, actual.revision, `${key} state revision agrees with the returned revision`);
+    assert.equal(actual.state.seed, 1, `${key} replay uses the fixture seed`);
+    assert.deepEqual(actual.state.history.map((entry) => entry.choiceId), path, `${key} state retains complete action records`);
+    assert.deepEqual(actual.state, actual.restoredState, `${key} save/restore preserves the complete state payload`);
+    assert.deepEqual(actual.observation, actual.restoredObservation, `${key} save/restore preserves the complete observation`);
     assert.equal(actual.stateHash, actual.restoredHash, `${key} survives save/restore`);
     const expected = replayOraclePath(scenario, path, bounds, graph.endingPairs);
-    // Receipts are not part of the symbolic projection; derive terminal identity
-    // from the path's final authored choice and compare the remaining fields.
+    const expectedFacts = factsForPath(scenario, path);
     const lastChoice = path.length === 0 ? undefined : scenario.choices.find((choice) => choice.id === path[path.length - 1]);
     const expectedEnding = lastChoice?.outcome === undefined ? 0 : graph.endingPairs.findIndex(([status, summary]) => status === lastChoice.outcome!.status && summary === lastChoice.outcome!.summary) + 1;
+    assert.deepEqual(actual.knownFacts, expectedFacts, `${key} preserves the independently expected known facts`);
+    assert.deepEqual(actual.state.knownFacts, expectedFacts, `${key} state facts match the independent replay`);
+    assert.equal(actual.observation.revision, actual.revision, `${key} observation revision matches state`);
+    assert.equal(actual.observation.sceneId, actual.scene, `${key} observation scene matches state`);
+    assert.equal(actual.observation.status, actual.status, `${key} observation status matches state`);
+    assert.deepEqual(actual.observation.resources, actual.resources, `${key} observation resources match state`);
+    assert.deepEqual(actual.observation.facts, expectedFacts.map((fact) => `Fixture fact: ${fact}`), `${key} observation facts use the fixture labels`);
+    assert.deepEqual(actual.observation.choices.map((choice) => choice.id), actual.status === "playing"
+      ? legalChoices(scenario, expected).map((choice) => choice.id)
+      : [], `${key} observation choices match the independent legal-choice set`);
+    if (lastChoice?.outcome === undefined) {
+      assert.equal(actual.receipt, undefined, `${key} non-terminal prefix has no receipt`);
+      assert.equal(actual.observation.receipt, undefined, `${key} non-terminal observation has no receipt`);
+    } else {
+      assert.deepEqual(
+        actual.receipt && { kind: actual.receipt.kind, summary: actual.receipt.summary, revision: actual.receipt.revision },
+        { kind: lastChoice.outcome.status, summary: lastChoice.outcome.summary, revision: path.length },
+        `${key} receipt kind, summary, and revision match the authored terminal choice`,
+      );
+      assert.equal(actual.receipt?.stateHash, actual.stateHash, `${key} receipt hash matches the saved state hash`);
+      assert.deepEqual(actual.observation.receipt, actual.receipt, `${key} observation carries the real receipt`);
+    }
     const projected: OracleState = {
       scene: actual.scene,
       status: actual.status as OracleState["status"],
@@ -705,6 +841,15 @@ function assertSymbolicMatchesOracle(rawScenario: RawScenario, bounds: Readonly<
     const completable = formulaForStates(model, expectedStateSet(graph, graph.completable));
     const deadEnds = formulaForStates(model, expectedStateSet(graph, graph.deadEnds));
     const noCompletion = formulaForStates(model, expectedStateSet(graph, graph.noCompletion));
+    // This domain is generated from the validated fixture's Cartesian product
+    // and lifecycle pairs, independently of the model's validity predicate.
+    const independentlyEnumeratedDomain = formulaForStates(model, domainStates);
+    assert.equal(model.validDomain, independentlyEnumeratedDomain, `${order} valid domain matches the independent domain union`);
+    assert.equal(
+      model.bdd.count(model.validDomain, model.currentVariables),
+      BigInt(domainStates.length),
+      `${order} valid-domain count includes every independently enumerated state`,
+    );
 
     assert.equal(result.exhaustive, true, `${order} fixed point is exhaustive`);
     assert.equal(result.reachable, reachable, `${order} reachable states match the independent oracle`);
@@ -723,6 +868,10 @@ function assertSymbolicMatchesOracle(rawScenario: RawScenario, bounds: Readonly<
     assert.deepEqual(Object.keys(result.sceneWitnesses).sort(), validated.scenes.map((sceneValue) => sceneValue.id).filter((id) => graphStates.some((state) => state.scene === id)).sort());
     assert.deepEqual(Object.keys(result.choiceWitnesses).sort(), [...reachableChoiceIds].sort());
     assert.deepEqual(Object.keys(result.endingWitnesses).sort(), validated.choices.filter((choice) => choice.outcome !== undefined && reachableChoiceIds.has(choice.id)).map((choice) => choice.id).sort());
+    if (validated.choices.some((choice) => choice.id === "finish-rich-copy")) {
+      assert.equal(result.endingWitnesses["finish-rich"]?.at(-1), "finish-rich", `${order} keeps the first duplicate-receipt ending witness`);
+      assert.equal(result.endingWitnesses["finish-rich-copy"]?.at(-1), "finish-rich-copy", `${order} keeps the second duplicate-receipt ending witness`);
+    }
 
     for (const sceneValue of validated.scenes) {
       const expectedScene = formulaForStates(model, graphStates.filter((state) => state.scene === sceneValue.id));
@@ -794,4 +943,53 @@ test("unreachable unsafe arithmetic is ignored, while a reachable intermediate f
         && JSON.stringify(error.path) === JSON.stringify(["enter-fault", "fault"]);
     }, `${order} reports the first reachable authored failure with its path`);
   }
+});
+
+test("content validation rejects unknown vocabulary, clock writes, and multiple navigation effects", () => {
+  const unknownResource = cloneRawScenario(ORDERED_SCENARIO);
+  const lowPreparation = unknownResource.choices.find((choice) => choice.id === "prepare-low")!;
+  lowPreparation.when = [{ type: "resourceAtMost", resource: "constructor", value: 1 }];
+  assert.throws(
+    () => validateScenario(unknownResource),
+    /unknown resource "constructor"/,
+    "an unknown condition resource cannot be accepted as a symbolic field",
+  );
+
+  const unknownFlag = cloneRawScenario(ORDERED_SCENARIO);
+  const unknownFlagChoice = unknownFlag.choices.find((choice) => choice.id === "prepare-low")!;
+  unknownFlagChoice.when = [{ type: "flag", flag: "constructor", value: false }];
+  assert.throws(
+    () => validateScenario(unknownFlag),
+    /unknown flag "constructor"/,
+    "an unknown condition flag cannot be accepted as a symbolic field",
+  );
+
+  const unknownClock = cloneRawScenario(ORDERED_SCENARIO);
+  const unknownClockChoice = unknownClock.choices.find((choice) => choice.id === "reset-through-fork")!;
+  const clockEffect = unknownClockChoice.effects.find((effect) => effect.type === "advanceClock");
+  assert.ok(clockEffect && clockEffect.type === "advanceClock");
+  clockEffect.clock = "constructor";
+  assert.throws(
+    () => validateScenario(unknownClock),
+    /unknown clock "constructor"/,
+    "an unknown clock cannot be accepted by the effect vocabulary",
+  );
+
+  const directClockWrite = cloneRawScenario(ORDERED_SCENARIO);
+  const directClockChoice = directClockWrite.choices.find((choice) => choice.id === "prepare-low")!;
+  directClockChoice.effects.splice(1, 0, { type: "setResource", resource: "tide", value: 0 });
+  assert.throws(
+    () => validateScenario(directClockWrite),
+    /clock resource "tide" cannot be targeted by setResource/,
+    "declared clock resources cannot be directly written",
+  );
+
+  const multipleGoTo = cloneRawScenario(ORDERED_SCENARIO);
+  const multipleGoToChoice = multipleGoTo.choices.find((choice) => choice.id === "prepare-low")!;
+  multipleGoToChoice.effects.push({ type: "goTo", scene: "reset" });
+  assert.throws(
+    () => validateScenario(multipleGoTo),
+    /a non-terminal choice must have exactly one goTo effect/,
+    "a non-terminal choice cannot hide a second navigation effect",
+  );
 });
