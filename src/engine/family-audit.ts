@@ -7,7 +7,7 @@ import {
 } from "./conserved-projection.js";
 
 /**
- * An opt-in audit of concrete active cores with exact, conserved parameters.
+ * An audit of concrete active cores with exact, conserved parameters.
  * See docs/CONSERVED_PARAMETER_AUDIT.md for its proof and explicit limits.
  * Families are not concrete states or full observation equivalence classes.
  */

@@ -1,8 +1,8 @@
 # Conserved-parameter audit contract
 
-Status: implemented as an opt-in method, still awaiting full Reedway
-acceptance. The release audit still retains every concrete resource balance,
-and Reedway has not passed its complete mechanical or live gates. This document narrows the method
+Status: the refined method completed the full Reedway audit and is being
+adopted as the release check. Full repository verification of the cached
+implementation and final browser/live gates remain pending. This document narrows the method
 to immutable parameters; it does not authorize interval widening, guessed
 entry states, symbolic arithmetic for mutable resources, or sampled routes.
 
@@ -40,6 +40,10 @@ resources or text, but cannot affect a future legal choice or effect. Other
 facts/history/flags retain the existing audit's explicitly documented
 representative limits. No full-observation or arbitrary-length revision
 overflow proof is claimed.
+
+Parameter bindings range over valid states, including safe integer balances
+and declared clock bounds. The method does not claim that malformed or
+unreachable assignments can be supplied to the engine as valid saves.
 
 Two states can share a core only when their active field names, joint active
 values, and parameter declarations agree. Their parameter bindings may
@@ -187,3 +191,35 @@ Every paired witness hash and final projection matches the old audit. The
 old result is reused byte-for-byte on the unchanged historical engine.
 `/tmp/af9-family-crosscheck-results-refined-20260904/` includes code hashes,
 import-only copy diffs, full results, replay checks and verified checksums.
+
+## Full Reedway result and release adoption
+
+The complete refined run on `e9d93d4`'s engine-source snapshot passes on
+game build `af9-ebf6248551f1460f99e263fc`: 243,426 families, 703,812
+transitions, 460,387 merged visits and 1,081,565 congruent successor checks.
+All 29 scenes, 160 choices and 36 endings are reachable. There are no dead
+ends or unfinished families without a completed route, and all 160 choice
+witnesses replay to their recorded full state hashes. Maximum legal choices
+is eight and the representative projection word maximum is 540, with the
+existing non-exhaustive word/facts/journal qualification intact.
+
+This is a complete mechanical result, unlike the size-only probes. It took
+5:31.33 with 1,090,536 KiB maximum RSS. Full output and process diagnostics:
+`/tmp/af9-family-audit-refined.json` and
+`/tmp/af9-family-audit-refined.log`.
+
+After this result, the manager adopts the method in `tests/scenario.test.ts`
+with the same 250,000-family workload limit and all prior assertions, plus
+explicit checks for replayed choice coverage and every authored ending.
+The resource-exact `auditScenario()` remains available and retains its
+unchanged guard and focused tests. This is a documented change in proof
+representation, not a claim that families are concrete states.
+
+`6eeb798` adds a separately reviewed 1,024-family LRU for representative
+evaluations and per-choice steps. Candidate collision checks still execute;
+eviction only discards reusable work. The cache may hold a finite per-choice
+payload for each family, so it is not a 1,024-state total-memory claim.
+Five mini-graph result exports are byte-identical with and without caching.
+Complete repository verification of the integrated cached release check is
+the next required result; no cache speed improvement or new player acceptance
+is inferred from the uncached run above.
