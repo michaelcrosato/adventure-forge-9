@@ -221,3 +221,60 @@ Three model players per source permit only a limited observation, not a
 broad human-experience or causal claim. Region acceptance and support for a
 clarity improvement must be reported separately. The Nessa-assistance issue
 is outside this focused correction.
+
+## Clarified candidate: verified and frozen
+
+Author commit `111c02c` is integrated as `4a6e5b1`, with manager wording
+corrections in `8b2be2c`. Archive and Blackglass completion choices explicitly
+finish the journey; the Archive continuation explicitly stays in it. Both
+resolved old hubs describe the competing regulator uses before entry, with
+separate unrecovered/carried text and no pending request after installation.
+Entry descriptions state that travel costs nothing and return remains open.
+Manager removed newly added instructions to visit both claimants; the
+existing regional content and every choice ID, order, condition, effect and
+outcome remain unchanged. Independent review found no blocking contradiction.
+The first batch's Nessa-assistance issue remains outside this candidate.
+
+Complete `npm run verify` passes all 108 tests on `8b2be2c`: 243,426 families,
+703,812 transitions, 460,387 merged visits, 1,081,565 successor comparisons,
+160 replayed choice witnesses and 36 ending witnesses. All authored content
+is reachable, with no dead ends or missing completed routes. Maximum legal
+choices remain eight and representative projection words 540. Wall time is
+5:24.41 with 2,699,180 KiB maximum RSS; the browser ran concurrently, so this
+is not a controlled performance comparison. Log:
+`/tmp/af9-continuation-release-verify.log`.
+
+The exact game build `af9-c4b63b33db556a8a2e83dc7d` completes a 50-action
+stateless browser journey. It checks the Archive finish/continue copy, both
+old hubs before recovery and while carrying the part, both claimants before
+allocation, clinic/patient/deckhand/relief outcomes and changed returns after
+installation. Free travel preserves resources and flags. Mid-activity
+download, fresh-session upload, reload and completed-save restoration all
+pass. Mobile document width is 375 within a 390-pixel viewport, with no
+browser errors. The actual final choose envelope is 6,136 bytes and matches
+the expected checkpoint and public observation with HTTP 200.
+
+Separate current-engine replays of previously audited action paths produce
+valid pre-ending saves for the Archive and all three Blackglass completions.
+Each save was uploaded, its new label inspected on mobile, and its ending
+clicked successfully. No old checkpoint identity was rewritten. Artifacts:
+`/tmp/af9-continuation-browser.{mjs,log}`,
+`/tmp/af9-continuation-{mid,completed}.save`,
+`/tmp/af9-continuation-50-envelope.{mts,json}` and
+`/tmp/af9-continuation-ending-{saves.mts,saves.json,browser.mjs,browser.log}`,
+with screenshots under the same prefix. Browser and local handler are closed.
+
+Clean detached checkout `/tmp/af9-stage7-continuation-verified` freezes
+`8b2be2c56cbb53e21fafb79eab0ce4a2560688a3`. Install and build pass; source ID
+is `c1c8ae75f3387ff0f5a917cbb6b749216e4d9caf68f689d55c1eeeb6b04a4622`
+(30 files). The source runner uses the browser-tested build above; compiled
+runtime identity is separately `af9-88cffe7b1fada669e418c509`. Exact dependency,
+configuration and compiled-tree identities are recorded in
+`/tmp/af9-stage7-freeze-continuation-8b2be2c.json`.
+
+Three fresh neutral Luna/max games at seeds 1–3 have now been dispatched
+under `/home/micha/.local/share/adventure-forge-9/runs-stage7-continuation-8b2be2c`.
+The fixed 60-turn ceiling and original gameplay/interview prompts are
+unchanged. Logs are `/tmp/af9-stage7-continuation-player-seed{1,2,3}.log`.
+Dispatch grants neither region acceptance nor a clarity-improvement claim;
+all attempts and original evidence must be reviewed under the rules above.
