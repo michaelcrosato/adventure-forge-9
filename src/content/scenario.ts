@@ -1,5 +1,6 @@
 import { BLACKGLASS_CHOICES, BLACKGLASS_CLOCKS, BLACKGLASS_SCENES } from "./blackglass.js";
 import { LANTERN_CHOICES, LANTERN_SCENES } from "./lantern.js";
+import { REEDWAY_CHOICES, REEDWAY_SCENES } from "./reedway.js";
 
 export type ScenarioStatus = "completed" | "departed" | "dead";
 
@@ -425,6 +426,7 @@ export const RAW_SCENARIO = {
     },
     ...LANTERN_SCENES,
     ...BLACKGLASS_SCENES,
+    ...REEDWAY_SCENES,
   ],
   choices: [
     {
@@ -1190,5 +1192,6 @@ export const RAW_SCENARIO = {
     },
     ...LANTERN_CHOICES,
     ...BLACKGLASS_CHOICES,
+    ...REEDWAY_CHOICES,
   ],
 } as const satisfies ScenarioData;
