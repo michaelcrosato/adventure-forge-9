@@ -2,7 +2,7 @@
 
 Updated: 2026-09-04 (America/Vancouver). The full Skyrim-breadth/BG3-depth goal remains active and far beyond the current game.
 
-Stage 7 is active locally under `STAGE7_REEDWAY.md`: four new regional places connect the resolved Lowsail/Blackglass hubs with free reversible travel. Five recovery approaches, competing regulator allocations, patient care, worker relief and deckhand treatment are now integrated. TypeScript build and validated game start pass. Full integrated audit, independent regressions, rendered checks and fresh player evidence remain outstanding; the region is not published or accepted. Production remains the accepted Blackglass build.
+Stage 7 is active locally under `STAGE7_REEDWAY.md`: four new regional places connect the resolved Lowsail/Blackglass hubs with free reversible travel. Five recovery approaches, competing regulator allocations, patient care, worker relief and deckhand treatment are integrated in `b2aff2b` (29 scenes, 160 choices). TypeScript build, validated game start, 18 existing Blackglass/clock checks and 10 independent regional regressions pass. The full audit exceeds the unchanged 250,000-state guard after 37.54 seconds; its failed attempt is preserved and sound phase pruning is being investigated. Full audit, rendered checks and fresh player evidence remain outstanding; the region is not published or accepted. Production remains the accepted Blackglass build.
 
 ## Accepted foundation
 
