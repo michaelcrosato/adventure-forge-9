@@ -23,7 +23,7 @@ export const LANTERN_SCENES = [
         when: [{ type: "flag", flag: "evacuation-plan", value: true }],
       },
       {
-        text: "The Archive case is open, and Reedway remains a parallel account. You can visit Sera's crew before returning here to investigate; the Blackglass pressure clock has not started.",
+        text: "The Archive case is open. You can visit Reedway's shores and return to the investigation whenever you choose. Travel costs nothing, and your evidence stays with the case.",
         when: [
           { type: "flag", flag: "archive-started", value: true },
           { type: "flag", flag: "archive-verdict-recorded", value: false },
@@ -32,7 +32,7 @@ export const LANTERN_SCENES = [
         ],
       },
       {
-        text: "Before you enter Reedway, Sera's stranded barge holds one regulator. Ilyra's clinic sterilizer and Orin's worker ferry both need it; the choice is waiting at the commons.",
+        text: "Sera's stranded barge holds one regulator. Ilyra's clinic sterilizer and Orin's worker ferry both need it. Paths from Reedway commons lead to the barge and both claimants.",
         when: [
           { type: "flag", flag: "archive-started", value: true },
           { type: "flag", flag: "archive-verdict-recorded", value: false },
@@ -44,7 +44,7 @@ export const LANTERN_SCENES = [
         ],
       },
       {
-        text: "Before you enter Reedway, you carry its single regulator, still unassigned. Ilyra's clinic and Orin's worker ferry each need it; choose one at the commons.",
+        text: "You carry Reedway's single regulator, still unassigned. You can install it at Ilyra's clinic annex or Orin's worker landing; each needs the same part.",
         when: [
           { type: "flag", flag: "archive-started", value: true },
           { type: "flag", flag: "archive-verdict-recorded", value: false },
@@ -56,7 +56,7 @@ export const LANTERN_SCENES = [
         ],
       },
       {
-        text: "Before you enter Reedway, the recovered regulator powers Ilyra's clinic sterilizer. Orin's ferry remains without the part; the regional account is waiting at the commons.",
+        text: "The recovered regulator powers Ilyra's clinic sterilizer. Orin's ferry remains without the part. Both shores remain open to you.",
         when: [
           { type: "flag", flag: "archive-started", value: true },
           { type: "flag", flag: "archive-verdict-recorded", value: false },
@@ -66,7 +66,7 @@ export const LANTERN_SCENES = [
         ],
       },
       {
-        text: "Before you enter Reedway, the recovered regulator powers Orin's worker ferry. Ilyra's clinic remains without the part; the regional account is waiting at the commons.",
+        text: "The recovered regulator powers Orin's worker ferry. Ilyra's clinic remains without the part. Both shores remain open to you.",
         when: [
           { type: "flag", flag: "archive-started", value: true },
           { type: "flag", flag: "archive-verdict-recorded", value: false },
@@ -82,7 +82,7 @@ export const LANTERN_SCENES = [
     title: "Lantern Archive Hall",
     text: [
       {
-        text: "Sera Vale lays the stolen order under a glass weight. As the Archive keeper and Reedway's salvage claimant, she keeps both records in view. Jalen Rook knows where the night ledger is kept; the seal workroom can trace the hand that authorized the diversion; Mara Venn is hidden below the stacks.",
+        text: "Sera Vale lays the stolen order under a glass weight. Jalen Rook knows where the night ledger is kept; the seal workroom can trace the hand that authorized the diversion; Mara Venn is hidden below the stacks.",
       },
       {
         text: "You have enough evidence to call a hearing. Removing Vask requires the night ledger, his counterseal, and either Mara's account or a canalwright's valve reconstruction. You may adjourn to investigate further; choosing a verdict is final.",
@@ -107,7 +107,7 @@ export const LANTERN_SCENES = [
         ],
       },
       {
-        text: "After the regulator seizure, Sera refuses to assume your council debt for the official file. The public stacks remain available, but the seal cannot buy her personal credit.",
+        text: "After the regulator seizure, Sera refuses to assume your council debt for the official file. You can still investigate through the public stacks.",
         when: [
           { type: "flag", flag: "council-control", value: true },
           { type: "flag", flag: "council-seal", value: true },
@@ -225,7 +225,7 @@ export const LANTERN_SCENES = [
         ],
       },
       {
-        text: "The Reedway commons is open before you decide whether to continue this journey at Blackglass. You can return here with its account intact.",
+        text: "You can visit Reedway's shores before deciding whether to continue at Blackglass. Travel costs nothing, and you can return here with the verdict unchanged.",
         when: [
           { type: "flag", flag: "archive-verdict-recorded", value: true },
           { type: "flag", flag: "archive-returned", value: false },
@@ -251,15 +251,15 @@ export const LANTERN_SCENES = [
         ],
       },
       {
-        text: "The Reedway regulator powers Ilyra's clinic sterilizer; Orin's ferry remains without the part. The commons remains open for the regional account.",
+        text: "The Reedway regulator powers Ilyra's clinic sterilizer; Orin's ferry remains without the part. Both shores remain open to you.",
         when: [{ type: "flag", flag: "archive-verdict-recorded", value: true }, { type: "flag", flag: "reedway-clinic-powered", value: true }],
       },
       {
-        text: "The Reedway regulator powers Orin's worker ferry; Ilyra's clinic remains without the part. The commons remains open for the regional account.",
+        text: "The Reedway regulator powers Orin's worker ferry; Ilyra's clinic remains without the part. Both shores remain open to you.",
         when: [{ type: "flag", flag: "archive-verdict-recorded", value: true }, { type: "flag", flag: "reedway-ferry-powered", value: true }],
       },
       {
-        text: "The Archive decision and Blackglass account are already carried. Review this record, then return to the settled Lowsail account.",
+        text: "The Archive verdict is unchanged, and your work at Blackglass is settled. From this record you can return to Lowsail or visit Reedway's shores.",
         when: [
           { type: "flag", flag: "archive-returned", value: true },
           { type: "flag", flag: "blackglass-resolved", value: true },
@@ -318,7 +318,7 @@ export const LANTERN_CHOICES = [
     id: "enter-lantern-hall",
     scene: "lantern-landing",
     label: "Enter the Archive hall",
-    description: "Put the stolen order before Sera Vale and begin the investigation.",
+    description: "Investigate the stolen order with Sera Vale. Any evidence already gathered stays with the open case.",
     when: [{ type: "flag", flag: "archive-verdict-recorded", value: false }],
     effects: [{ type: "goTo", scene: "archive-hall" }],
   },
@@ -326,7 +326,7 @@ export const LANTERN_CHOICES = [
     id: "explore-reedway-before-archive",
     scene: "lantern-landing",
     label: "Visit Reedway before the hearing",
-    description: "Visit Sera Vale's crew, Ilyra and Orin at the Reedway commons before investigating the open Archive case. Return here without starting the Blackglass pressure clock.",
+    description: "Visit Reedway's shores, where Sera Vale's crew, Ilyra and Orin need help. Travel costs nothing; you can return to the open Archive case with your evidence intact.",
     when: [
       { type: "flag", flag: "archive-started", value: true },
       { type: "flag", flag: "archive-verdict-recorded", value: false },
@@ -507,7 +507,7 @@ export const LANTERN_CHOICES = [
     id: "pause-archive-investigation",
     scene: "archive-hall",
     label: "Pause and return to the landing",
-    description: "Step back to the Archive landing while the case remains open. You can visit Reedway and resume the investigation before choosing a verdict.",
+    description: "Return to the Archive landing at no cost, keeping your evidence. You can visit Reedway and resume the open investigation before choosing a verdict.",
     when: [{ type: "flag", flag: "archive-verdict-recorded", value: false }],
     effects: [{ type: "goTo", scene: "lantern-landing" }],
   },
@@ -813,15 +813,15 @@ export const LANTERN_CHOICES = [
     id: "explore-reedway-before-blackglass",
     scene: "lowsail-reckoning",
     label: "Visit the Reedway shores",
-    description: "Visit Sera Vale's crew at Reedway before continuing at Blackglass, or revisit the shores after the record has been carried. Return here with the Archive decision intact.",
+    description: "Visit Reedway's shores and Sera Vale's crew. Travel costs nothing; you can return here with the Archive verdict unchanged.",
     when: [{ type: "flag", flag: "archive-verdict-recorded", value: true }],
     effects: [{ type: "goTo", scene: "reedway-commons" }],
   },
   {
     id: "return-to-lowsail-from-archive-record",
     scene: "lowsail-reckoning",
-    label: "Return to the settled Lowsail account",
-    description: "Leave the Archive record and return to Lowsail's settled account after Blackglass.",
+    label: "Return to Lowsail after Blackglass",
+    description: "Return to Lowsail at no cost, keeping the Archive verdict and your work at Blackglass unchanged.",
     when: [
       { type: "flag", flag: "archive-returned", value: true },
       { type: "flag", flag: "blackglass-resolved", value: true },

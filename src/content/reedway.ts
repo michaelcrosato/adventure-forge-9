@@ -30,7 +30,7 @@ export const REEDWAY_SCENES = [
         when: [{ type: "flag", flag: "blackglass-resolved", value: true }],
       },
       {
-        text: "The raised causeway links Ilyra's clinic annex, Orin's worker landing and Sera Vale's stranded barge. The Archive case remains open; the landing is the road back while you decide whether to carry a verdict upriver.",
+        text: "The raised causeway links Ilyra's clinic annex, Orin's worker landing and Sera Vale's stranded barge. A path leads back to the Archive landing, where your case remains open.",
         when: [
           { type: "flag", flag: "archive-started", value: true },
           { type: "flag", flag: "archive-verdict-recorded", value: false },
@@ -39,7 +39,7 @@ export const REEDWAY_SCENES = [
         ],
       },
       {
-        text: "The raised causeway links Ilyra's clinic annex, Orin's worker landing and Sera Vale's stranded barge. The Archive verdict is decided; the Lowsail record is the road back while Blackglass waits for its pressure crossing.",
+        text: "The raised causeway links Ilyra's clinic annex, Orin's worker landing and Sera Vale's stranded barge. A path leads back to your Archive record in Lowsail, where you can decide whether to continue at Blackglass.",
         when: [
           { type: "flag", flag: "archive-verdict-recorded", value: true },
           { type: "flag", flag: "archive-returned", value: false },
@@ -47,7 +47,7 @@ export const REEDWAY_SCENES = [
         ],
       },
       {
-        text: "The Archive decision and Blackglass account are already carried; the Reedway shores remain open for this journey.",
+        text: "You can also return to your Archive record in Lowsail. Its verdict and your work at Blackglass are unchanged.",
         when: [
           { type: "flag", flag: "archive-returned", value: true },
           { type: "flag", flag: "blackglass-resolved", value: true },
@@ -62,7 +62,7 @@ export const REEDWAY_SCENES = [
         ],
       },
       {
-        text: "The regulator is off Sera's barge and still unassigned. Ilyra's clinic and Orin's ferry are waiting for the same part; choose its destination.",
+        text: "You carry the regulator, still unassigned. Ilyra offers two medicine for installing it at the clinic annex; Orin offers two supplies for installing it at the worker landing. Only one facility can have the part.",
         when: [
           { type: "flag", flag: "reedway-regulator-recovered", value: true },
           { type: "flag", flag: "reedway-clinic-powered", value: false },
@@ -267,7 +267,7 @@ export const REEDWAY_CHOICES = [
     id: "return-to-open-archive-from-reedway",
     scene: "reedway-commons",
     label: "Return to the open Archive case",
-    description: "Return to the Archive landing with the regional account intact. The case remains open and the Blackglass pressure clock has not started.",
+    description: "Return to the Archive landing at no cost. Your case remains open, keeping its evidence and everything you have done in Reedway.",
     when: [
       { type: "flag", flag: "archive-started", value: true },
       { type: "flag", flag: "archive-verdict-recorded", value: false },
@@ -278,7 +278,7 @@ export const REEDWAY_CHOICES = [
     id: "return-to-archive-record-from-reedway",
     scene: "reedway-commons",
     label: "Return to the Archive record",
-    description: "Return to the Lowsail record with the verdict intact. Revisit the regional account whenever you are ready.",
+    description: "Return to your Archive record in Lowsail at no cost, keeping its verdict and everything you have done in Reedway. The shores remain open to you.",
     when: [{ type: "flag", flag: "archive-verdict-recorded", value: true }],
     effects: [{ type: "goTo", scene: "lowsail-reckoning" }],
   },
