@@ -316,14 +316,14 @@ export class SymbolicModel {
   image(source: number, choice?: SymbolicChoice): number {
     if (choice !== undefined) {
       if (this.bdd.and(source, choice.enabled) === 0) return 0;
-      return this.bdd.rename(this.bdd.exists(this.bdd.and(source, choice.relation), this.currentVariables), this.toCurrent);
+      return this.bdd.rename(this.bdd.andExists(source, choice.relation, this.currentVariables), this.toCurrent);
     }
     return this.choices.reduce((result, option) => this.bdd.or(result, this.image(source, option)), 0);
   }
 
   preimage(target: number, choice?: SymbolicChoice): number {
     const nextTarget = this.bdd.rename(target, this.toNext);
-    const pre = (option: SymbolicChoice) => this.bdd.exists(this.bdd.and(nextTarget, option.relation), this.nextVariables);
+    const pre = (option: SymbolicChoice) => this.bdd.andExists(nextTarget, option.relation, this.nextVariables);
     return choice === undefined ? this.choices.reduce((result, option) => this.bdd.or(result, pre(option)), 0) : pre(choice);
   }
 

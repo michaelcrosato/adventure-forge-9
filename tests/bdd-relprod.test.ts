@@ -125,12 +125,12 @@ test("andExists rejects invalid handles and quantified variable iterables", () =
 });
 
 test("andExists fails closed when its exact result exceeds the node limit", () => {
-  const limited = new Bdd(2, { nodeLimit: 2, cacheLimit: 0 });
+  const limited = new Bdd(3, { nodeLimit: 2, cacheLimit: 0 });
   const x0 = limited.variable(0);
   const x1 = limited.variable(1);
   assert.equal(limited.stats().nodes, 4, "two variables should consume two non-terminal nodes");
-  assert.throws(
-    () => limited.andExists(x0, x1, []),
+  for (const quantified of [[], [2]]) assert.throws(
+    () => limited.andExists(x0, x1, quantified),
     error => error instanceof BddLimitError,
     "node exhaustion must throw BddLimitError instead of returning an approximation",
   );
