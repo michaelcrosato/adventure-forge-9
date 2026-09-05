@@ -170,3 +170,28 @@ historical coverage still does not pass. A separate round-16 inventory finds
 against 765,034 allocated non-terminal nodes. This supports a bounded exact
 forest-copy experiment. None of these measurements establish acceptance,
 authoring elapsed time or a model ranking.
+
+
+Exact forest-copy implementation (`2342cc4`) and independent compaction tests
+(`6ebe95d`) were integrated with root's owned-generation traversal API as
+`b55d18b`. Root expanded the independent oracle and real-engine replay cases;
+build plus all 29 focused checks pass in 3.68 seconds / 336,160 KiB maximum
+RSS. The one- and two-million-node historical attempts remain incomplete at
+forward rounds 19 and 22 respectively; no successful campaign proof follows
+from the fixture checks. A field-dependency reviewer went beyond the assigned
+read-only inventory with constructor probes. Both original and controlled
+attempts, including three blocked-order construction failures, remain outside
+Git with source/script hashes. Root requires a reviewed full-permutation API,
+independent semantic fixtures and strict process/provenance limits before the
+next single historical traversal. No authoring-time or model-ranking claim
+is supported by these diagnostic timings.
+
+The field-order API (`bcd5ffc`, corrected in `8d4c048`) is integrated with
+root's expanded independent tests in `42673ce`. Root review corrected a
+double-read of getter-backed order entries and a meaningless comparison of
+numeric handles from different managers. All 32 focused checks pass on
+unchanged clean pre/post source (4.83 seconds / 421,724 KiB maximum RSS).
+Root also corrected the reviewer's heuristic description against the actual
+generator: pair weight uses exclusive condition membership, and the initial
+seed has an additional occurrence-count tie-breaker. The original candidate
+is retained unchanged for the next controlled diagnostic.

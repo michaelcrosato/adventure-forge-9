@@ -455,3 +455,111 @@ frontier, reachable/completable/current set and accumulated legal predicate,
 with atomic ownership changes between completed operations. This compaction
 is under implementation and independent regression review; it is not adopted
 by the release audit. Current Stage 8 acceptance remains open.
+
+## Exact owned generations implemented
+
+The experimental implementation is now frozen at `b55d18b`. `copyForestTo`
+validates the entire root list and the target variable count/order before
+copying a shared DAG forest, maps terminals directly, and uses the target's
+canonical node constructor. It copies no caches and preserves the source
+manager and all its handles. A target node-limit failure can leave appended
+nodes in that target, so traversal copies into a disposable fresh instance.
+
+Compaction remains opt-in through the fourth reachability argument,
+`{ compactAtNodes }`. It uses private frozen snapshots of validated content,
+resource bounds, order, maximum domain and both budgets. An enabled traversal
+starts in a private fresh model immediately, keeping the caller's original
+node/cache tables unchanged. At a boundary it clears the old worker's memo
+cache, recompiles the static model into a fresh manager, and copies
+reachable/current/completable/legal roots and every distance frontier as one
+forest. Only a successful whole transfer publishes the new owner and roots.
+It checks the threshold once per boundary; a threshold smaller than the live
+forest does not cause an inner retry loop. Every exact operation still fails
+closed at the configured node limit.
+
+Every result now carries `.model`, the owner of its numeric roots, and
+`.compactions`. The witness verifier requires that exact owner; image and
+preimage reject choice objects from another model. Observers receive the
+current owner as their third argument and a `compact` phase after a successful
+copy. Callers must update their context from those owners rather than reading
+statistics or evaluating roots through an obsolete numeric namespace.
+
+Build and all 29 focused checks pass in 3.68 seconds / 336,160 KiB maximum
+RSS. Five forest-copy checks cover shared roots, terminals, prepopulated
+targets, validation before mutation, cache independence, source usability,
+same-manager copies and target exhaustion. Forced threshold-one tests compare
+three complete finite graphs under both variable orders, including a graph
+with no completed outcome, all state sets, frontiers and authored witnesses.
+Both-order isolated actual-engine checks replay the complete witness catalog
+with receipt/save/full-state parity and reject the original result owner.
+Input source/bounds/options mutation, original handle/cache stability, foreign
+choice objects, invalid thresholds and exact authored failure paths are also
+checked. Preserve `/tmp/af9-symbolic-compaction-expanded-tests.log` and
+`/tmp/af9-symbolic-compaction-test-provenance.json`; the tested working changes
+were subsequently frozen as `b55d18b`, as the provenance explicitly records.
+
+The first historical compaction diagnostic retains the prior one-million-node
+and one-million-cache capacities, with threshold 500,000, 128 rounds,
+120,000 ms checked, 150-second TERM/five-second KILL and 1,536 MiB old-space.
+It remains **incomplete**, hitting the node guard during forward round 19.
+Five successful copies leave 191,345, 233,337, 281,714, 339,719 and 404,494
+non-terminal nodes, respectively; the next round still reaches one million
+before its next safe boundary. No backward traversal or witness replay runs.
+The attempt takes 21,784 ms internally / 22.02 seconds externally, with
+818,112 KiB maximum RSS. Source/profiler/bounds/config/manifest checks all pass;
+the child closes with exit 1 and no signal.
+
+Preserve `/tmp/af9-symbolic-compaction-139e48.json` and its `.progress.json`,
+`.finalization.json` and `.log` companions, plus
+`/tmp/af9-symbolic-compaction-139e48-manifest.json`. Its separate profiler and
+runner update the current owner on progress and use `result.model` for replay
+and final counts. No old artifact is rewritten.
+
+The second compaction diagnostic uses two million nodes and 500,000 cache
+entries with the same threshold and all other limits. It also fails closed,
+during forward round 22 after eight copies. The retained non-terminal counts
+are 191,345, 233,337, 281,714, 339,719, 404,494, 490,975, 600,381 and 747,458.
+The next image still reaches two million before a safe boundary. No backward
+traversal or witness replay completes. It takes 49,531 ms internally / 49.74
+seconds externally, with 833,284 KiB maximum RSS; the child closes with exit 1
+and source/profiler/bounds/config/manifest checks all pass. Preserve
+`/tmp/af9-symbolic-compaction-2m-139e48.json`, its progress/finalization/log
+companions and `/tmp/af9-symbolic-compaction-2m-139e48-manifest.json`. These
+separate capacity measurements do not change the production gate.
+
+A dependency review proposes an exact field permutation: retain scene,
+status and ending first, then greedily group fields by shared authored
+conditions and effects. In the actual generator, a pair has weight three
+when exactly one field appears in the choice's conditions; all other pairs
+have weight one, even when a read field is also written. The first field uses
+weighted degree, read/write occurrence count and lexical ties; subsequent
+fields use affinity to placed fields, degree and lexical ties. The earlier
+reviewer's simpler guard/write description was inaccurate. The generator
+collects choice fields, so a generic reuse also needs a complete declaration
+and text-field check. All 66 historical fields (three
+lifecycle/location fields, nine resources, 54 flags) remain; the inventory's
+63 count excludes the first three. No flag or resource is omitted. The
+candidate is `/tmp/af9-order-candidate.json`; its generator and complete set
+check are recorded in `/tmp/af9-order-review-provenance.json`.
+
+The reviewer also ran constructor probes beyond the assigned read-only
+inventory. Preserve both `/tmp/af9-order-test.2fKIxF/measure.log` and
+`/tmp/af9-order-baseline.SALqfa/measure.log`, plus their scripts/checkouts.
+The controlled constructor comparison reports 44,420 baseline and 38,401
+candidate non-terminal nodes with interleaved current/next bits. Both
+blocked-layout constructions hit their two-million-node guard; the first
+candidate-only blocked attempt also failed. These probes have no verified
+external wall/RSS measurements and prove no reachability.
+
+The optional full-permutation API is frozen in the experimental worktree at
+`42673ce` after independent review. It captures each validated field ID once
+into a frozen snapshot, rejects incomplete/duplicate/unknown/sparse orders,
+and preserves the exact layout in fresh generations. Root expanded the
+independent finite interpreter, complete fixture-domain image/preimage,
+forced-compaction and isolated real-engine replay comparisons across default
+and reversed field layouts under both blocked and interleaved bit layouts.
+Build plus all 32 focused checks pass on unchanged clean pre/post source in
+4.83 seconds / 421,724 KiB maximum RSS. Preserve
+`/tmp/af9-symbolic-field-order-expanded-tests.log` and
+`/tmp/af9-symbolic-field-order-test-provenance.json`. No historical traversal
+with the permutation has completed yet.
