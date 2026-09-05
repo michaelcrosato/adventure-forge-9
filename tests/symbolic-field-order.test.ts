@@ -83,7 +83,15 @@ test("fieldOrder reorders bit assignment while preserving the exact model", () =
   assert.deepEqual(reordered.fieldOrder, requested);
   assert.ok(Object.isFrozen(defaultModel.fieldOrder));
   assert.ok(Object.isFrozen(reordered.fieldOrder));
-  assert.notEqual(reordered.initial, defaultModel.initial, "field order should change encoded bit positions");
+  const defaultInitialAssignment = defaultModel.bdd.satisfyingAssignment(defaultModel.initial);
+  const reorderedInitialAssignment = reordered.bdd.satisfyingAssignment(reordered.initial);
+  assert.ok(defaultInitialAssignment !== undefined);
+  assert.ok(reorderedInitialAssignment !== undefined);
+  assert.notDeepEqual(
+    reorderedInitialAssignment,
+    defaultInitialAssignment,
+    "field order should change encoded bit positions",
+  );
   assert.equal(
     reordered.bdd.count(reordered.validDomain, reordered.currentVariables),
     defaultModel.bdd.count(defaultModel.validDomain, defaultModel.currentVariables),
@@ -107,6 +115,20 @@ test("fieldOrder is snapshotted for fresh generations and rejects malformed perm
   assert.deepEqual(fresh.fieldOrder, snapshot);
   assert.deepEqual(fresh.currentVariables, model.currentVariables);
   assert.throws(() => (model.fieldOrder as string[]).push("scene"), TypeError);
+
+  const getterOrder = [...DEFAULT_FIELD_ORDER];
+  let reads = 0;
+  Object.defineProperty(getterOrder, 0, {
+    configurable: true,
+    enumerable: true,
+    get: () => {
+      reads += 1;
+      return reads === 1 ? "scene" : "flag:ready";
+    },
+  });
+  const getterModel = makeModel({ fieldOrder: getterOrder });
+  assert.equal(reads, 1, "each accessor-backed field must be captured once");
+  assert.deepEqual(getterModel.fieldOrder, DEFAULT_FIELD_ORDER);
 
   const duplicate = [...DEFAULT_FIELD_ORDER.slice(0, -1), DEFAULT_FIELD_ORDER[0]];
   const sparse = [...DEFAULT_FIELD_ORDER];

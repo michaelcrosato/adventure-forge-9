@@ -51,6 +51,7 @@ function normalizeFieldOrder(
   }
   const known = new Set(expected);
   const seen = new Set<string>();
+  const snapshot: string[] = [];
   for (let index = 0; index < requested.length; index++) {
     if (!Object.hasOwn(requested, index)) throw new Error("fieldOrder must not be sparse");
     const id = requested[index];
@@ -58,9 +59,10 @@ function normalizeFieldOrder(
     if (!known.has(id)) throw new Error(`fieldOrder contains unknown field ${JSON.stringify(id)}`);
     if (seen.has(id)) throw new Error(`fieldOrder contains duplicate field ${JSON.stringify(id)}`);
     seen.add(id);
+    snapshot.push(id);
   }
   if (seen.size !== known.size) throw new Error("fieldOrder must include every field exactly once");
-  return Object.freeze([...requested]);
+  return Object.freeze(snapshot);
 }
 
 function flagNames(scenario: Scenario): string[] {
