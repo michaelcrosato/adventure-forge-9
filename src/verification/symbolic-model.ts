@@ -519,7 +519,11 @@ export interface SymbolicReachability {
 }
 
 export interface SymbolicReachabilityOptions {
-  /** Opt-in exact generation replacement between operations. No default compaction. */
+  /**
+   * Opt-in exact generation replacement between choice operations. The first
+   * copy occurs at this many retained unique nodes; each later copy waits for
+   * the previous retained size plus this interval. No default compaction.
+   */
   readonly compactAtNodes?: number;
 }
 
@@ -551,24 +555,41 @@ export function symbolicReachability(
   let frontiers = [model.initial];
   let reachable = model.initial, frontier = model.initial, forwardRounds = 0;
   let completable = 0, legal = 0, compactions = 0;
+  // The accumulator is a live root while one round is being evaluated. It
+  // must travel with the other roots when a generation is replaced between
+  // choices.
+  let pending = 0;
+  let nextCompactionAt = compactAtNodes;
+
+  function addCompactionInterval(retainedUnique: number): number {
+    if (compactAtNodes === undefined) return Number.POSITIVE_INFINITY;
+    return retainedUnique >= Number.MAX_SAFE_INTEGER - compactAtNodes
+      ? Number.MAX_SAFE_INTEGER
+      : retainedUnique + compactAtNodes;
+  }
 
   function compactIfNeeded(): void {
-    if (compactAtNodes === undefined || bdd.stats().uniqueEntries < compactAtNodes) return;
+    if (nextCompactionAt === undefined || bdd.stats().uniqueEntries < nextCompactionAt) return;
     // Clearing memo entries is exact and reduces coexistence during copying.
     // The old node table/handles remain valid until the old manager is collected.
     bdd.clearOperationCaches();
     const nextModel = model.fresh();
     nextModel.bdd.clearOperationCaches();
-    const copied = bdd.copyForestTo(nextModel.bdd, [reachable, frontier, completable, legal, ...frontiers]);
+    const copied = bdd.copyForestTo(nextModel.bdd, [reachable, frontier, completable, legal, pending, ...frontiers]);
     // Publish the entire root bundle and its owner only after copying succeeds.
     reachable = copied[0]!;
     frontier = copied[1]!;
     completable = copied[2]!;
     legal = copied[3]!;
-    frontiers = copied.slice(4);
+    pending = copied[4]!;
+    frontiers = copied.slice(5);
     model = nextModel;
     bdd = nextModel.bdd;
     compactions++;
+    // A retained forest can already be larger than the initial threshold.
+    // Advance by a full interval so it does not trigger a copy at every
+    // subsequent disabled or zero-work choice.
+    nextCompactionAt = addCompactionInterval(bdd.stats().uniqueEntries);
     onProgress?.("compact", compactions, model);
     // Do not loop here if the retained forest itself exceeds the threshold.
     // The node guard still bounds every copy and subsequent exact operation.
@@ -578,13 +599,27 @@ export function symbolicReachability(
     if (++forwardRounds > roundLimit) throw new Error("Symbolic forward limit exceeded; coverage incomplete");
     compactIfNeeded();
     onProgress?.("forward", forwardRounds, model);
-    for (const choice of model.choices) {
+    // Keep the authored fault precedence: all arithmetic/bound diagnostics
+    // are checked before transition images can exhaust the BDD budget.
+    for (let choiceIndex = 0; choiceIndex < model.choices.length; choiceIndex++) {
+      compactIfNeeded();
+      const choice = model.choices[choiceIndex]!;
       for (const [reason, predicate] of [["arithmetic-error", choice.arithmeticError], ["bound-exit", choice.boundExit]] as const) {
         const failed = bdd.and(frontier, predicate);
         if (failed !== 0) throw new SymbolicTransitionError(reason, choice.id, [...model.witness(failed, frontiers), choice.id]);
       }
     }
-    const next = bdd.and(model.image(frontier), bdd.not(reachable));
+    pending = 0;
+    // Evaluate one choice at a time. A choice is reacquired by index after
+    // each possible generation copy; numeric handles never cross owners.
+    for (let choiceIndex = 0; choiceIndex < model.choices.length; choiceIndex++) {
+      compactIfNeeded();
+      const choice = model.choices[choiceIndex]!;
+      pending = bdd.or(pending, model.image(frontier, choice));
+    }
+    compactIfNeeded();
+    const next = bdd.and(pending, bdd.not(reachable));
+    pending = 0;
     if (next === 0) break;
     reachable = bdd.or(reachable, next); frontier = next; frontiers.push(next);
   }
@@ -595,7 +630,17 @@ export function symbolicReachability(
     if (++backwardRounds > roundLimit) throw new Error("Symbolic backward limit exceeded; coverage incomplete");
     compactIfNeeded();
     onProgress?.("backward", backwardRounds, model);
-    const more = bdd.and(bdd.and(model.preimage(completable), reachable), bdd.not(completable));
+    pending = 0;
+    // As in the forward pass, retain only the current choice image at each
+    // step and carry the union root through any safe boundary copy.
+    for (let choiceIndex = 0; choiceIndex < model.choices.length; choiceIndex++) {
+      compactIfNeeded();
+      const choice = model.choices[choiceIndex]!;
+      pending = bdd.or(pending, model.preimage(completable, choice));
+    }
+    compactIfNeeded();
+    const more = bdd.and(bdd.and(pending, reachable), bdd.not(completable));
+    pending = 0;
     if (more === 0) break;
     completable = bdd.or(completable, more);
   }
