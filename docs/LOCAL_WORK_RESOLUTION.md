@@ -91,3 +91,12 @@ local branches are `main` and `audit-symbolic-manager`.
 The active symbolic proof, historical diagnostic overlays and blind-player
 source freezes remain available. Publication, remaining cleanup and the final
 completion audit have not passed yet.
+
+The masked-accumulation diagnostic adds one separate detached historical
+checkout, `/tmp/af9-symbolic-masked-per-choice-2m-139e48`, preserving every
+prior probe unchanged. Its three untracked verifier modules exactly match
+clean tested manager `f83792e`; its complete source manifest is
+`/tmp/af9-symbolic-masked-per-choice-2m-manifest-v1.json`. The resulting failed
+diagnostic is retained with that overlay. After this preparation there are
+33 worktrees and still only the same two local branches; this is a new source
+snapshot, not a change to the four archive batches' removal counts.

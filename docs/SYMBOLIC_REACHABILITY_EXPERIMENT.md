@@ -744,3 +744,115 @@ Earlier round checkpoints are not immediate pre-copy measurements. No further ca
 result, and no frontier or state field may be silently dropped.
 No campaign fixed point, historical replay acceptance or release adoption
 follows from the focused fixture checks.
+
+### Copy-17 inventory and early accumulation masks
+
+The external observer completed its predeclared inventory at the seventeenth
+copy using byte-unchanged `68f8932` verifier modules and historical `139e48a`
+engine/content. It intentionally stops after `copyForestTo` returns, before
+the traversal publishes its new owner or emits the compact-17 checkpoint.
+Thus `inventoryComplete` is true while `coverageComplete` and `complete`
+remain false. The last completed operation is the image of
+`open-emergency-bypass` (choice index 123), in forward round 24. The next
+operation is unobserved and recorded as null.
+
+Exact non-terminal structural unions at this boundary are:
+
+| Root forest | Unique nodes |
+| --- | ---: |
+| Permanent model roots | 25,615 |
+| Five current traversal roots | 937,595 |
+| All 24 historical frontiers alone | 753,483 |
+| Permanent plus current traversal roots | 963,180 |
+| Permanent, current and all historical roots | 1,267,134 |
+| That semantic forest plus literal-cache values | 1,267,300 |
+
+Historical frontiers add 303,954 nodes to the permanent/current union;
+their standalone count must not be mistaken for their incremental cost.
+The source has 1,839,417 allocated nodes, leaving 572,117 outside the
+semantic-plus-literal forest. The copied target has 1,285,939 allocations,
+including 18,639 constructor allocations outside that forest. The inventory
+does not isolate pending alone, and node fractions are not byte/RSS fractions.
+Old operation-cache result values are measured separately from semantic
+roots; their key operands are not independently classified.
+
+The helper performs iterative read-only structural walks, validates roots,
+checks owner/configuration correspondence and verifies that observation
+leaves BDD statistics unchanged. Three independent small tests cover analytic
+shared closures, instrumented/uninstrumented full traversal and witnesses,
+and intentional-stop identity plus hook restoration. Numeric handles from
+foreign managers with overlapping ranges remain inherently unbranded.
+Preserve `/tmp/af9-symbolic-copy-inventory-hooks-v2.mjs` (SHA-256
+`b214ba178ab009871e4f3d359489be03ed61b12d28876df041d1814f89eb333b`),
+its `-tests-v2.mjs` and `-tests-v2.log` companions, and
+`/tmp/af9-symbolic-copy17-inventory-manifest-v2.json` (SHA-256
+`6ee93cb04156b23e1967e4cdd6fee3faf7441dd6de6ed5ae4a6ea7b4c313a621`).
+The report, progress, finalization and log share prefix
+`/tmp/af9-symbolic-copy17-inventory-139e48`. The inventory takes 80,899 ms
+internally / 81.09 seconds externally, with 1,313,016 KiB maximum RSS and
+matching provenance. This is an observational inventory, not campaign coverage.
+Independent artifact review records exact phase/step/BDD-stat agreement for
+all 42 shared checkpoints against the previous uninstrumented traversal;
+that run alone records the final compact-17 callback. The wrapper exited zero
+and its PID is absent. Preserve
+`/tmp/af9-symbolic-copy17-inventory-root-check-v1.json` (SHA-256
+`8c9c6a7bff6141d23b1363ec0d133ba74bbe8c82d296cdcf943ce29308f47265`).
+
+The measured current/model union is larger than the incremental historical
+frontier forest. The next small exact experiment therefore filters each
+choice contribution before accumulating it. Clean freeze
+`f83792e0ea4cf0f5131db6aee26eca3c9c971e8a` adds optional
+`accumulationMode: "masked"`; the default remains `"unmasked"`.
+For fixed frontier F and reached set R, the forward union of
+`image(choice, F) \\ R` equals the old full image union followed by difference
+with R. For fixed completable set C and R, the backward union of
+`preimage(choice, C) intersect R \\ C` equals the old final masks.
+The per-choice masks use existing ITE/intersection operations, and their
+redundant final masks can be omitted. No resource, flag, correlation or
+historical frontier is dropped. Fault checks still precede all forward images;
+copies retain the complete current and historical root bundle.
+
+Independent review accepts both distributed-mask equations and omission of
+their redundant final masks. Build and all 40 focused BDD/symbolic checks
+pass on unchanged clean pre/post `f83792e`, in 20.77 seconds / 1,078,428 KiB
+maximum RSS. Tests include an independent six-state reset/cycle/reconvergence
+fixture, the finite DSL oracle, both bit layouts, default/reversed field order,
+both transition strategies, forced compaction, actual-engine replay, ordered
+faults and one-time option snapshotting. Allocation counts/copy timing may
+differ between modes; successful logical results must agree. Preserve
+`/tmp/af9-symbolic-masked-expanded-tests.log` (SHA-256
+`c710dfdcfc919705731b476acf8f864672bd18b0e9fa8f620eab157f1eb4c39d`) and
+`/tmp/af9-symbolic-masked-test-provenance.json`.
+
+One masked historical diagnostic uses a new historical checkout and fresh
+artifacts. All previous node/cache/copy/time/heap limits,
+the default 66-field interleaved layout and relational transitions are kept.
+Its historical efficacy remains unproven; this option has not been adopted
+by the production audit.
+The prepared manifest is
+`/tmp/af9-symbolic-masked-per-choice-2m-manifest-v1.json` (SHA-256
+`5d70959cc90ab44b7b71fecd7a226cc1704a2a26f80029aaebc813193e742123`),
+binding all 14 historical/overlay source files to aggregate hash
+`f4da2fa0a306a057da6f2769c3b399663ce48845a3936b24b408dd2b61f8697d`.
+The new checkout has its own locked dependencies and passed harmless `tsx`
+startup before launch. Source is detached historical `139e48a` with the exact
+three verifier modules from tested `f83792e`; previous probes are untouched.
+The profile/runner include `accumulationMode` in configuration, strategy hashes,
+manifest checks and actual traversal options. Report/progress/finalization/log
+paths share prefix `/tmp/af9-symbolic-masked-per-choice-2m-139e48`.
+
+The one masked attempt also fails closed, at forward round 26 and the same
+two-million-node guard. There are 18 successful copies; the last retains
+1,538,381 allocated non-terminal nodes. Runtime is 113,195 ms internally /
+113.42 seconds externally, with 1,155,468 KiB maximum RSS. The wrapper PID
+1246585 closes with exit 1 and no signal and is absent afterward. Report and
+finalization provenance both match. Preserve
+`/tmp/af9-symbolic-masked-per-choice-2m-root-check-v1.json` (SHA-256
+`dcbd1fb68986b3e24303823ea3515b64b95be4310daadd777c13ee4ec7a53e82`).
+No backward round or witness replay completes, and no independent coverage
+checker runs against this incomplete report. The option advances the observed
+prefix by two rounds but still does not establish a fixed point. This run
+does not identify the specific failing choice operation or provide a new
+exact root inventory. Read-only reviews are assessing lossless frontier
+storage and a compact exhaustive explicit-state representation before the
+next implementation is chosen; no automatic capacity/order fallback is run.

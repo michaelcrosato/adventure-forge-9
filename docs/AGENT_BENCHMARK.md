@@ -252,3 +252,31 @@ That attempt remains incomplete at forward round 24 after 17 copies
 (84.69 seconds / 1,368,956 KiB maximum RSS), with exact matching provenance.
 This advances the observed prefix but does not complete campaign coverage;
 no witness checker, capacity fallback or live players were run.
+
+Root implemented the external copy-17 inventory after the assigned helper task
+ended without a file; the worker's failed patch left no changes. Independent
+review accepted the helper and measurement contract. Three analytic/fixture
+checks pass, and the observational run completes its intentional stop with
+matching provenance. It isolates a 303,954-node incremental historical frontier
+cost, versus a 963,180-node current/model union; it does not complete coverage.
+
+Root implemented optional early accumulation masks after independent proof
+review. A worker supplied an independent six-state cycle/reset/reconvergence
+fixture; root expanded its invalid-option/compaction coverage and the existing
+DSL-oracle/real-engine suites to both accumulation modes. A second review
+accepted removing redundant final masks under the fixed-round-root invariants.
+Build and all 40 focused checks pass on unchanged clean `f83792e` in 20.77
+seconds / 1,078,428 KiB maximum RSS. Evidence is
+`/tmp/af9-symbolic-masked-expanded-tests.log` and
+`/tmp/af9-symbolic-masked-test-provenance.json`. These are verifier checks,
+not live-player results or a completed campaign proof. No authoring-time or
+model-ranking conclusion is inferred.
+
+A worker prepared the narrowly adapted masked profiler/runner with explicit
+mode provenance and unchanged limits. Root reviewed the diff, installed the
+new historical checkout's locked dependencies, checked all 14 source files
+and bound the clean passing verifier freeze before the single launch. It
+remains incomplete at forward round 26 after 18 copies, in 113.42 seconds /
+1,155,468 KiB maximum RSS. The report/finalization hashes match and the closed
+process is absent. No full witness checker or live-player attempt followed
+the incomplete result.

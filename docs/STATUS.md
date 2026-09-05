@@ -60,11 +60,20 @@ order and allocation intervals. The clean 36-check run takes 12.72 seconds /
 with their corrections. After a preserved missing-dependency setup failure,
 the runtime-ready historical attempt fails at forward round 24 after 17
 copies (84.69 seconds / 1,368,956 KiB maximum RSS), with matching provenance.
-No backward traversal or witness replay completes. Read-only review proposes an
-operation trace and exact root inventory around one predeclared copy boundary,
-separating constructor garbage, temporary allocations and historical frontiers.
-Implementation and the bounded inventory remain pending; no complete symbolic
-campaign coverage is accepted.
+No backward traversal or witness replay completes. The predeclared copy-17
+inventory is now complete: the semantic root forest has 1,267,134 nodes,
+including 303,954 added by historical frontiers beyond the current/model union.
+It intentionally stops after copying and establishes no campaign coverage.
+An independently reviewed optional early per-choice mask is implemented in
+clean experiment `f83792e`; build and all 40 focused checks pass (20.77 seconds /
+1,078,428 KiB maximum RSS), with unchanged source provenance. The single
+historical masked diagnostic reaches forward round 26, then fails the same
+two-million-node guard after 18 copies (113.42 seconds / 1,155,468 KiB maximum
+RSS). Source and runner provenance match; no backward traversal or witness
+replay completes. Read-only reviews are comparing lossless frontier storage
+and compact exhaustive explicit states before another implementation is chosen.
+The unmasked default remains unchanged; no complete symbolic campaign coverage
+or release adoption is accepted.
 The production family guard is unchanged. See
 `SYMBOLIC_REACHABILITY_EXPERIMENT.md`. Final copy rendering and all 115 non-audit checks pass, but the
 full audit remains open. The 52-action browser and original failure evidence
