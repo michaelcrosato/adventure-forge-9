@@ -433,7 +433,7 @@ export class Bdd {
 
   private assertAssignment(assignment: readonly boolean[]): void {
     if (!Array.isArray(assignment) || assignment.length !== this.variableCount
-      || assignment.some((value) => typeof value !== "boolean")) {
+      || Array.from(assignment).some((value) => typeof value !== "boolean")) {
       throw new TypeError(`assignment must contain exactly ${this.variableCount} booleans`);
     }
   }
