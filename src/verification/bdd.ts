@@ -184,7 +184,11 @@ export class Bdd {
     const ordered = this.normalizeVariableArray(variables, "variables");
     if (root === FALSE) return 0n;
     const ranks = new Map<number, number>(ordered.map((variable, rank) => [variable, rank]));
-    return this.countInternal(root, 0, ordered.length, ranks);
+    // A reduced diagram can reach one suffix node from exponentially many
+    // paths.  The rank is part of the key because skipped selected variables
+    // contribute different free-assignment factors at different entry points.
+    const memo = new Map<string, bigint>();
+    return this.countInternal(root, 0, ordered.length, ranks, memo);
   }
 
   /** Drop memoized operation results while preserving canonical nodes. */
@@ -341,9 +345,13 @@ export class Bdd {
     floorRank: number,
     variableTotal: number,
     ranks: ReadonlyMap<number, number>,
+    memo: Map<string, bigint>,
   ): bigint {
     if (root === FALSE) return 0n;
     if (root === TRUE) return 1n << BigInt(variableTotal - floorRank);
+    const memoKey = `${root}:${floorRank}`;
+    const memoized = memo.get(memoKey);
+    if (memoized !== undefined) return memoized;
     const node = this.nodeAt(root);
     const rank = ranks.get(node.variable);
     if (rank === undefined) {
@@ -351,10 +359,12 @@ export class Bdd {
     }
     if (rank < floorRank) throw new Error("BDD node order is inconsistent");
     const freeBeforeNode = 1n << BigInt(rank - floorRank);
-    return freeBeforeNode * (
-      this.countInternal(node.low, rank + 1, variableTotal, ranks)
-      + this.countInternal(node.high, rank + 1, variableTotal, ranks)
+    const result = freeBeforeNode * (
+      this.countInternal(node.low, rank + 1, variableTotal, ranks, memo)
+      + this.countInternal(node.high, rank + 1, variableTotal, ranks, memo)
     );
+    memo.set(memoKey, result);
+    return result;
   }
 
   private nodeAt(root: Handle): Node {
