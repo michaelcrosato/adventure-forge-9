@@ -1052,3 +1052,237 @@ test("a wholly out-of-bound resource relation remains false rather than losing i
       && error.reason === "bound-exit" && error.path.join(",") === "increase");
   }
 });
+
+type CompactReachabilityResult = ReturnType<typeof symbolicReachability>;
+
+type CompactProgressPhase = "forward" | "backward" | "scenes" | "choices" | "compact";
+
+interface CompactProgressEvent {
+  readonly phase: CompactProgressPhase;
+  readonly step: number;
+  readonly owner: SymbolicModel;
+}
+
+function compactFixtureResult(
+  scenario: RawScenario,
+  bounds: Readonly<Record<string, number>>,
+  order: "interleaved" | "blocked",
+): { readonly input: SymbolicModel; readonly result: CompactReachabilityResult; readonly progress: readonly CompactProgressEvent[] } {
+  const input = new SymbolicModel(scenario, bounds, { order, nodeLimit: 100_000, cacheLimit: 20_000 });
+  const progress: CompactProgressEvent[] = [];
+  const result = symbolicReachability(input, 64, (phase, step, owner) => {
+    progress.push(Object.freeze({ phase, step, owner }));
+  }, { compactAtNodes: 1 });
+  return Object.freeze({ input, result, progress: Object.freeze(progress) });
+}
+
+function assertCompactedCoverageMatchesOracle(
+  scenario: RawScenario,
+  bounds: Readonly<Record<string, number>>,
+  order: "interleaved" | "blocked",
+  result: CompactReachabilityResult,
+): void {
+  const validated = validateScenario(scenario);
+  const graph = buildOracle(validated, bounds);
+  const owner = result.model;
+  const graphStates = [...graph.states.values()];
+  const reachable = formulaForStates(owner, graphStates);
+  const completable = formulaForStates(owner, expectedStateSet(graph, graph.completable));
+  const deadEnds = formulaForStates(owner, expectedStateSet(graph, graph.deadEnds));
+  const noCompletion = formulaForStates(owner, expectedStateSet(graph, graph.noCompletion));
+
+  // Every result root is interpreted through the result's owner. Numeric
+  // handles from the input manager must never be used for these comparisons.
+  assert.equal(owner.bdd.and(result.reachable, owner.validDomain), result.reachable, `${order} compact reachable stays in the owner domain`);
+  assert.equal(result.reachable, reachable, `${order} compact reachable states match the independent oracle`);
+  assert.equal(result.completable, completable, `${order} compact completion predecessors match the independent oracle`);
+  assert.equal(result.deadEnds, deadEnds, `${order} compact dead ends match the independent oracle`);
+  assert.equal(result.noCompletion, noCompletion, `${order} compact no-completion states match the independent oracle`);
+  assert.equal(result.reachableCount, BigInt(graph.states.size), `${order} compact reachable count matches the oracle`);
+  assert.equal(result.frontiers.length, graph.frontiers.length, `${order} compact frontier depth matches the oracle`);
+  for (const [index, frontier] of result.frontiers.entries()) {
+    assert.equal(
+      frontier,
+      formulaForStates(owner, [...(graph.frontiers[index] ?? []).map((key) => stateFromKey(graph, key))]),
+      `${order} compact frontier ${index} matches the oracle`,
+    );
+  }
+
+  const reachableSceneIds = validated.scenes
+    .map((sceneValue) => sceneValue.id)
+    .filter((id) => graphStates.some((state) => state.scene === id));
+  const reachableChoiceIds = [...new Set(graph.edges.map((edge) => edge.choiceId))];
+  const endingChoiceIds = validated.choices
+    .filter((choice) => choice.outcome !== undefined && reachableChoiceIds.includes(choice.id))
+    .map((choice) => choice.id);
+  assert.deepEqual(Object.keys(result.sceneWitnesses).sort(), [...reachableSceneIds].sort(), `${order} compact scene witness set matches`);
+  assert.deepEqual(Object.keys(result.choiceWitnesses).sort(), [...reachableChoiceIds].sort(), `${order} compact choice witness set matches`);
+  assert.deepEqual(Object.keys(result.endingWitnesses).sort(), [...endingChoiceIds].sort(), `${order} compact ending witness set matches`);
+  assert.deepEqual(result.unreachableScenes, validated.scenes.map((sceneValue) => sceneValue.id).filter((id) => !reachableSceneIds.includes(id)), `${order} compact unreachable scenes match`);
+  assert.deepEqual(result.unreachableChoices, validated.choices.map((choice) => choice.id).filter((id) => !reachableChoiceIds.includes(id)), `${order} compact unreachable choices match`);
+
+  // A compacted BDD may choose a different satisfying assignment for a
+  // witness, so compare every authored witness semantically and replay its
+  // action path independently instead of comparing raw numeric handles.
+  for (const [sceneId, path] of Object.entries(result.sceneWitnesses)) {
+    const final = replayOraclePath(validated, path, bounds, graph.endingPairs);
+    assert.equal(final.scene, sceneId, `${order} compact scene witness ${sceneId} reaches its scene`);
+  }
+  for (const [choiceId, path] of Object.entries(result.choiceWitnesses)) {
+    assert.equal(path.at(-1), choiceId, `${order} compact choice witness ${choiceId} ends with its choice`);
+    const final = replayOraclePath(validated, path, bounds, graph.endingPairs);
+    assert.equal(final.status === "playing" || final.status === "completed" || final.status === "departed" || final.status === "dead", true);
+  }
+  for (const [choiceId, path] of Object.entries(result.endingWitnesses)) {
+    assert.equal(path.at(-1), choiceId, `${order} compact ending witness ${choiceId} ends with its choice`);
+    const final = replayOraclePath(validated, path, bounds, graph.endingPairs);
+    const choice = validated.choices.find((candidate) => candidate.id === choiceId)!;
+    assert.equal(final.status, choice.outcome!.status, `${order} compact ending witness ${choiceId} has its authored status`);
+    assert.equal(final.ending, graph.endingPairs.findIndex(([status, summary]) => status === choice.outcome!.status && summary === choice.outcome!.summary) + 1, `${order} compact ending witness ${choiceId} has its authored ending`);
+  }
+}
+
+function assertCompactAndDefaultWitnessSetsAgree(
+  baseline: CompactReachabilityResult,
+  baselineModel: SymbolicModel,
+  compact: CompactReachabilityResult,
+  label: string,
+): void {
+  assert.equal(baseline.compactions, 0, `${label} default traversal does not compact`);
+  assert.strictEqual(baseline.model, baselineModel, `${label} default traversal retains its input owner`);
+  assert.deepEqual(Object.keys(compact.sceneWitnesses).sort(), Object.keys(baseline.sceneWitnesses).sort(), `${label} scene witness keys survive compaction`);
+  assert.deepEqual(Object.keys(compact.choiceWitnesses).sort(), Object.keys(baseline.choiceWitnesses).sort(), `${label} choice witness keys survive compaction`);
+  assert.deepEqual(Object.keys(compact.endingWitnesses).sort(), Object.keys(baseline.endingWitnesses).sort(), `${label} ending witness keys survive compaction`);
+}
+
+test("forced compaction preserves complete finite reachability, frontiers, and witness sets", () => {
+  const fixtures: readonly { readonly label: string; readonly scenario: RawScenario; readonly bounds: Readonly<Record<string, number>> }[] = [
+    { label: "ordered", scenario: ORDERED_SCENARIO, bounds: { stock: 2, tide: 2 } },
+    { label: "unreachable-unsafe-branch", scenario: UNREACHABLE_INVALID_SCENARIO, bounds: { stock: 2 } },
+  ];
+  for (const fixture of fixtures) {
+    for (const order of ["interleaved", "blocked"] as const) {
+      const baselineModel = new SymbolicModel(fixture.scenario, fixture.bounds, { order, nodeLimit: 100_000, cacheLimit: 20_000 });
+      const baseline = symbolicReachability(baselineModel, 64);
+      const { input, result, progress } = compactFixtureResult(fixture.scenario, fixture.bounds, order);
+      assert.equal(result.exhaustive, true, `${fixture.label}/${order} compact traversal is exhaustive`);
+      assert.notStrictEqual(result.model, input, `${fixture.label}/${order} threshold compaction creates a result owner`);
+      assert.ok(result.compactions > 0, `${fixture.label}/${order} threshold 1 performs compaction`);
+      assert.ok(progress.some((event) => event.phase === "compact"), `${fixture.label}/${order} reports a compact phase`);
+      assert.ok(progress.every((event) => event.owner instanceof SymbolicModel), `${fixture.label}/${order} progress reports symbolic owners`);
+      assert.strictEqual(progress.filter((event) => event.phase === "compact").at(-1)?.owner, result.model, `${fixture.label}/${order} final compact event names the result owner`);
+      assertCompactAndDefaultWitnessSetsAgree(baseline, baselineModel, result, `${fixture.label}/${order}`);
+      assertCompactedCoverageMatchesOracle(fixture.scenario, fixture.bounds, order, result);
+
+      // The pre-compaction model and its handles remain usable after the
+      // result has been built. Only the result's owner may consume result roots.
+      const oldChoice = input.choices[0]!;
+      assert.doesNotThrow(() => input.bdd.and(input.initial, oldChoice.enabled), `${fixture.label}/${order} preserves old handles`);
+      assert.throws(
+        () => result.model.image(result.reachable, oldChoice),
+        /owner|manager|model|foreign/i,
+        `${fixture.label}/${order} rejects an enabled choice owned by the old model`,
+      );
+      assert.throws(
+        () => result.model.preimage(result.reachable, oldChoice),
+        /owner|manager|model|foreign/i,
+        `${fixture.label}/${order} rejects a foreign choice in preimage`,
+      );
+    }
+  }
+});
+
+test("the isolated real-engine replay adapter accepts the compact result owner and rejects the original owner", () => {
+  const fixture = materializeEngineFixture(ORDERED_SCENARIO);
+  try {
+    const inputPath = join(fixture.root, "compaction-probe.json");
+    const probePath = join(fixture.root, "compaction-probe.mjs");
+    writeFileSync(inputPath, JSON.stringify({ bounds: { stock: 2, tide: 2 } }));
+    writeFileSync(probePath, `
+import { readFileSync } from "node:fs";
+import assert from "node:assert/strict";
+import { SCENARIO } from "./src/engine/content.ts";
+import { replay, start, stateHash } from "./src/engine/index.ts";
+import { SymbolicModel, symbolicReachability } from "./src/verification/symbolic-model.ts";
+import { replaySymbolicPath, verifySymbolicWitnesses } from "./src/verification/symbolic-replay.ts";
+const { bounds } = JSON.parse(readFileSync(process.argv[2], "utf8"));
+const input = new SymbolicModel(SCENARIO, bounds, { order: "interleaved", nodeLimit: 100_000, cacheLimit: 20_000 });
+const phases = [];
+const result = symbolicReachability(input, 64, (phase, step, owner) => {
+  assert.equal(typeof step, "number");
+  assert.ok(owner && owner.bdd);
+  phases.push(phase);
+}, { compactAtNodes: 1 });
+assert.notStrictEqual(result.model, input);
+assert.ok(result.compactions > 0);
+assert.ok(phases.includes("compact"));
+assert.throws(() => verifySymbolicWitnesses(input, result));
+const summary = verifySymbolicWitnesses(result.model, result);
+const path = result.choiceWitnesses["finish-rich"];
+assert.ok(path);
+const adapted = replaySymbolicPath(result.model, path);
+const actual = replay(1, path.map((choiceId, expectedRevision) => ({ choiceId, expectedRevision })));
+assert.deepEqual(adapted, actual);
+assert.equal(stateHash(adapted), stateHash(actual));
+console.log(JSON.stringify({ compactions: result.compactions, summary, path, phases }));
+`);
+    const stdout = execFileSync(process.execPath, ["--import", tsxLoader(), probePath, inputPath], {
+      cwd: fixture.root,
+      encoding: "utf8",
+      maxBuffer: 16 * 1024 * 1024,
+    });
+    const report = JSON.parse(stdout.trim()) as { compactions: number; summary: { choiceWitnesses: number }; path: readonly string[]; phases: readonly string[] };
+    assert.ok(report.compactions > 0);
+    assert.equal(report.summary.choiceWitnesses, 11);
+    assert.equal(report.path.at(-1), "finish-rich");
+    assert.ok(report.phases.includes("compact"));
+  } finally {
+    fixture.cleanup();
+  }
+});
+
+test("compaction snapshots source, bounds, and construction options", () => {
+  const source = cloneRawScenario(ORDERED_SCENARIO);
+  const bounds: { stock: number; tide: number } = { stock: 2, tide: 2 };
+  const options: { order: "interleaved" | "blocked"; maxDomain: number } = { order: "blocked", maxDomain: 8 };
+  const normalized = validateScenario(cloneRawScenario(source));
+  const model = new SymbolicModel(source, bounds, options);
+  source.scenes[0]!.text[0]!.text = "mutated after construction";
+  source.initialResources.stock = 0;
+  source.choices[0]!.effects[0] = { type: "setResource", resource: "stock", value: 0 };
+  bounds.stock = 0;
+  bounds.tide = 0;
+  options.order = "interleaved";
+  options.maxDomain = 1;
+  const result = symbolicReachability(model, 64, undefined, { compactAtNodes: 1 });
+  assert.notStrictEqual(result.model, model);
+  assert.deepEqual(result.model.scenario, normalized, "compaction uses the normalized scenario snapshot");
+  assertCompactedCoverageMatchesOracle(ORDERED_SCENARIO, { stock: 2, tide: 2 }, "blocked", result);
+});
+
+test("malformed compaction thresholds are rejected and authored failures retain their paths", () => {
+  const model = new SymbolicModel(ORDERED_SCENARIO, { stock: 2, tide: 2 });
+  for (const compactAtNodes of [0, -1, 1.5, Number.NaN, Number.POSITIVE_INFINITY, "1"] as const) {
+    assert.throws(
+      () => symbolicReachability(model, 64, undefined, { compactAtNodes } as unknown as { readonly compactAtNodes?: number }),
+      /compactAtNodes|compaction/i,
+      `threshold ${String(compactAtNodes)} is rejected`,
+    );
+  }
+
+  for (const [order, expectedReason] of [["bound-first", "bound-exit"], ["arithmetic-first", "arithmetic-error"]] as const) {
+    const faultModel = new SymbolicModel(faultScenario(order), { stock: 1, water: 2 }, { order: "blocked", nodeLimit: 100_000, cacheLimit: 20_000 });
+    const progress: CompactProgressEvent[] = [];
+    assert.throws(
+      () => symbolicReachability(faultModel, 32, (phase, step, owner) => {
+        progress.push(Object.freeze({ phase, step, owner }));
+      }, { compactAtNodes: 1 }),
+      (error: unknown) => error instanceof SymbolicTransitionError
+        && error.reason === expectedReason
+        && error.choiceId === "fault"
+        && JSON.stringify(error.path) === JSON.stringify(["enter-fault", "fault"]),
+      `${order} compact traversal preserves the authored failure path`,
+    );
+    assert.ok(progress.some((event) => event.phase === "compact"), `${order} failure path exercised compaction`);
+  }
+});
