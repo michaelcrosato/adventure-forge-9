@@ -56,8 +56,33 @@ const PROVISIONAL_ARCHIVE_PREFIX = [
   "negotiate-provisional-record",
 ] as const;
 
+const SHARED_ARCHIVE_PREFIX = [
+  "choose-canalwright",
+  "find-nessa",
+  "ask-clinic-before-leaving",
+  "make-clinic-promise",
+  "refuse-council-control",
+  "use-canalwright-kit",
+  "pay-scouts",
+  "read-stolen-order",
+  "repair-and-share-water",
+  "release-shared-water",
+  "bring-shared-water-to-clinic",
+  "close-clinic-and-open-archive",
+  "enter-lantern-hall",
+  "read-nessa-maintenance-log",
+  "trace-seal-chain",
+  "compare-seal-impressions",
+  "call-lantern-hearing",
+  "negotiate-provisional-record",
+] as const;
+
 function blackglassStart(seed = 1): GameState {
   return walk([...PROVISIONAL_ARCHIVE_PREFIX, "continue-to-blackglass"], seed);
+}
+
+function sharedBlackglassStart(seed = 1): GameState {
+  return walk([...SHARED_ARCHIVE_PREFIX, "continue-to-blackglass"], seed);
 }
 
 function stableStringify(value: unknown): string {
@@ -119,27 +144,35 @@ test("the continuation performs the old Archive closure while preserving the old
 });
 
 test("tide gates are inclusive at each authored <= boundary", () => {
-  let state = blackglassStart(7);
+  let state = sharedBlackglassStart(7);
   assert.equal(state.resources.tide, 0);
   state = step(state, "begin-blackglass-crossing");
-  assertChoice(state, "take-council-catwalk");
+  assertChoice(state, "take-shared-maintenance-line");
 
-  state = step(state, "take-council-catwalk");
+  state = step(state, "take-shared-maintenance-line");
   assert.equal(state.resources.tide, 1);
-  assertChoice(state, "wait-for-watch-to-turn");
+  assertChoice(state, "follow-shared-repair-marks");
 
-  state = step(state, "wait-for-watch-to-turn");
+  state = step(state, "follow-shared-repair-marks");
   assert.equal(state.resources.tide, 2);
   assertChoice(state, "set-pressure-before-next-surge");
 });
 
 test("repeated permitted navigation saturates tide and still reaches the scarred return", () => {
+  let watchline = blackglassStart(11);
+  watchline = step(watchline, "begin-blackglass-crossing");
+  watchline = step(watchline, "cross-the-flooded-road");
+  assert.equal(watchline.resources.tide, 1);
+  watchline = step(watchline, "run-the-watchline");
+  assert.equal(watchline.resources.tide, 2, "the delivered watchline advances tide by one");
+  assert.equal(watchline.resources.risk, 4, "the delivered watchline also adds one risk");
+
   let state = blackglassStart(11);
   state = step(state, "begin-blackglass-crossing");
   state = step(state, "cross-the-flooded-road");
   assert.equal(state.resources.tide, 1);
-  state = step(state, "run-the-watchline");
-  assert.equal(state.resources.tide, 3);
+  state = step(state, "wait-for-watch-to-turn");
+  assert.equal(state.resources.tide, 3, "waiting advances tide by two and reaches the clock maximum");
 
   state = step(state, "open-emergency-bypass");
   assert.equal(state.resources.tide, 3, "the final advance saturates at the declared maximum");
