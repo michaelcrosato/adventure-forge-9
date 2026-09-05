@@ -1,3 +1,5 @@
+import { LANTERN_CHOICES, LANTERN_SCENES } from "./lantern.js";
+
 export type ScenarioStatus = "completed" | "departed" | "dead";
 
 export interface FlagConditionData {
@@ -129,6 +131,28 @@ export const FACT_LABELS = {
   "stragglers-treated": "Silverleaf let the wounded family cross with the others.",
   "clinic-exemption": "Ilyra won a clinic exemption from council rationing.",
   "kit-ferry-built": "Nessa's repair kit became a brace for the evacuation landing.",
+  "background-canalwright": "You carry a canalwright's eye for pressure, flow, and worn floodwork.",
+  "background-field-medic": "You are a field medic trusted to triage people under pressure.",
+  "background-oathkeeper": "You keep an oathkeeper's writ and its public obligations.",
+  "canalwright-kit-carried": "Your own canalwright kit is carrying the repair work.",
+  "field-medic-triage": "Your field-medic mark brought the last wounded family across.",
+  "field-medic-duty": "You accepted the professional duty attached to your field-medic mark.",
+  "oathkeeper-writ-bound": "You bound the council transfer to your oathkeeper's writ.",
+  "oathkeeper-vow-bound": "Your oath requires you to answer for the council's water order.",
+  "oathkeeper-vow-discharged": "You discharged the oath by making the official answer in public.",
+  "archive-case-opened": "The Lantern Archive opened a case on the stolen water order.",
+  "archive-ledger-copied": "The Archive copied the night ledger into the case file.",
+  "archive-porter-amnesty": "Jalen Rook received amnesty for carrying the night ledger.",
+  "archive-seal-chain-traced": "The Archive traced the diversion order to Vask's seal chain.",
+  "archive-technical-proof": "The floodwork pressure marks prove where the diversion was made.",
+  "archive-witness-heard": "Mara Venn's account entered the Lantern case.",
+  "archive-witness-protected": "The Archive sealed Mara Venn's identity behind protection.",
+  "archive-witness-exposed": "Mara Venn's name entered the public Lantern record.",
+  "archive-vask-exposed": "The Lantern record exposed Prefect Oren Vask's diversion.",
+  "archive-case-sealed": "The Lantern case was sealed to protect its witness.",
+  "archive-record-negotiated": "The Archive filed a provisional record without a public verdict.",
+  "archive-hearing-adjourned": "The Lantern hearing was adjourned while the witness question remained open.",
+  "archive-case-closed": "You closed the Lantern case after carrying its record back to Lowsail.",
 } as const satisfies Readonly<Record<string, string>>;
 
 /**
@@ -147,6 +171,7 @@ export const RAW_SCENARIO = {
     tools: 0,
     water: 0,
     evacuees: 0,
+    "archive-evidence": 0,
   },
   initialFacts: ["dry-tanks", "stolen-water-order"],
   scenes: [
@@ -178,6 +203,22 @@ export const RAW_SCENARIO = {
           text: "The stolen order is on your table. Choose how Lowsail will remember the sluice.",
           when: [{ type: "flag", flag: "water-released", value: true }],
         },
+        {
+          text: "Before you take the order into the floodworks, you may declare the working mark you carry. It will change what Lowsail asks of you.",
+          when: [{ type: "flag", flag: "expedition-started", value: false }, { type: "flag", flag: "background-chosen", value: false }],
+        },
+        {
+          text: "Your canalwright mark is known at the floodworks; carrying your own kit leaves a technical trail in the Archive.",
+          when: [{ type: "flag", flag: "background-canalwright", value: true }],
+        },
+        {
+          text: "Your field-medic mark is trusted at the landing and gives Mara a professional witness to lean on later.",
+          when: [{ type: "flag", flag: "background-field-medic", value: true }],
+        },
+        {
+          text: "Your oathkeeper's writ can bind a council transfer, and it will require you to answer for that promise.",
+          when: [{ type: "flag", flag: "background-oathkeeper", value: true }],
+        },
       ],
     },
     {
@@ -201,6 +242,10 @@ export const RAW_SCENARIO = {
         },
         {
           text: "His goal is control. Nessa Quill's repair would give every street a share.",
+        },
+        {
+          text: "Your oathkeeper's writ can make the transfer lawful, but it will leave you answerable for the council's ration rule.",
+          when: [{ type: "flag", flag: "background-oathkeeper", value: true }],
         },
       ],
     },
@@ -255,7 +300,15 @@ export const RAW_SCENARIO = {
         },
         {
           text: "The scouts used your last supply, so shared repair is unavailable. Your kit can still brace the evacuation landing.",
-          when: [{ type: "flag", flag: "repair-tools", value: true }, { type: "flag", flag: "scouts-marked", value: true }],
+          when: [{ type: "flag", flag: "borrowed-repair-kit", value: true }, { type: "flag", flag: "scouts-marked", value: true }],
+        },
+        {
+          text: "The scouts used one supply, but your own canalwright kit leaves enough material to complete the shared repair.",
+          when: [{ type: "flag", flag: "own-repair-kit", value: true }, { type: "flag", flag: "scouts-marked", value: true }],
+        },
+        {
+          text: "Your oath requires you to answer for the council valve before you leave the floodworks.",
+          when: [{ type: "flag", flag: "oathkeeper-obligation", value: true }],
         },
         {
           text: "The stolen order bears a stamp naming Tovan Rusk as its owner; that stamp is not the council seal Tovan can grant you.",
@@ -339,8 +392,48 @@ export const RAW_SCENARIO = {
         },
       ],
     },
+    ...LANTERN_SCENES,
   ],
   choices: [
+    {
+      id: "choose-canalwright",
+      scene: "lowsail-market",
+      label: "Carry the canalwright's mark",
+      description: "Declare your floodwork training and carry your own worn repair kit. This changes the repair and Archive evidence routes.",
+      when: [{ type: "flag", flag: "expedition-started", value: false }, { type: "flag", flag: "background-chosen", value: false }],
+      effects: [
+        { type: "setFlag", flag: "background-chosen", value: true },
+        { type: "setFlag", flag: "background-canalwright", value: true },
+        { type: "addFact", fact: "background-canalwright" },
+        { type: "goTo", scene: "lowsail-market" },
+      ],
+    },
+    {
+      id: "choose-field-medic",
+      scene: "lowsail-market",
+      label: "Carry the field-medic mark",
+      description: "Declare your trusted triage work. It changes the last evacuation crossing and Mara's deposition.",
+      when: [{ type: "flag", flag: "expedition-started", value: false }, { type: "flag", flag: "background-chosen", value: false }],
+      effects: [
+        { type: "setFlag", flag: "background-chosen", value: true },
+        { type: "setFlag", flag: "background-field-medic", value: true },
+        { type: "addFact", fact: "background-field-medic" },
+        { type: "goTo", scene: "lowsail-market" },
+      ],
+    },
+    {
+      id: "choose-oathkeeper",
+      scene: "lowsail-market",
+      label: "Carry the oathkeeper's writ",
+      description: "Declare the writ that can bind a council transfer. Its obligation will follow you into the hearing.",
+      when: [{ type: "flag", flag: "expedition-started", value: false }, { type: "flag", flag: "background-chosen", value: false }],
+      effects: [
+        { type: "setFlag", flag: "background-chosen", value: true },
+        { type: "setFlag", flag: "background-oathkeeper", value: true },
+        { type: "addFact", fact: "background-oathkeeper" },
+        { type: "goTo", scene: "lowsail-market" },
+      ],
+    },
     {
       id: "visit-clinic",
       scene: "lowsail-market",
@@ -447,6 +540,25 @@ export const RAW_SCENARIO = {
       effects: [{ type: "addFact", fact: "council-offer-refused" }, { type: "goTo", scene: "workshop" }],
     },
     {
+      id: "bind-council-writ",
+      scene: "council-hall",
+      label: "Bind the council transfer to your writ",
+      description: "Use your oathkeeper's authority to make the transfer lawful. It costs one debt mark and leaves you answerable for the ration rule.",
+      when: [
+        { type: "flag", flag: "background-oathkeeper", value: true },
+        { type: "flag", flag: "council-seal", value: false },
+        { type: "flag", flag: "oathkeeper-writ-bound", value: false },
+      ],
+      effects: [
+        { type: "setFlag", flag: "oathkeeper-writ-bound", value: true },
+        { type: "setFlag", flag: "oathkeeper-obligation", value: true },
+        { type: "adjustResource", resource: "debt", delta: 1 },
+        { type: "addFact", fact: "oathkeeper-writ-bound" },
+        { type: "addFact", fact: "oathkeeper-vow-bound" },
+        { type: "goTo", scene: "workshop" },
+      ],
+    },
+    {
       id: "continue-with-council-seal", scene: "council-hall",
       label: "Return to Nessa with the seal",
       description: "Keep the authority you already borrowed and continue preparing.",
@@ -476,6 +588,24 @@ export const RAW_SCENARIO = {
       ],
     },
     {
+      id: "use-canalwright-kit",
+      scene: "workshop",
+      label: "Use your own canalwright kit",
+      description: "Carry your worn kit into the floodworks without spending Nessa's supply or taking her debt. The unfamiliar gear adds 1 risk, but preserves material for the shared repair.",
+      when: [
+        { type: "flag", flag: "background-canalwright", value: true },
+        { type: "flag", flag: "repair-tools", value: false },
+      ],
+      effects: [
+        { type: "setFlag", flag: "repair-tools", value: true },
+        { type: "setFlag", flag: "own-repair-kit", value: true },
+        { type: "setResource", resource: "tools", value: 1 },
+        { type: "adjustResource", resource: "risk", delta: 1 },
+        { type: "addFact", fact: "canalwright-kit-carried" },
+        { type: "goTo", scene: "sluice-road" },
+      ],
+    },
+    {
       id: "borrow-repair-tools",
       scene: "workshop",
       label: "Borrow Nessa's repair kit",
@@ -486,6 +616,7 @@ export const RAW_SCENARIO = {
       ],
       effects: [
         { type: "setFlag", flag: "repair-tools", value: true },
+        { type: "setFlag", flag: "borrowed-repair-kit", value: true },
         { type: "setResource", resource: "tools", value: 1 },
         { type: "adjustResource", resource: "supplies", delta: -1 },
         { type: "adjustResource", resource: "debt", delta: 1 },
@@ -614,6 +745,22 @@ export const RAW_SCENARIO = {
       effects: [
         { type: "setResource", resource: "water", value: 1 },
         { type: "adjustResource", resource: "debt", delta: 1 },
+        { type: "setFlag", flag: "council-control", value: true },
+        { type: "addFact", fact: "council-flow-controlled" },
+        { type: "goTo", scene: "water-test" },
+      ],
+    },
+    {
+      id: "honor-oathkeeper-writ",
+      scene: "sluice-chamber",
+      label: "Honor the oathkeeper's writ",
+      description: "Put the lawful transfer into the council valve. The water will be rationed, and your writ keeps you answerable for every claim.",
+      when: [
+        { type: "flag", flag: "oathkeeper-writ-bound", value: true },
+        { type: "flag", flag: "council-control", value: false },
+      ],
+      effects: [
+        { type: "setResource", resource: "water", value: 1 },
         { type: "setFlag", flag: "council-control", value: true },
         { type: "addFact", fact: "council-flow-controlled" },
         { type: "goTo", scene: "water-test" },
@@ -764,6 +911,26 @@ export const RAW_SCENARIO = {
       },
     },
     {
+      id: "close-clinic-and-open-archive",
+      scene: "clinic-followthrough",
+      label: "Finish the clinic account and open the Archive case",
+      description: "Give Ilyra one medicine bundle, then carry the resolved order to the Lantern Archive for a second investigation.",
+      when: [
+        { type: "resourceAtLeast", resource: "medicine", value: 1 },
+        { type: "flag", flag: "clinic-aided", value: false },
+        { type: "flag", flag: "archive-started", value: false },
+      ],
+      effects: [
+        { type: "adjustResource", resource: "medicine", delta: -1 },
+        { type: "setFlag", flag: "clinic-aided", value: true },
+        { type: "addFact", fact: "clinic-water-restored" },
+        { type: "setFlag", flag: "archive-started", value: true },
+        { type: "setFlag", flag: "archive-origin-clinic", value: true },
+        { type: "addFact", fact: "archive-case-opened" },
+        { type: "goTo", scene: "lantern-landing" },
+      ],
+    },
+    {
       id: "leave-clinic-unfinished",
       scene: "clinic-followthrough",
       label: "Leave the clinic unfinished",
@@ -798,6 +965,22 @@ export const RAW_SCENARIO = {
       },
     },
     {
+      id: "sign-charter-and-open-archive",
+      scene: "council-followthrough",
+      label: "Sign the charter and open the Archive case",
+      description: "Accept Tovan's ration rule and its debt, then carry the resolved order to the Lantern Archive.",
+      when: [{ type: "flag", flag: "archive-started", value: false }],
+      effects: [
+        { type: "adjustResource", resource: "debt", delta: 1 },
+        { type: "setFlag", flag: "council-charter", value: true },
+        { type: "addFact", fact: "council-charter-signed" },
+        { type: "setFlag", flag: "archive-started", value: true },
+        { type: "setFlag", flag: "archive-origin-council", value: true },
+        { type: "addFact", fact: "archive-case-opened" },
+        { type: "goTo", scene: "lantern-landing" },
+      ],
+    },
+    {
       id: "leave-council-charter",
       scene: "council-followthrough",
       label: "Leave the charter unsigned",
@@ -825,6 +1008,25 @@ export const RAW_SCENARIO = {
       },
     },
     {
+      id: "lead-evacuation-and-open-archive",
+      scene: "evacuation-followthrough",
+      label: "Lead the families and open the Archive case",
+      description: "Use the scouts' marked crossing to get all eight families to shelter, then carry the resolved order to the Lantern Archive.",
+      when: [
+        { type: "flag", flag: "scouts-marked", value: true },
+        { type: "flag", flag: "archive-started", value: false },
+      ],
+      effects: [
+        { type: "setResource", resource: "evacuees", value: 8 },
+        { type: "setFlag", flag: "evacuation-finished", value: true },
+        { type: "addFact", fact: "market-evacuated" },
+        { type: "setFlag", flag: "archive-started", value: true },
+        { type: "setFlag", flag: "archive-origin-evacuation", value: true },
+        { type: "addFact", fact: "archive-case-opened" },
+        { type: "goTo", scene: "lantern-landing" },
+      ],
+    },
+    {
       id: "lead-unmarked-evacuation", scene: "evacuation-followthrough",
       label: "Lead seven families across the washout",
       description: "Without scouts or treatment, seven families can cross. One wounded family will remain at the landing awaiting help.",
@@ -833,12 +1035,101 @@ export const RAW_SCENARIO = {
       outcome: { status: "completed", summary: "Seven families reach shelter. One wounded family is left at the landing; Bram must find another boat. The market is lost." },
     },
     {
+      id: "lead-unmarked-and-open-archive",
+      scene: "evacuation-followthrough",
+      label: "Lead seven families and open the Archive case",
+      description: "Take seven families across the unmarked washout, leave one wounded family at the landing, then carry the resolved order to the Lantern Archive.",
+      when: [
+        { type: "flag", flag: "scouts-marked", value: false },
+        { type: "flag", flag: "archive-started", value: false },
+      ],
+      effects: [
+        { type: "setResource", resource: "evacuees", value: 7 },
+        { type: "setFlag", flag: "evacuation-finished", value: true },
+        { type: "addFact", fact: "unmarked-crossing" },
+        { type: "setFlag", flag: "archive-started", value: true },
+        { type: "setFlag", flag: "archive-origin-evacuation", value: true },
+        { type: "addFact", fact: "archive-case-opened" },
+        { type: "goTo", scene: "lantern-landing" },
+      ],
+    },
+    {
       id: "treat-evacuation-straggler", scene: "evacuation-followthrough",
       label: "Treat the wounded family and take everyone",
       description: "Spend one silverleaf dose to get all eight families across the unmarked washout. This medicine will not reach the fever ward.",
       when: [{ type: "flag", flag: "scouts-marked", value: false }, { type: "resourceAtLeast", resource: "medicine", value: 1 }],
       effects: [{ type: "adjustResource", resource: "medicine", delta: -1 }, { type: "setResource", resource: "evacuees", value: 8 }, { type: "setFlag", flag: "evacuation-finished", value: true }, { type: "addFact", fact: "stragglers-treated" }],
       outcome: { status: "completed", summary: "Silverleaf gets the wounded family moving. All eight families reach shelter with Bram, but the fever ward's promised dose went to the crossing. Lowsail's market is lost." },
+    },
+    {
+      id: "treat-straggler-and-open-archive",
+      scene: "evacuation-followthrough",
+      label: "Treat the straggler and open the Archive case",
+      description: "Spend one silverleaf dose to get all eight families across, then carry the resolved order to the Lantern Archive.",
+      when: [
+        { type: "flag", flag: "scouts-marked", value: false },
+        { type: "resourceAtLeast", resource: "medicine", value: 1 },
+        { type: "flag", flag: "archive-started", value: false },
+      ],
+      effects: [
+        { type: "adjustResource", resource: "medicine", delta: -1 },
+        { type: "setResource", resource: "evacuees", value: 8 },
+        { type: "setFlag", flag: "evacuation-finished", value: true },
+        { type: "addFact", fact: "stragglers-treated" },
+        { type: "setFlag", flag: "archive-started", value: true },
+        { type: "setFlag", flag: "archive-origin-evacuation", value: true },
+        { type: "addFact", fact: "archive-case-opened" },
+        { type: "goTo", scene: "lantern-landing" },
+      ],
+    },
+    {
+      id: "treat-unmarked-stragglers-by-protocol",
+      scene: "evacuation-followthrough",
+      label: "Treat the stragglers by field protocol",
+      description: "As a trusted field medic, triage the wounded family without spending the clinic's medicine. Risk +1 while you hold the crossing together.",
+      when: [
+        { type: "flag", flag: "background-field-medic", value: true },
+        { type: "flag", flag: "scouts-marked", value: false },
+        { type: "flag", flag: "evacuation-finished", value: false },
+        { type: "flag", flag: "field-medic-duty", value: false },
+      ],
+      effects: [
+        { type: "adjustResource", resource: "risk", delta: 1 },
+        { type: "setResource", resource: "evacuees", value: 8 },
+        { type: "setFlag", flag: "evacuation-finished", value: true },
+        { type: "setFlag", flag: "field-medic-duty", value: true },
+        { type: "addFact", fact: "field-medic-triage" },
+        { type: "addFact", fact: "field-medic-duty" },
+      ],
+      outcome: {
+        status: "completed",
+        summary: "Your field-medic mark gets the wounded family across without taking medicine from Ilyra's ward. All eight families reach shelter, but the crossing leaves you exposed to the surge.",
+      },
+    },
+    {
+      id: "treat-unmarked-stragglers-by-protocol-and-open-archive",
+      scene: "evacuation-followthrough",
+      label: "Treat the stragglers and open the Archive case",
+      description: "Use your trusted field-medic protocol to get all eight families across without spending medicine, then carry the resolved order to the Lantern Archive. Risk +1.",
+      when: [
+        { type: "flag", flag: "background-field-medic", value: true },
+        { type: "flag", flag: "scouts-marked", value: false },
+        { type: "flag", flag: "evacuation-finished", value: false },
+        { type: "flag", flag: "field-medic-duty", value: false },
+        { type: "flag", flag: "archive-started", value: false },
+      ],
+      effects: [
+        { type: "adjustResource", resource: "risk", delta: 1 },
+        { type: "setResource", resource: "evacuees", value: 8 },
+        { type: "setFlag", flag: "evacuation-finished", value: true },
+        { type: "setFlag", flag: "field-medic-duty", value: true },
+        { type: "addFact", fact: "field-medic-triage" },
+        { type: "addFact", fact: "field-medic-duty" },
+        { type: "setFlag", flag: "archive-started", value: true },
+        { type: "setFlag", flag: "archive-origin-evacuation", value: true },
+        { type: "addFact", fact: "archive-case-opened" },
+        { type: "goTo", scene: "lantern-landing" },
+      ],
     },
     {
       id: "stay-in-floodplain",
@@ -865,5 +1156,6 @@ export const RAW_SCENARIO = {
         summary: "You leave the high ground before the evacuation is complete.",
       },
     },
+    ...LANTERN_CHOICES,
   ],
 } as const satisfies ScenarioData;
