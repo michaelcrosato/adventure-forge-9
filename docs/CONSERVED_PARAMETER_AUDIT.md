@@ -1,8 +1,8 @@
 # Conserved-parameter audit contract
 
-Status: the refined method completed the full Reedway audit and is being
-adopted as the release check. Full repository verification of the cached
-implementation and final browser/live gates remain pending. This document narrows the method
+Status: the refined method completed the full Reedway audit and is adopted
+as the release check. All 108 repository checks and the final-source browser
+journey pass; fresh player acceptance remains pending. This document narrows the method
 to immutable parameters; it does not authorize interval widening, guessed
 entry states, symbolic arithmetic for mutable resources, or sampled routes.
 
@@ -223,3 +223,13 @@ Five mini-graph result exports are byte-identical with and without caching.
 Complete repository verification of the integrated cached release check is
 the next required result; no cache speed improvement or new player acceptance
 is inferred from the uncached run above.
+
+Complete `npm run verify` on the integrated release check at `998a214`
+passes all 108 tests. Counts match the uncached run: 243,426 families,
+703,812 transitions, 460,387 merges, 1,081,565 successor comparisons,
+160 replayed choice witnesses and 36 authored endings. The full build/test
+command took 5:22.66 with 2,706,140 KiB maximum RSS while the separate browser
+journey ran; this is not a controlled cache speed or memory comparison.
+Log: `/tmp/af9-family-release-verify.log`. This satisfies the current
+mechanical gate within the existing workload guard. It does not establish
+capacity for the requested final world.

@@ -185,3 +185,13 @@ See `CONSERVED_PARAMETER_AUDIT.md` for the implementation contract, exact
 historical source/code provenance and preserved artifacts. The original
 resource-exact release guard is unchanged. Complete verification of the
 current family method remains required before adopting it for releases.
+
+The subsequent complete refined Reedway run passes at 243,426 families /
+703,812 transitions, with every one of 160 choices and 36 endings reached
+and no dead ends or missing completed routes. All 160 choice witnesses replay
+exactly. After that evidence, `998a214` adopts the separately reviewed cached
+family method in the release test. `npm run verify` passes all 108 checks
+with identical family/transition/congruence counts. The older resource-exact
+method remains available; counts from the two representations are labeled
+separately. See `CONSERVED_PARAMETER_AUDIT.md` for exact source, measurements,
+code provenance and the full result artifacts.

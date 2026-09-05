@@ -107,3 +107,38 @@ so it does not approve the expansion. Complete current checks are running
 separately. Exact contracts, limitations, source identities and artifacts are
 in `CONSERVED_PARAMETER_AUDIT.md`. No new blind player batch or publication
 has occurred.
+
+## Mechanical/rendered gates passed; fresh players dispatched
+
+The full refined audit passes at 243,426 families and 703,812 transitions,
+with all 29 scenes, 160 choices and 36 endings reachable, no dead ends and no
+unfinished family lacking a completed route. All choice witnesses replay.
+The release test adopts the new representation after independent historical
+comparisons and real-engine adversarial tests; the 250,000-family guard and
+prior semantic assertions remain. Complete `npm run verify` on `998a214`
+passes all 108 tests (`/tmp/af9-family-release-verify.log`). Exact proof
+limits, failed attempts and results remain in `CONSERVED_PARAMETER_AUDIT.md`.
+
+The same source and game build `af9-55d07242701a5613af8d0919` complete a fresh
+44-action stateless browser journey: both claimants visited before recovery,
+clinic installation, patient/deckhand/relief services, changed returns to
+both hubs, mid-activity download/new-session/upload restoration and completed
+save/reload. Mobile screenshots were inspected; document width is 375 within
+a 390-pixel viewport, all ten resource labels fit and browser errors are
+empty. The last actual choose request is 5,608 bytes, returns HTTP 200 and
+matches both the exact checkpoint and public observation.
+
+Artifacts: `/tmp/af9-reedway-final-browser.{mjs,log}`,
+`/tmp/af9-reedway-final-{start,barge-mobile,commons-mobile,completed-mobile}.png`,
+`/tmp/af9-reedway-final-{mid,completed}.save` and
+`/tmp/af9-reedway-final-44-envelope.{mts,json}`. Browser and local handler
+were closed after verification.
+
+A clean worktree at `/tmp/af9-stage7-verified` freezes commit
+`998a21488e603d3b96d31d32e1fe1dff6b19694c`; `npm ci` and build pass. Source
+identity is `fca7534ba21c366cdd0c67c316d29ba352f2308d2aea4ccac53c69a5a60af73c`.
+The source runner uses the browser-tested build above; the separately
+identified compiled build is `af9-0cbeabaff7dd948611fc299f`. Three neutral
+Luna/max games at seeds 1–3 and the unchanged 60-turn ceiling have now been
+dispatched under `/home/micha/.local/share/adventure-forge-9/runs-stage7-998a214`.
+No outcome, interview, acceptance or publication is inferred from dispatch.
