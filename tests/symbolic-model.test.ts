@@ -647,8 +647,12 @@ function materializeEngineFixture(scenario: RawScenario): { root: string; cleanu
   const root = mkdtempSync(join(tmpdir(), "af9-symbolic-engine-"));
   mkdirSync(join(root, "src", "engine"), { recursive: true });
   mkdirSync(join(root, "src", "content"), { recursive: true });
+  mkdirSync(join(root, "src", "verification"), { recursive: true });
   for (const file of ["index.ts", "types.ts", "content.ts", "build-id.ts"]) {
     copyFileSync(join(testRoot, "src", "engine", file), join(root, "src", "engine", file));
+  }
+  for (const file of ["bdd.ts", "symbolic-model.ts", "symbolic-replay.ts"]) {
+    copyFileSync(join(testRoot, "src", "verification", file), join(root, "src", "verification", file));
   }
   writeFileSync(join(root, "src", "content", "scenario.ts"), fixtureScenarioSource(scenario));
   writeFileSync(join(root, "package.json"), JSON.stringify({ name: "af9-symbolic-engine-fixture", type: "module" }));
@@ -712,16 +716,49 @@ interface EngineReplay {
   readonly restoredObservation: EngineObservation;
 }
 
-function replayThroughRealEngine(scenario: RawScenario, paths: Readonly<Record<string, readonly string[]>>): Record<string, EngineReplay> {
+function replayThroughRealEngine(
+  scenario: RawScenario,
+  paths: Readonly<Record<string, readonly string[]>>,
+  bounds: Readonly<Record<string, number>>,
+  order: "interleaved" | "blocked",
+): Record<string, EngineReplay> {
   const fixture = materializeEngineFixture(scenario);
   try {
     const inputPath = join(fixture.root, "paths.json");
     const probePath = join(fixture.root, "probe.mjs");
-    writeFileSync(inputPath, JSON.stringify(paths));
+    writeFileSync(inputPath, JSON.stringify({ paths, bounds, order }));
     writeFileSync(probePath, `
 import { readFileSync } from "node:fs";
+import assert from "node:assert/strict";
+import { SCENARIO } from "./src/engine/content.ts";
 import { observe, replay, restore, save, stateHash } from "./src/engine/index.ts";
-const paths = JSON.parse(readFileSync(process.argv[2], "utf8"));
+import { SymbolicModel, symbolicReachability } from "./src/verification/symbolic-model.ts";
+import { replaySymbolicPath, verifySymbolicWitnesses } from "./src/verification/symbolic-replay.ts";
+const { paths, bounds, order } = JSON.parse(readFileSync(process.argv[2], "utf8"));
+const model = new SymbolicModel(SCENARIO, bounds, { order, nodeLimit: 200_000, cacheLimit: 20_000 });
+const graph = symbolicReachability(model, 64);
+const verified = verifySymbolicWitnesses(model, graph);
+for (const kind of ["scene", "choice", "ending"]) {
+  assert.equal(verified[kind + "Witnesses"], Object.keys(paths).filter(key => key.startsWith(kind + ":")).length);
+}
+// Reports containing expected dead ends still have valid replayable witnesses.
+// In contrast, an invented unreachable claim cannot silently skip a witness.
+const sceneWitnesses = { ...graph.sceneWitnesses };
+delete sceneWitnesses[SCENARIO.initialScene];
+assert.throws(() => verifySymbolicWitnesses(model, {
+  ...graph, sceneWitnesses, unreachableScenes: [...graph.unreachableScenes, SCENARIO.initialScene],
+}), /unreachableScenes disagrees/);
+const reachableChoice = Object.keys(graph.choiceWitnesses)[0];
+assert.ok(reachableChoice);
+const choiceWitnesses = { ...graph.choiceWitnesses };
+delete choiceWitnesses[reachableChoice];
+assert.throws(() => verifySymbolicWitnesses(model, {
+  ...graph, choiceWitnesses, unreachableChoices: [...graph.unreachableChoices, reachableChoice],
+}), /unreachableChoices disagrees/);
+const changed = JSON.parse(JSON.stringify(SCENARIO));
+changed.scenes[0].title += " altered";
+const wrongScenario = new SymbolicModel(changed, bounds, { order, nodeLimit: 200_000, cacheLimit: 20_000 });
+assert.throws(() => replaySymbolicPath(wrongScenario, []), /differs from the fixed validated SCENARIO/);
 const result = {};
 for (const [key, path] of Object.entries(paths)) {
   const state = replay(1, path.map((choiceId, expectedRevision) => ({ choiceId, expectedRevision })));
@@ -893,7 +930,7 @@ function assertSymbolicMatchesOracle(rawScenario: RawScenario, bounds: Readonly<
       if (key.startsWith("scene:")) assert.equal(expected.scene, key.slice("scene:".length));
       if (key.startsWith("choice:") || key.startsWith("ending:")) assert.equal(path.at(-1), key.slice(key.indexOf(":") + 1));
     }
-    assertEngineReplayMatches(validated, graph, paths, replayThroughRealEngine(rawScenario, paths), bounds);
+    assertEngineReplayMatches(validated, graph, paths, replayThroughRealEngine(rawScenario, paths, bounds, order), bounds);
 
     for (const choice of model.choices) {
       const choiceEdges = graph.edges.filter((edge) => edge.choiceId === choice.id);
