@@ -872,3 +872,70 @@ streaming them requires a new archive/witness API and separate decoder,
 cross-owner and shortest-path proofs. The measured 303,954-node saving is
 only one boundary, not a guaranteed capacity improvement. This alternative
 is not selected under the current API.
+
+### Separate packed explicit-state prototype
+
+The next bounded experiment changes representation rather than weakening the
+control-state key. Independent review considers a BigInt-keyed exact graph
+reasonable to measure before investing in a custom hash table. Historical
+canonical counts are not upper bounds for all-flag states: the packed model
+retains every authored/read flag. Current family counts are not concrete-state
+counts either. No campaign cardinality or memory saving is inferred in advance.
+
+The proposed model packs scene, status, deduplicated status/summary ending
+identity, every resource, and every authored or condition/text-read flag.
+Each resource uses 53 bits for all nonnegative safe integers; declared clocks
+add their existing maximum constraint. It introduces no guessed ordinary
+resource bounds and no ordinary saturation. Compiled indexed guards and ordered
+effects must preserve intermediate arithmetic failures, clock saturation,
+last writes, effects after navigation and terminal outcomes after effects.
+
+Traversal interns exact BigInt tuples through a Map and assigns dense IDs.
+Chunked Uint32 vectors retain BFS parents and reverse edges, with explicit
+state/edge guards and a reserved sentinel. Every authored choice witness is
+recorded before successor interning, so reconverging and duplicate terminal
+choices remain represented. Reverse propagation starts only from completed
+states. It proves completion reachability; the reverse edge representation
+does not reconstruct a separate completion path for every state. First-parent
+paths reconstruct shortest authored scene/choice/ending witnesses.
+
+This graph covers authored choices; the separate global `end()` operation
+retains its existing focused engine checks. Facts, history, seed, revision,
+journal and receipt hash stay outside the control tuple. All authored witness
+paths still require real-engine replay, saves, receipts and hash verification;
+arbitrary full-history equivalence is not claimed. Tests and implementation
+are in progress, and no packed historical traversal or release adoption has
+yet been accepted.
+
+The first packed implementation is frozen in
+`dcf3db9d909ecdb9fa5e4848a995b1e959734159` on the experimental manager. Root
+owns the BFS/reverse graph and independent oracle expansion; a worker supplied
+the model and another supplied analytic graph/limit checks. Review corrected
+the model's first object-expanding transition draft to direct BigInt field
+operations, changed locale-dependent sorting to the validator's ASCII ID order,
+and made encode/project inputs single-read snapshots. The finished model is
+immutable, enforces clock/lifecycle domains and rejects foreign choice objects.
+BigInt codes themselves are unbranded values and must remain model-scoped.
+
+Build plus all 50 focused BDD/symbolic/packed checks pass on unchanged clean
+pre/post `dcf3db9`, in 21.47 seconds / 1,271,900 KiB maximum RSS. Preserve
+`/tmp/af9-packed-expanded-tests-v1.log` (SHA-256
+`e63ea53ea5c7deae29228af8f243689ebcd40b0c3636d5c20ce5efceb2850590`) and
+`/tmp/af9-packed-expanded-test-provenance-v1.json`. The independent finite DSL
+oracle checks every small-domain transition, exact reachable/completable/dead-end
+and no-completion sets, BFS distance frontiers, shortest authored witnesses and
+actual-engine replay/project/save/receipt/hash correspondence. Additional checks
+cross a 16,384-entry storage boundary, preserve duplicate edges/cycles, enforce
+state/edge limits, retain 74 flags and `constructor` fields, reject malformed
+domains/getters, and preserve an earlier cross-resource overflow despite a later
+reset. These tests include both existing BDD modes; their RSS is not a packed
+campaign measurement.
+
+A new detached historical probe, `/tmp/af9-packed-historical-139e48`, has only
+the two exact packed verifier modules over engine/content `139e48a`, its own
+`npm ci` dependencies and successful harmless `tsx` startup. A single diagnostic
+is being prepared with two million explicit states, eight million edges,
+120-second checked time, external TERM at 150 seconds plus KILL after five,
+and a 1,536 MiB Node heap. A separate trusted-engine checker will require all
+25 scenes, 131 choices and 34 terminal-choice witnesses, with zero mechanical
+issues. No historical packed run has been launched yet.

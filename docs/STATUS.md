@@ -70,10 +70,16 @@ clean experiment `f83792e`; build and all 40 focused checks pass (20.77 seconds 
 historical masked diagnostic reaches forward round 26, then fails the same
 two-million-node guard after 18 copies (113.42 seconds / 1,155,468 KiB maximum
 RSS). Source and runner provenance match; no backward traversal or witness
-replay completes. Read-only reviews are comparing lossless frontier storage
-and compact exhaustive explicit states before another implementation is chosen.
-The unmasked default remains unchanged; no complete symbolic campaign coverage
-or release adoption is accepted.
+replay completes. Review rejected external frontier storage under the existing
+numeric-root/witness API. A separate compact exhaustive explicit-state prototype
+is now being implemented: BigInt keys retain every control value, resources
+use the full nonnegative safe-integer domain, and chunked reverse edges support
+completion analysis. Clean experiment `dcf3db9` passes build and all 50 focused
+checks (21.47 seconds / 1,271,900 KiB maximum RSS), including independent
+oracle/domain/replay and storage boundaries. A separate historical packed probe
+has its exact two modules and locked dependencies; its bounded harness and
+independent witness checker are being prepared before launch. The unmasked default remains unchanged;
+no complete symbolic campaign coverage or release adoption is accepted.
 The production family guard is unchanged. See
 `SYMBOLIC_REACHABILITY_EXPERIMENT.md`. Final copy rendering and all 115 non-audit checks pass, but the
 full audit remains open. The 52-action browser and original failure evidence

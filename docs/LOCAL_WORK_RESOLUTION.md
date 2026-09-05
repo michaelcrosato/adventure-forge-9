@@ -100,3 +100,9 @@ clean tested manager `f83792e`; its complete source manifest is
 diagnostic is retained with that overlay. After this preparation there are
 33 worktrees and still only the same two local branches; this is a new source
 snapshot, not a change to the four archive batches' removal counts.
+
+The separate packed experiment adds detached
+`/tmp/af9-packed-historical-139e48`, with the two packed modules from clean
+tested `dcf3db9` and its own locked dependencies. At this preparation snapshot,
+34 worktrees remain with the same two local branches. Both new diagnostic
+overlays remain deliberately separate from prior evidence.

@@ -280,3 +280,21 @@ remains incomplete at forward round 26 after 18 copies, in 113.42 seconds /
 1,155,468 KiB maximum RSS. The report/finalization hashes match and the closed
 process is absent. No full witness checker or live-player attempt followed
 the incomplete result.
+
+Read-only review found that external historical-frontier storage would require
+a changed witness/owner API for only a measured partial capacity saving. Root
+instead selected a separate packed explicit-state prototype after an independent
+feasibility review, without treating old canonical/family counts as an all-flag
+state upper bound. A worker supplied the model; root corrected object-expanding
+per-edge transitions to direct field operations, sorting and getter snapshotting.
+Root wrote dense BFS/reverse graph storage and extended the independent finite
+DSL/real-engine oracle; a second worker supplied analytic graph/chunk/limit
+fixtures. Independent source review found no transition or graph soundness
+defect under the stated authored-choice/control-state scope.
+
+Root's clean freeze `dcf3db9` passes build and all 50 focused checks in 21.47
+seconds / 1,271,900 KiB maximum RSS, with unchanged pre/post source evidence at
+`/tmp/af9-packed-expanded-test-provenance-v1.json`. The broad suite includes
+existing BDD tests, so this is not a packed campaign performance result. A new
+historical source probe is prepared, but its run and full acceptance remain
+pending. No live player or model-speed ranking is claimed.
