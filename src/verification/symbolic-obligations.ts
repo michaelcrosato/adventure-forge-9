@@ -21,7 +21,7 @@ export interface ObligationSummary {
 }
 
 export interface ObligationProgress {
-  readonly phase: "completion" | "obligation";
+  readonly phase: "completion" | "completion-or-failure" | "obligation";
   readonly id?: string;
   readonly round: number;
   readonly nodes: number;
@@ -31,6 +31,8 @@ export interface ObligationProgress {
 export interface SymbolicObligationOptions {
   /** Maximum number of predecessor applications for every fixed point. */
   readonly roundLimit?: number;
+  /** Whether to absorb failure-reachable states from the global seed. */
+  readonly nonCompletionMode?: "direct" | "failure-absorbed";
   readonly onProgress?: (progress: ObligationProgress) => void;
   /** Observe each obligation while its roots still belong to its fresh model. */
   readonly onObligation?: (value: {
@@ -47,6 +49,10 @@ export interface CompletionSafetyByObligationResult {
   /** States with an existential authored route to a completed terminal. */
   readonly completable: number;
   readonly completionRounds: number;
+  /** Existential completion-or-failure closure, not strong completion; absorbed mode only. */
+  readonly completionOrFailure?: number;
+  /** Predecessor rounds starting from the already-computed C union failure seeds. */
+  readonly completionOrFailureRounds?: number;
   /** True when the original initial projection is in any obligation closure. */
   readonly initialInBad: boolean;
   readonly obligations: readonly ObligationSummary[];
@@ -95,6 +101,7 @@ function assertEquivalentFreshModel(original: SymbolicModel, fresh: SymbolicMode
 
 function snapshotOptions(options: SymbolicObligationOptions | undefined): {
   readonly roundLimit: number;
+  readonly nonCompletionMode: "direct" | "failure-absorbed";
   readonly onProgress: ((progress: ObligationProgress) => void) | undefined;
   readonly onObligation: ((value: {
     readonly model: SymbolicModel;
@@ -104,7 +111,12 @@ function snapshotOptions(options: SymbolicObligationOptions | undefined): {
   }) => void) | undefined;
 } {
   if (options === undefined) {
-    return Object.freeze({ roundLimit: DEFAULT_ROUND_LIMIT, onProgress: undefined, onObligation: undefined });
+    return Object.freeze({
+      roundLimit: DEFAULT_ROUND_LIMIT,
+      nonCompletionMode: "direct" as const,
+      onProgress: undefined,
+      onObligation: undefined,
+    });
   }
   if (options === null || typeof options !== "object" || Array.isArray(options)) {
     throw new TypeError("options must be an object");
@@ -112,11 +124,16 @@ function snapshotOptions(options: SymbolicObligationOptions | undefined): {
   // Read each option exactly once. Besides making the snapshot explicit, this
   // prevents an accessor from changing the proof configuration mid-run.
   const requestedRoundLimit = options.roundLimit;
+  const requestedNonCompletionMode = options.nonCompletionMode;
   const onProgress = options.onProgress;
   const onObligation = options.onObligation;
   const roundLimit = requestedRoundLimit === undefined ? DEFAULT_ROUND_LIMIT : requestedRoundLimit;
+  const nonCompletionMode = requestedNonCompletionMode === undefined ? "direct" : requestedNonCompletionMode;
   if (!Number.isSafeInteger(roundLimit) || roundLimit < 1) {
     throw new RangeError("roundLimit must be a positive safe integer");
+  }
+  if (nonCompletionMode !== "direct" && nonCompletionMode !== "failure-absorbed") {
+    throw new RangeError("nonCompletionMode must be \"direct\" or \"failure-absorbed\"");
   }
   if (onProgress !== undefined && typeof onProgress !== "function") {
     throw new TypeError("onProgress must be a function");
@@ -124,7 +141,7 @@ function snapshotOptions(options: SymbolicObligationOptions | undefined): {
   if (onObligation !== undefined && typeof onObligation !== "function") {
     throw new TypeError("onObligation must be a function");
   }
-  return Object.freeze({ roundLimit, onProgress, onObligation });
+  return Object.freeze({ roundLimit, nonCompletionMode, onProgress, onObligation });
 }
 
 /**
@@ -134,7 +151,10 @@ function snapshotOptions(options: SymbolicObligationOptions | undefined): {
  * and their authored predecessors. Each bad seed is then closed under the
  * same predecessor relation. The seed closures are solved in fresh managers
  * so a large union does not keep every obligation's intermediate BDD nodes
- * alive in one append-only manager.
+ * alive in one append-only manager. The optional failure-absorbed mode first
+ * removes states that can already reach either completion or an explicit
+ * failure seed from the global non-completion seed; it leaves C and every
+ * separate failure obligation intact.
  */
 export function proveCompletionSafetyByObligation(
   model: SymbolicModel,
@@ -182,11 +202,6 @@ export function proveCompletionSafetyByObligation(
 
   const completion = completionFixedPoint();
   const seeds: SeedSpec[] = [];
-  seeds.push(Object.freeze({
-    id: "non-completion:",
-    kind: "non-completion",
-    seed: current(bdd.and(playing, bdd.not(completion.root)), "non-completion seed"),
-  }));
 
   const seedForChoice = (choice: SymbolicChoice): readonly SeedSpec[] => {
     const enabled = current(choice.enabled, `choice ${choice.id}.enabled`);
@@ -212,7 +227,61 @@ export function proveCompletionSafetyByObligation(
       Object.freeze({ id: `uncovered-enabled:${choice.id}`, kind: "uncovered-enabled" as const, choiceId: choice.id, seed: uncovered }),
     ]);
   };
-  for (const choice of model.choices) seeds.push(...seedForChoice(choice));
+
+  /**
+   * Compute W = Pre*(C ∪ F). Since C = Pre*(completed), this is exactly
+   * Pre*(completed ∪ F); using C avoids rebuilding the already-proven
+   * completion cone. W is an existential "can complete or reach failure"
+   * predicate and is never used as the strong completion result. With
+   * P = playing states and N = P \ C, replacing N by P \ W is exact because
+   * Pre*((P \ C) ∪ F) = Pre*((P \ W) ∪ F): the removed states are already in
+   * Pre*(F), whose predecessor closure is idempotent.
+   */
+  const completionOrFailureFixedPoint = (seed: CurrentRoot): FixedPoint => {
+    let root = current(seed, "completion-or-failure seed");
+    for (let round = 1; round <= snapshot.roundLimit; round++) {
+      const predecessor = current(model.preimage(root), "completion-or-failure predecessor");
+      const next = current(bdd.or(root, predecessor), "completion-or-failure fixed-point candidate");
+      const fixed = next === root;
+      progress({ phase: "completion-or-failure", round, nodes: bdd.stats().nodes, fixed }, snapshot.onProgress);
+      if (fixed) return Object.freeze({ root, rounds: round });
+      root = next;
+    }
+    throw new Error(`completion-or-failure fixed point not reached within round limit ${snapshot.roundLimit}`);
+  };
+
+  let completionOrFailure: FixedPoint | undefined;
+  if (snapshot.nonCompletionMode === "direct") {
+    // Keep the default operation order: direct mode constructs the global
+    // non-completion seed before compiling each choice's four failure seeds.
+    seeds.push(Object.freeze({
+      id: "non-completion:",
+      kind: "non-completion",
+      seed: current(bdd.and(playing, bdd.not(completion.root)), "non-completion seed"),
+    }));
+    for (const choice of model.choices) seeds.push(...seedForChoice(choice));
+  } else {
+    const choiceSeeds: SeedSpec[] = [];
+    for (const choice of model.choices) choiceSeeds.push(...seedForChoice(choice));
+    let failureSeed = 0;
+    for (const spec of choiceSeeds) {
+      failureSeed = current(bdd.or(failureSeed, spec.seed), "failure seed union");
+    }
+    const completionOrFailureSeed = current(
+      bdd.or(completion.root, failureSeed),
+      "completion-or-failure initial seed",
+    );
+    completionOrFailure = completionOrFailureFixedPoint(completionOrFailureSeed);
+    seeds.push(Object.freeze({
+      id: "non-completion:",
+      kind: "non-completion",
+      seed: current(
+        bdd.and(playing, bdd.not(completionOrFailure.root)),
+        "failure-absorbed non-completion seed",
+      ),
+    }));
+    seeds.push(...choiceSeeds);
+  }
 
   const solveObligation = (spec: SeedSpec): ObligationSummary => {
     if (spec.seed === 0) {
@@ -295,12 +364,20 @@ export function proveCompletionSafetyByObligation(
   };
 
   const obligations = Object.freeze(seeds.map(solveObligation));
-  return Object.freeze({
+  const baseResult = {
     model,
     completable: completion.root,
     completionRounds: completion.rounds,
     initialInBad: obligations.some(obligation => obligation.initialInBad),
     obligations,
+  };
+  if (completionOrFailure === undefined) {
+    return Object.freeze({ ...baseResult, complete: true as const });
+  }
+  return Object.freeze({
+    ...baseResult,
+    completionOrFailure: completionOrFailure.root,
+    completionOrFailureRounds: completionOrFailure.rounds,
     complete: true as const,
   });
 }
