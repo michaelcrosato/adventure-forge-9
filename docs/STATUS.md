@@ -30,6 +30,16 @@ All live batches, including the three continuation-candidate runs, are closed an
 
 ## Required next work
 
+Stage 8 follow-up: `bee7b6c` corrects the stale static future-read assertion;
+`2f6212d` integrates the final optional-visit and unfinished-case copy review.
+Build and 17 focused checks pass. The separate size-only run hit its 500,000
+guard after 287,397 visited families / 908,913 transitions; it is not complete
+coverage. Independent design/measurement and proof reviews are investigating
+state-local stable-flag pruning; no method or release-limit change is adopted.
+The final copy still needs rendered checks, and the full audit remains open.
+The 52-action browser and all original failure evidence remain bound to
+`c64c47c`. Local browser, server and full verification processes are closed.
+
 1. Finish independent Stage 8 review and resolve its measured audit workload failure without weakening the proof or removing regional activity. Review the older future-read assertion against the new graph. Full verification and a clean freeze are required before the three predeclared fresh players. The wording comparison is complete, with a narrow clarity observation but a second failed regional exposure gate (1/3). Keep both batches and all earlier endings; do not rerun identical players until a favorable result appears. See `STAGE7_REEDWAY.md` and `STAGE8_PARALLEL_CAMPAIGN.md`.
 2. Review persistent regional travel and safe earlier-area revisits as the next breadth step. Current chapters are mostly sequential; another sequential investigation area alone would not establish an explorable world.
 3. Preserve the strict completion audit as the world grows; address state growth without discarding meaningful future distinctions. A 1,010-action local checkpoint measured 79,097 request bytes and restored in about 32 ms, but the hosted 256 KiB envelope limit remains a finite long-session constraint.

@@ -1,8 +1,9 @@
 # Parallel campaign activity — prospective contract
 
 Status: implemented locally at `c64c47c`; focused behavior and a 52-action
-browser journey pass. Full verification fails at the existing workload guard
-and one older future-read assertion. No Stage 8 live players or publication.
+browser journey pass there. Later copy review is integrated at `2f6212d`.
+Full verification fails at the existing workload guard; the separate older
+future-read assertion is corrected. No Stage 8 live players or publication.
 The prospective contract below was recorded before implementation.
 Behavior baseline is `8b2be2c`; its wording comparison is complete, but both
 Stage 7 regional exposure batches failed at 1/3. Preserve those failures and
@@ -214,3 +215,40 @@ The actual final choose request measured 6,264 bytes; the handler returned
 200 with exact expected checkpoint and public observation. See
 `/tmp/af9-parallel-envelope.{mts,json}`. This finite witness does not establish
 long-session capacity. Browser and local server are closed.
+
+## Follow-up review and workload measurement
+
+Independent inspection confirmed the older static future-read assertion was
+stale: the authored closure now links reckoning, commons, Archive landing and
+hall. The static analysis correctly retains ledger evidence; state-specific
+phase pruning is a separate step. Tests-only `9e88313`, integrated as
+`bee7b6c`, checks that closure and required read. The nine scaling tests pass.
+
+Content review prompted `2f6212d`: either claimant can be visited before
+allocation, record text names the actual installation sites, and both
+regional endings state that an open Archive investigation ends unfinished.
+Record hooks remain available after Blackglass because an unassigned part
+can still be installed then. No natural zero-debt refusal contradiction was
+demonstrated, so no speculative source condition was added for malformed
+states. Build and the 17 combined scaling/parallel-campaign checks pass on
+this later copy. The 52-action rendered evidence above belongs to `c64c47c`;
+the final source still needs rendered verification before its fresh freeze.
+
+The exact-key size-only diagnostic on an isolated `c64c47c` checkout reached
+its separate 500,000-family guard after visiting 287,397 families and 908,913
+transitions. It did not finish the graph. Of visited families, 287,368 were
+playing, 17 departed, two dead and ten completed; these are partial traversal
+counts, not total endings or completion coverage. Wall time was 34.85 seconds,
+maximum RSS 1,873,052 KiB. The largest visited scene counts were commons
+49,246, clinic 43,705, workers 42,267, Archive hall 39,857, landing 31,020 and
+barge 30,983. Most discovered families retained Debt, Supplies, Risk, Tide
+and the regional/Archive phases.
+
+Artifacts: `/tmp/af9-parallel-release-size-500k.{json,log}`; isolated source
+`/tmp/af9-parallel-release-size`. This diagnostic omitted safety, congruence,
+witness replay and completion proof. The release guard remains 250,000.
+Next, independent design and proof reviews assess pruning a flag condition
+only when no potentially reachable effect can change that flag's current
+value. Any fixed-point refinement needs non-circular closure proofs, signed
+justifiers, correct cache dependencies and conservation across successors.
+No new audit method is adopted by this diagnostic or proposal.
