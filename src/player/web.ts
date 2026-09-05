@@ -377,7 +377,7 @@ export const APP_JS = String.raw`(() => {
 
   function renderResources(values) {
     resources.replaceChildren();
-    const entries = Object.entries(values || {});
+    const entries = Object.entries(values || {}).sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0);
     if (entries.length === 0) {
       const empty = document.createElement('p');
       empty.className = 'muted';

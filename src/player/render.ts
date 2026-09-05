@@ -64,7 +64,7 @@ export function renderTerminalObservation(observation: Observation): string {
     lines.push("");
   }
 
-  const resources = Object.entries(observation.resources);
+  const resources = Object.entries(observation.resources).sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0);
   if (resources.length > 0) {
     lines.push(
       `Resources: ${resources
