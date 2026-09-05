@@ -116,7 +116,10 @@ export function packedReachability(
   if (onProgress !== undefined && typeof onProgress !== "function") throw new Error("Invalid packed progress observer");
 
   const codes = [model.initial];
-  const indices = new Map<bigint, number>([[model.initial, 0]]);
+  // Hexadecimal is an injective encoding of a bigint, not a truncated hash.
+  // Node's bigint Map lookups can degrade when many keys share low limbs;
+  // retain the exact packed state while indexing all its bits as a string.
+  const indices = new Map<string, number>([[model.initial.toString(16), 0]]);
   const parents = new Words(), parentChoices = new Words(), heads = new Words();
   // Reverse edges prove completion reachability; they do not reconstruct a
   // completion path for each state. Authored witness paths use parent choices.
@@ -170,12 +173,13 @@ export function packedReachability(
         // Capture every authored choice before interning its successor. Two
         // choices may reach the same tuple and still need distinct witnesses.
         if (!choiceSources.has(choice.id)) choiceSources.set(choice.id, source);
-        let target = indices.get(transition.state);
+        const key = transition.state.toString(16);
+        let target = indices.get(key);
         if (target === undefined) {
           if (codes.length >= stateLimit) throw new PackedGraphLimitError("state", stateLimit);
           target = codes.length;
           codes.push(transition.state);
-          indices.set(transition.state, target);
+          indices.set(key, target);
           parents.push(source);
           const choiceIndex = choiceIndices.get(choice);
           if (choiceIndex === undefined) throw new Error("Foreign packed choice in traversal");
@@ -242,17 +246,21 @@ export function packedReachability(
 
   // These are set-membership predicates. Unknown codes are absent from every
   // result set; isReachable distinguishes absence from a reached negative case.
-  const isReachable = (code: bigint): boolean => indices.has(code);
+  // Preserve exact Map key typing at the public boundary: a number, string or
+  // boxed bigint must not alias a bigint through string conversion.
+  const indexOf = (code: bigint): number | undefined =>
+    typeof code === "bigint" ? indices.get(code.toString(16)) : undefined;
+  const isReachable = (code: bigint): boolean => indexOf(code) !== undefined;
   const isCompletable = (code: bigint): boolean => {
-    const id = indices.get(code);
+    const id = indexOf(code);
     return id !== undefined && completable[id] === 1;
   };
   const isDeadEnd = (code: bigint): boolean => {
-    const id = indices.get(code);
+    const id = indexOf(code);
     return id !== undefined && kinds.get(id) === 3;
   };
   const isNoCompletion = (code: bigint): boolean => {
-    const id = indices.get(code);
+    const id = indexOf(code);
     return id !== undefined && (kinds.get(id) === 0 || kinds.get(id) === 3) && completable[id] !== 1;
   };
   return Object.freeze({ exhaustive: true, model, states: Object.freeze(codes),

@@ -620,3 +620,188 @@ test("packed tuples retain more than 64 flags and own constructor-named fields",
   assert.equal(result.completableCount, 3);
   assert.deepEqual(result.choiceWitnesses.constructor, ["constructor"]);
 });
+
+/*
+ * This graph deliberately gives the packed tuple two ordinary resources. The
+ * two 53-bit resource slots put the first flag at bit 111. Thus the plain,
+ * high-marker, and other-marker hub states have the same low 64 bits while
+ * remaining different full BigInts. The two high-marker choices reconverge to
+ * one exact state, and the hub loop exercises a retained self-edge.
+ */
+const HIGH_BIT_RECONVERGENCE_SCENARIO = {
+  version: 1,
+  initialScene: "start",
+  initialResources: { alpha: 0, omega: 0 },
+  initialFacts: [],
+  scenes: [
+    {
+      id: "start",
+      title: "Start",
+      text: [{ text: "Three paths reach the same hub with different high bits." }],
+    },
+    {
+      id: "hub",
+      title: "Hub",
+      text: [{ text: "The exact high-bit marker controls which close is legal." }],
+    },
+  ],
+  choices: [
+    {
+      id: "plain-to-hub",
+      scene: "start",
+      label: "Take the plain path",
+      description: "Reach the hub without setting a marker.",
+      effects: [{ type: "goTo", scene: "hub" }],
+    },
+    {
+      id: "high-to-hub-a",
+      scene: "start",
+      label: "Take marked path A",
+      description: "Set the high marker before reaching the hub.",
+      effects: [
+        { type: "setFlag", flag: "high-marker", value: true },
+        { type: "goTo", scene: "hub" },
+      ],
+    },
+    {
+      id: "high-to-hub-b",
+      scene: "start",
+      label: "Take marked path B",
+      description: "Set the same high marker by a second route.",
+      effects: [
+        { type: "setFlag", flag: "high-marker", value: true },
+        { type: "goTo", scene: "hub" },
+      ],
+    },
+    {
+      id: "other-to-hub",
+      scene: "start",
+      label: "Take the other marked path",
+      description: "Set a different high marker before reaching the hub.",
+      effects: [
+        { type: "setFlag", flag: "other-marker", value: true },
+        { type: "goTo", scene: "hub" },
+      ],
+    },
+    {
+      id: "loop-hub",
+      scene: "hub",
+      label: "Recheck the hub",
+      description: "Stay at the hub and preserve the exact tuple.",
+      effects: [{ type: "goTo", scene: "hub" }],
+    },
+    {
+      id: "finish-plain",
+      scene: "hub",
+      label: "Close the plain route",
+      description: "Close only when neither marker is set.",
+      when: [
+        { type: "flag", flag: "high-marker", value: false },
+        { type: "flag", flag: "other-marker", value: false },
+      ],
+      effects: [],
+      outcome: { status: "completed", summary: "Plain route closed." },
+    },
+    {
+      id: "finish-high",
+      scene: "hub",
+      label: "Close the high route",
+      description: "Close only with the high marker.",
+      when: [
+        { type: "flag", flag: "high-marker", value: true },
+        { type: "flag", flag: "other-marker", value: false },
+      ],
+      effects: [],
+      outcome: { status: "completed", summary: "High route closed." },
+    },
+    {
+      id: "finish-other",
+      scene: "hub",
+      label: "Close the other route",
+      description: "Close only with the other marker.",
+      when: [
+        { type: "flag", flag: "high-marker", value: false },
+        { type: "flag", flag: "other-marker", value: true },
+      ],
+      effects: [],
+      outcome: { status: "completed", summary: "Other route closed." },
+    },
+  ],
+} as const;
+
+test("packed graph indexes exact high-bit tuples, reconverges witnesses, and preserves invalid membership behavior", () => {
+  const model = modelFor(HIGH_BIT_RECONVERGENCE_SCENARIO);
+  assert.equal(model.flags.length, 2);
+  assert.ok(model.bitCount > 64);
+
+  const plain = successState(model, model.initial, "plain-to-hub");
+  const highA = successState(model, model.initial, "high-to-hub-a");
+  const highB = successState(model, model.initial, "high-to-hub-b");
+  const other = successState(model, model.initial, "other-to-hub");
+  const low64 = (1n << 64n) - 1n;
+
+  // The three hub states are equal below bit 64 but distinct above it.
+  assert.equal(plain & low64, highA & low64);
+  assert.equal(plain & low64, other & low64);
+  assert.notEqual(plain, highA);
+  assert.notEqual(plain, other);
+  assert.notEqual(highA, other);
+  assert.ok((highA >> 64n) !== 0n);
+  assert.ok((other >> 64n) !== 0n);
+
+  // Two authored images must deduplicate to one state while retaining both
+  // authored source witnesses.
+  assert.equal(highA, highB);
+  assert.deepEqual(
+    model.transition(plain, choiceFor(model, "loop-hub")),
+    { kind: "success", state: plain },
+  );
+  assert.deepEqual(
+    model.transition(highA, choiceFor(model, "finish-plain")),
+    { kind: "disabled" },
+  );
+  assert.equal(model.transition(plain, choiceFor(model, "finish-plain")).kind, "success");
+  assert.equal(model.transition(highA, choiceFor(model, "finish-high")).kind, "success");
+  assert.equal(model.transition(other, choiceFor(model, "finish-other")).kind, "success");
+  assert.equal(model.transition(other, choiceFor(model, "finish-high")).kind, "disabled");
+
+  const result = packedReachability(model, { stateLimit: 7, edgeLimit: 10 });
+  assert.equal(result.stateCount, 7);
+  assert.equal(result.transitionCount, 10);
+  assert.equal(result.completableCount, 7);
+  assert.equal(result.deadEndCount, 0);
+  assert.equal(result.noCompletionCount, 0);
+  assert.deepEqual(result.unreachableScenes, []);
+  assert.deepEqual(result.unreachableChoices, []);
+  assert.deepEqual(result.choiceWitnesses["high-to-hub-a"], ["high-to-hub-a"]);
+  assert.deepEqual(result.choiceWitnesses["high-to-hub-b"], ["high-to-hub-b"]);
+  assert.notDeepEqual(
+    result.choiceWitnesses["high-to-hub-a"],
+    result.choiceWitnesses["high-to-hub-b"],
+  );
+  assert.equal(result.sceneWitnesses.hub?.length, 1);
+  assert.equal(result.isReachable(plain), true);
+  assert.equal(result.isReachable(highA), true);
+  assert.equal(result.isReachable(other), true);
+  assert.equal(result.isCompletable(plain), true);
+  assert.equal(result.isCompletable(highA), true);
+  assert.equal(result.isCompletable(other), true);
+
+  // Both high marker bits are a valid-width but unreachable tuple; exact
+  // membership must not alias it with either reachable high-bit state.
+  const bothMarkers = highA | (1n << 112n);
+  assert.equal(result.isReachable(bothMarkers), false);
+  assert.equal(result.isCompletable(bothMarkers), false);
+  assert.equal(result.isDeadEnd(bothMarkers), false);
+  assert.equal(result.isNoCompletion(bothMarkers), false);
+
+  // Preserve Map<bigint> runtime behavior after changing the internal key to
+  // canonical hexadecimal strings: wrong runtime types return false rather
+  // than being coerced or throwing from .toString(16).
+  for (const invalid of [1, highA.toString(16), Object(highA), null, undefined] as const) {
+    assert.equal(result.isReachable(invalid as never), false);
+    assert.equal(result.isCompletable(invalid as never), false);
+    assert.equal(result.isDeadEnd(invalid as never), false);
+    assert.equal(result.isNoCompletion(invalid as never), false);
+  }
+});
