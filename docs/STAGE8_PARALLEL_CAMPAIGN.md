@@ -312,6 +312,11 @@ Reports and root provenance checks are under
 `/tmp/af9-packed-static-current-8m-7428b75*`, with the exact root-check and
 manifest paths indexed in `SYMBOLIC_REACHABILITY_EXPERIMENT.md`. The release
 family guard and main verifier source are unchanged. The next proof review
-concerns the existing permanent monotone false-gate analysis, with retained
-mask identity and collision checks; no new phase implementation has started.
+concerned the existing permanent monotone false-gate analysis. The resulting
+experiment now retains all monotone false-gate flags on pruned choices after
+root found a successor-mask expansion counterexample. Complete historical
+comparison and all 190 trusted-engine witness replays pass on clean `9df0cf7`,
+with 30 focused checks. The current phase graph still hits two million states
+in 21.32 seconds / 1,195,016 KiB maximum RSS; source/artifact checks pass, but
+no backward analysis or witness replay completes. See `PACKED_PHASE_AUDIT.md`.
 Full current verification and the predeclared three fresh players remain open.

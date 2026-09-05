@@ -1112,7 +1112,8 @@ The report, progress, finalization and log share that filename prefix.
 Root provenance check `/tmp/af9-packed-static-historical-root-check-v1.json`
 has SHA-256
 `4567b71ddc0ecc2b60c605eb1ca4918816aced0bb511a2cf181ce4f444768881`.
-Its checker-pending field predates the subsequent independent success. The
+Its `independentWitnessCheckerRun: false` field and pending scope statement
+predate the subsequent independent success. The
 separate checker `/tmp/af9-check-packed-static-historical-v1.mts` (SHA-256
 `628d428b3507fdb1879df08b95c5f3efc800bb53c112d0f5f1386626ddfe0247`)
 imports only the separate clean trusted historical engine/content. It checks
@@ -1205,5 +1206,9 @@ complete comparison should map the accepted 169,922-state static graph into
 the candidate classes, checking every static transition, group congruence and
 uniform completion classification, then replay all 190 historical witnesses.
 The reduced count is unknown and is not required to equal the static count.
-No phase-projection source or campaign run has been made. Current acceptance,
+That proposal has now been implemented and corrected after a multi-justifier
+counterexample to the subset argument. Complete historical static-to-phase
+comparison and all 190 trusted-engine replays pass; the current phase run
+still hits two million states. See `PACKED_PHASE_AUDIT.md` for the exact rule,
+30-check freeze, preserved counterexample and run artifacts. Current acceptance,
 main adoption, full verification, fresh players and publication remain open.

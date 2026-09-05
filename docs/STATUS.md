@@ -102,10 +102,20 @@ million classes (7.50 seconds / 795,528 KiB maximum RSS), then a separately
 reviewed eight-million-class capacity diagnostic also fails (37.63 seconds /
 2,862,832 KiB maximum RSS). All 96 logical checkpoints from the smaller run
 match the larger run's prefix; neither completes backward analysis or replay.
-Both failures and every source/artifact binding are preserved. Read-only
-reviews support investigating the existing permanent monotone false-gate
-analysis with explicit retained-mask identity and collision congruence checks;
-no phase-projection implementation or run has been made. The default all-flag
+Both failures and every source/artifact binding are preserved. Permanent-phase
+projection is now implemented in clean experiment `9df0cf7`; 30 focused checks
+pass. Root found that retaining only currently true pruning justifiers can
+expand the successor read set. The corrected rule retains every monotone
+false-gate flag on a pruned choice, including false siblings. An independent
+complete historical comparison checks all 169,922 static states and 332,402
+edges against 156,103 phase classes / 298,433 edges, with identical completion
+classifications and zero issues. All 190 paths also pass separate trusted-engine
+replay. The current phase run still fails the two-million-state cap in
+21.32 seconds / 1,195,016 KiB maximum RSS, before backward analysis or replay.
+All evidence is preserved in `PACKED_PHASE_AUDIT.md`. Read-only reviews now
+consider backward symbolic safety/completion properties with separate explicit
+authored reachability witnesses; no such implementation or run has begun.
+The default all-flag
 scope and production audit remain unchanged; no current campaign coverage or
 release adoption is accepted.
 The production family guard is unchanged. See

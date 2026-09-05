@@ -45,6 +45,27 @@ control behavior. No next candidate source or campaign run is claimed here.
 These measurements are verification runtimes, not worker authoring time,
 service cost or an equivalent-task model ranking.
 
+The permanent-phase worker supplied a generic helper without the newer engine
+analyzer dependency. Root caught normalization setting retained bits true,
+then found that the proposed subset proof failed when a second monotone gate
+became true behind an already-pruned route. Two initial root fixtures failed
+content validation; the valid counterexample and exact source are preserved.
+The independent four-test suite reproduced the handoff failure. Retaining all
+monotone false-gate siblings repairs the invariant, and root adds conservative
+superset/immutability checks. Clean `9df0cf7` passes 30 combined checks in
+2.36 seconds. The worker's sampled 1,000-state/2,083-transition comparison
+before the counterexample did not establish the generic subset argument.
+
+The historical comparison harness independently maps every static state and
+edge into phase classes. Root adds exact completion counts, all-edge accounting
+and static-edge handoff checks; independent review accepts those changes.
+The complete comparison takes 53.35 seconds, while the separate phase graph
+and witness profiler takes 2.50 seconds and trusted replay another 0.52 seconds.
+The current phase diagnostic still fails its two-million-state cap in
+21.32 seconds. These are verification runtimes, not authoring/model cost
+comparisons; the historical success does not establish current acceptance.
+See `PACKED_PHASE_AUDIT.md` for source identities and every preserved failure.
+
 Reference: `gpt-5.6-luna`, reasoning `max`, as requested. These are development workers, not blind playtesters. Service cost and exact per-worker token counts are unavailable; no dollar estimates are claimed.
 
 | Task | Accepted output | Manager/peer corrections | Timing evidence |

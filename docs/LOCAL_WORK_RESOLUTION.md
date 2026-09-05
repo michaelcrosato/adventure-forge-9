@@ -133,3 +133,18 @@ The corresponding source-preparation manifests and root checks are indexed in
 and the same two local branches. All three diagnostic processes are closed.
 These deliberately retained sources still need an eventual reconstructible
 archive/disposition; final cleanup and publication are not complete.
+
+Permanent-phase work adds two detached probes:
+`/tmp/af9-packed-phase-historical-139e48` and
+`/tmp/af9-packed-phase-current-7428b75`. Each has its own locked dependencies
+and only the four verifier files from clean tested `9df0cf7`. The historical
+and current trusted source roles reuse their existing clean checkouts. The
+historical comparison and trusted replay complete; the current two-million-state
+failure remains preserved. The original rejected justifier helper and root
+counterexample variants are also retained outside Git. See
+`PACKED_PHASE_AUDIT.md` for exact source and artifact hashes.
+
+The refreshed preservation inventory is 40 worktrees and the same two local
+branches. All comparison, diagnostic and test processes from this phase are
+closed. No archive batch's removal counts changed, and no prior probe was
+overwritten. Main adoption, publication and final cleanup remain pending.
