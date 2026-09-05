@@ -252,3 +252,33 @@ only when no potentially reachable effect can change that flag's current
 value. Any fixed-point refinement needs non-circular closure proofs, signed
 justifiers, correct cache dependencies and conservation across successors.
 No new audit method is adopted by this diagnostic or proposal.
+
+## Final-copy rendered check and rejected pruning prototype
+
+On game source `2f6212d` (documentation head `1497770`), the full 52-action
+developer trace was replayed from the current engine start. Its old action
+IDs were reused as inputs; no save identities were replaced. Six current
+checkpoints were uploaded through the browser: optional-visit commons, both
+regional endings while the Archive remained open, settled/unrecovered and
+settled/carried record views, and the predecessor of the 52-action ending.
+Three actual ending clicks completed correctly. Final save download/reload
+matched the current replay; mobile width was 390/375 and browser errors were
+empty. The relevant offer/record screenshots were inspected.
+
+Game build is `af9-dce7b1dc57b6d6febcc9bb72`. The actual final request remains
+6,264 bytes and returns 200 with exact checkpoint/public observation. See
+`/tmp/af9-parallel-final-copy-{saves.mts,browser.mjs,browser.log}`,
+`/tmp/af9-parallel-final-copy-*.save`,
+`/tmp/af9-parallel-final-browser-completed.save` and
+`/tmp/af9-parallel-final-envelope.{mts,json}`. This follow-up is six uploads
+and three browser choices, not a second 52-click journey. All 115 non-audit
+checks and the build pass; log
+`/tmp/af9-parallel-final-nonaudit-tests.log`. Browser, server and test processes
+are closed. The unchanged full audit still has its retained workload failure.
+
+The local-stability prototype is rejected: it removed only seven keys from
+the same 100,000-state prefix and has a reproduced shrinking-active-field
+violation. See `LOCAL_FLAG_STABILITY_AUDIT.md` for the exact counterexample,
+measurements and preserved artifacts. Symbolic reachability and exhaustive
+prefix partitioning are under independent feasibility review; no new method
+or limit has been adopted and no fresh Stage 8 players have been dispatched.

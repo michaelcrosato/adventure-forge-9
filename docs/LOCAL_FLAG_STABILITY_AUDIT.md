@@ -1,8 +1,9 @@
 # Local flag stability — prospective audit refinement
 
-Status: design, independent proof review and isolated size-only prototype.
-Not adopted. The full game goal, current rules and 250,000-family release
-guard remain unchanged. This contract precedes a release implementation.
+Status: prototype rejected after measurement and a reproduced handoff
+counterexample. Not adopted. The full game goal, current rules and
+250,000-family release guard remain unchanged. The prospective contract
+below preceded the experiment and is retained with its failure.
 
 ## Measured problem
 
@@ -90,3 +91,41 @@ campaign with safety, collision, successor, witness and reverse-completion
 checks at the existing release guard. Full `npm run verify`, final rendered
 checks and a separate clean source freeze remain prerequisites for the
 predeclared fresh Stage 8 players.
+
+## Result: rejected
+
+The size-only experiment on frozen `c64c47c` hit both 100,000-family bounds.
+The original traversal visited 54,922 families / 180,240 transitions; the
+candidate visited 54,500 / 178,539. Applying candidate keys to the exact
+original 100,000-state prefix produced 99,993 distinct keys, just seven fewer.
+Total experiment time was 26.1 seconds. Candidate execution reused a warm
+cache and retained the original queue, so timings and RSS are not a fair
+performance comparison. Neither traversal finished or checked full safety,
+congruence or completion.
+
+More decisively, manager review reproduced a violation of the existing
+active-field handoff invariant. With `A=true`, `B=false`, `start` has a
+choice guarded by `A=false` that writes `B=true`, plus a free move to `hub`.
+The hub's `A=false` route leads to a hidden scene with a `B=true` choice.
+Before moving, proving A stable removes both the writer and hidden route
+before B can supply a pruning cause. After moving, the initial closure lacks
+the writer, so both A and B supply causes in the same round, even though the
+hidden scene is subsequently removed. The candidate's active flags grow
+from `{A}` to `{A,B}` on the legal move. Accumulating earlier round causes
+alone does not prevent this.
+
+The manager's direct analyzer fixture is
+`/tmp/af9-local-fixed-point-root-fixture.{mts,json}`. The independently
+retained worker counterexample is
+`/tmp/af9-local-fixed-point-counterexample.{mjs,json}`. These are abstract
+analyzer fixtures, not claimed complete games. Prototype
+`/tmp/af9-local-fixed-point-profile.mts` has SHA-256
+`f6f77b8b9a1e52392b0166fb3e4f8b7509a71bfdfcfd4064a9ec0e8f5b824e2b`;
+measurement `/tmp/af9-local-fixed-point-profile-100k.json` has SHA-256
+`0840b978b996e7f630b1ff8fb16b87994c9272552d246712f7cdde51094a5881`.
+Original attempts/logs and the earlier 500,000-family diagnostic remain.
+
+Do not integrate this candidate, remove the handoff assertion, or describe
+the small prefix difference as a scalability result. Independent feasibility
+work now compares exact symbolic reachability with an exhaustive partition
+of real early prefixes. Neither alternative is adopted yet.
