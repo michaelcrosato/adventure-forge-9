@@ -102,3 +102,56 @@ The graph enumerates authored choices. The separate exported `end()` action
 has focused engine coverage but is not added to this graph's witnesses or
 transition count. Full-observation equivalence is not claimed: facts, journal,
 receipt revision and receipt hash remain representative metadata as above.
+
+## Reedway phase pruning
+
+Source `b49fb6d`, integrated as `c9655d1`, adds a state-specific conservative
+closure. A flag qualifies as monotone only when every authored write sets it
+to true. If it is already true, a choice requiring it to be false can never
+become legal again. The closure excludes that choice, retains every true
+pruning justifier, and follows every other possible destination. Resettable
+flags such as Sera's hostility cannot justify this pruning. False or absent
+flags retain their branches; the analysis does not speculate about later
+writes.
+
+The cache uses the current scene and the mask of monotone false-gate flags in
+its original static closure. Flags outside that mask cannot affect the
+resolution. Collision checks independently resolve the retained sets and
+keys of both states and both successors. Every resource balance remains in
+the key. Independent review found no correctness blocker; focused tests cover
+resettable gates, false-first paths, different phase justifiers, irrelevant
+history and unknown vocabulary. This refines the earlier static closure; it
+does not establish full-observation equivalence.
+
+Reedway still exceeds the existing 250,000-state guard. Preserved worker
+measurements on `b49fb6d` are 42.87 seconds / 1,024,940 KiB maximum RSS at
+250,000, and 50.95 seconds / 1,165,480 KiB at 300,000. Neither completed.
+After reviewing those failures, the manager explicitly authorized one
+1,000,000-state diagnostic with a 4,096 MiB Node heap ceiling. It also failed
+after 3:31.15 with 3,626,260 KiB maximum RSS. Logs are
+`/tmp/af9-audit-monotone-250k.log`,
+`/tmp/af9-audit-monotone-300k.log` and
+`/tmp/af9-audit-monotone-1m.log`. No complete result or witness map was emitted
+by these attempts. The production guard remains 250,000.
+
+## Prospective verification through conserved parameters
+
+The million-state failure motivates a different proof representation before
+further world expansion. A preparatory analysis is being implemented
+separately from the active audit. It identifies every field read by a future
+choice or potentially written by a future effect, using the conservative
+phase closure. All such values must remain concrete. Other resources and
+text-only flags may be future-constant parameters: their exact current values
+would be carried unchanged through every continuation, rather than
+enumerating their Cartesian product with independent new activities.
+
+This is not yet an accepted audit mode. Before adoption it needs explicit
+conservation checks, proof that parameters cannot affect choice legality or
+future writes, exact conditional-text templates under parameter substitution,
+adversarial tests for late reads/writes and resettable gates, and real
+whole-campaign witnesses for every authored choice. Reverse completion must
+hold for all represented parameter bindings, not only a convenient example.
+Reported counts must distinguish parameterized families from concrete states;
+the earlier resource-exact state counts cannot be relabeled as equivalent
+coverage. No sampling, changed resource balances or skipped completion
+obligations are authorized by this investigation.
