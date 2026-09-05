@@ -322,8 +322,8 @@ export const REEDWAY_CHOICES = [
   {
     id: "close-reedway-clinic-account",
     scene: "reedway-commons",
-    label: "Close the clinic account",
-    description: "Record that the recovered regulator powers Ilyra's annex sterilizer and close the Reedway account.",
+    label: "Finish this journey: close the clinic account",
+    description: "Finish this journey by recording that the recovered regulator powers Ilyra's annex sterilizer and closing the Reedway account.",
     when: [{ type: "flag", flag: "reedway-clinic-powered", value: true }],
     effects: [],
     outcome: {
@@ -334,8 +334,8 @@ export const REEDWAY_CHOICES = [
   {
     id: "close-reedway-ferry-account",
     scene: "reedway-commons",
-    label: "Close the ferry account",
-    description: "Record that the recovered regulator powers Orin's heavy worker transport and close the Reedway account.",
+    label: "Finish this journey: close the ferry account",
+    description: "Finish this journey by recording that the recovered regulator powers Orin's heavy worker transport and closing the Reedway account.",
     when: [{ type: "flag", flag: "reedway-ferry-powered", value: true }],
     effects: [],
     outcome: {
