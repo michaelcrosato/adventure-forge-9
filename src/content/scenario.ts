@@ -248,10 +248,14 @@ export const RAW_SCENARIO = {
           text: "The control chamber is half flooded. One lever can set the town's future.",
         },
         {
-          text: "A shared repair needs Nessa's tools and Ilyra's promise. Council control needs Tovan's seal.",
+          text: "Shared repair needs one repair kit, one supply, one silverleaf dose, and Ilyra's promise. Council control needs Tovan's seal. Evacuation needs one supply or a kit to brace the landing.",
         },
         {
           text: "An evacuation route can save families, but it leaves the market and its tanks behind.",
+        },
+        {
+          text: "The scouts used your last supply, so shared repair is unavailable. Your kit can still brace the evacuation landing.",
+          when: [{ type: "flag", flag: "repair-tools", value: true }, { type: "flag", flag: "scouts-marked", value: true }],
         },
         {
           text: "The stolen order names Tovan Rusk as its owner.",
