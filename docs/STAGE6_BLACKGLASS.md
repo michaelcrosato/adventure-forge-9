@@ -1,6 +1,6 @@
 # Blackglass Works — timed traversal wave
 
-Status: bounded clock engine and Blackglass content integrated locally. All 69 checks pass, including full authored traversal under the explicitly adjusted workload ceiling. Cross-area, clock, consequence, browser and final rendered wording checks pass. This candidate is ready for the predeclared three fresh neutral games; it is not published or accepted. The full requested world breadth and depth remain the completion target.
+Status: the first frozen candidate passes its mechanical checks and all three fresh games completed, but publication is held for the unclear-risk feedback below. A targeted supply/forecast correction and fresh verification are in progress. The full requested world breadth and depth remain the completion target.
 
 The prior turn delivered the Archive expansion and verified its public deployment. This wave should add a different interaction: acting changes a tide/patrol window, routes carry different timing and risk costs, and a companion's willingness to help follows earlier choices. A new wrapper around ordinary choices, another evidence counter, or duplicated water/Archive context would not add that behavior.
 
@@ -82,3 +82,25 @@ At `98b8dc3`, build `af9-340db03e8b00a55ba0b932e4`, the final wording loaded thr
 All 130 first-discovered authored choice witnesses were replayed to measure their actual request envelopes. The longest witness is 21 actions and its last request is 3,197 bytes; the largest request among all witnesses is 3,235 bytes. Both longest/largest candidates passed an actual `/api/choose` request with checkpoint/replay parity. Artifact `/tmp/af9-blackglass-witness-envelope.json`. Longer deliberate detours remain possible, as the separate 26-action browser trace demonstrates; no finite maximum campaign save length is claimed.
 
 Independent review found the terminal reduction sound under the current vocabulary. The traversal covers authored choices, not the separate exported `end()` operation; direct departures retain focused engine tests rather than exhaustive graph witnesses. Facts, journal, receipt revision and receipt hash remain representative projection fields, so no exact full-observation-equivalence claim is made.
+
+## First fresh batch — retained, publication held
+
+Frozen commit **08156a1**, trusted checkout `/tmp/af9-stage6-verified`, source identity `2c408cdbae181f8bd1a9b8418b7c48a9962e875c635ad5d41e075943676a3eb7`, build `af9-340db03e8b00a55ba0b932e4`. All used fresh neutral `gpt-5.6-luna` / `max` conversations, seeds 1–3, unchanged prompts and a 60-turn ceiling. All three completed the full game and original same-conversation interviews. Independent setup, source, integrity and replay checks passed without executing archived source. The validator's `liveAccepted` field denotes pipeline validity, not manager product acceptance.
+
+| Seed / run suffix | Actions / elapsed | Actual Blackglass route | Clarity / enjoyment |
+| --- | --- | --- | --- |
+| 1 / `03-54-34-498Z-60cec881` | 24 / 123.978 s | Own kit + free canal; public technical verdict; gallery at Risk 2 / Supplies 1; rush raises Risk to 3; forced scarred repair | 4 / 4 |
+| 2 / `03-54-34-496Z-f8d63148` | 26 / 137.418 s | Own kit + paid scouts; protected Mara and public technical verdict; gallery at Risk 1; quiet marks and clean repair | 5 / 5 |
+| 3 / `03-54-34-497Z-557f1970` | 24 / 129.270 s | Same dangerous approach/result as seed 1 | 4 / 5 |
+
+All run IDs begin `2026-09-05T`. Evidence is under `/home/micha/.local/share/adventure-forge-9/runs/`; exports `stage6-first-seed{1,2,3}-<full-run-id>.tar.gz` and SHA-256 sidecars are under `.../exports/`. Original free and structured responses remain preserved. All three entered Blackglass and encountered the controls, reported no observed defect and wanted another run. Median clarity 4/5 meets the numerical gate. All still chose canalwright/shared water/public technical publication; other origins remain mechanically covered.
+
+Two players reported unclear Blackglass consequences. Seed 1's original structured response includes “Some resource and tide consequences were not fully predictable.” Seed 3 reported that the optional area's risks and likely endpoint were unclear. Both named the pressure scar as their worst moment. Their traces reveal a forecast gap: they reached pressure control at **Tide 2**, but the gallery rush crossed the separate **Risk 3** threshold. Holding the valve then advanced Tide to 3. They had retained one supply through the earlier risky road choice but could not use it for a quiet crossing. The entry explained tide without the attention threshold. The scar was mechanically correct; the available information and alternatives were insufficiently clear. Seed 1 also repeated the earlier uncertainty about Mara's role after technical proof, a separate known presentation issue.
+
+## Prospective feedback correction
+
+Before any new runs, declare this correction: explain the clean-setting tide/risk requirements before committing, warn beside the public patrol rush that Risk 3 forces a hurried repair unless Nessa helps, and add `brace-the-conduit-ledge`. It spends one retained supply on rope/canvas, advances tide by one and adds no risk. It preserves the public Archive verdict and existing risky/quiet options. It does not erase accumulated risk or make late pressure damage disappear. Supplies must exist, the tide window must remain open, and no repeat resource farm may result.
+
+Manager regressions ran against the first candidate: 8/9 consequence cases passed and the new supply-route case failed specifically because that choice was unavailable. Log `/tmp/af9-blackglass-brace-baseline-test.log`; the exhausted-supply completion case already passed. After implementation require the full audit and existing invariants, these counterfactual tests, and rendered choice/ending verification before a new source freeze.
+
+Run three fresh neutral games at seeds 1–3 with the same model/settings/protocol. Require all attempts to retain valid evidence/replay/interviews, at least two natural Blackglass/control entries, median clarity at least 4 and no blocking defect; inspect contradictions regardless of ratings. Report the number reaching the public gallery at Risk 2 with a spare supply. Only claim supported improvement at the observed problem if at least two naturally encounter that situation and none report the corresponding unclear-risk consequence. Lesser exposure limits the correction to its mechanical/rendered proof and whatever natural paths were actually tested. Preserve this first batch and every further attempt; do not replace its negative reports with the next ratings.

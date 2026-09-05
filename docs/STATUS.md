@@ -22,11 +22,11 @@ The engine performance correction is integrated: privately constructed frozen st
 
 The user's hosting request is fulfilled: https://adventure-forge-9.vercel.app is public and connected to GitHub main. The Archive expansion was pushed as `ad92740` and automatically reached Ready production deployment `dpl_J5rMtKvQQ2epAo12YXi1W1Le7Z5w`; its exact GitHub source SHA and production alias were verified. GitHub's independent verification also passed. Automatic browser checkpoints survive stateless function requests; game-content updates can still require a new journey. See HOSTING.md.
 
-All current live runs are closed and exported. Historical source checkouts remain separate: Cycle 3 at `34af626` in `/tmp/af9-cycle3-verified`; first Archive batch at `59afce4` in `/tmp/af9-stage5-verified`; repaired Archive batch at `dbabc94` in `/tmp/af9-stage5-hearing-verified`. Future live runs require a new source freeze. No final world-scale or interaction-depth acceptance is claimed.
+All current live runs are closed and exported. Historical source checkouts remain separate: Cycle 3 at `34af626` in `/tmp/af9-cycle3-verified`; first Archive batch at `59afce4` in `/tmp/af9-stage5-verified`; repaired Archive batch at `dbabc94` in `/tmp/af9-stage5-hearing-verified`; first Blackglass batch at `08156a1` in `/tmp/af9-stage6-verified`. Future live runs require a new source freeze. No final world-scale or interaction-depth acceptance is claimed.
 
 ## Required next work
 
-1. Freeze the verified Blackglass candidate and run/preserve three fresh neutral Luna/max games. Require the predeclared exposure, replay/interview and clarity gates before publication.
+1. Complete the targeted Blackglass supply/forecast correction prompted by the first three fresh games, verify it, freeze source again and repeat the neutral batch. Publication remains held despite the first batch meeting its numeric clarity gate.
 2. Review persistent regional travel and safe earlier-area revisits as the next breadth step. Current chapters are mostly sequential; another sequential investigation area alone would not establish an explorable world.
 3. Preserve the strict completion audit as the world grows; address state growth without discarding meaningful future distinctions. A 1,010-action local checkpoint measured 79,097 request bytes and restored in about 32 ms, but the hosted 256 KiB envelope limit remains a finite long-session constraint.
 4. Continue reviewed waves with cross-area consequences, character counterfactuals, long sessions and authentic feedback. Clarify remaining kit/testimony tradeoffs and the distinction between accepting a council seal and actually granting control. The full completion audit remains outstanding.
