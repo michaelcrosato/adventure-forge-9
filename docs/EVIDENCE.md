@@ -52,3 +52,7 @@ The compact browser UI was exercised at 1280×577 and 390×844. Mobile document 
 The mechanical suite now has 16 passing test cases, including rehashed checkpoint rejection, cumulative resource checks, effective isolation assertions, and synthetic protocol tamper checks. Synthetic fixtures explicitly cannot grant live acceptance.
 
 The pinned Codex 0.153.3 App Server initialized using the proposed capability configuration. `config/read` plus resolved session-flag layers confirmed the overrides. This preflight made no model call and is not a live playtest. Exact source reviewed: `openai/codex` tag `rust-v0.153.3`, commit `b1a547b1f73ce86205d9222ac19cff334b3b7a2e`.
+
+## Expansion evidence index
+
+[STAGE5.md](STAGE5.md) preserves both three-player Archive batches, the first batch's early-hearing problem, the correction, mechanical/browser recovery witnesses and limited natural-play acceptance. [STAGE6_BLACKGLASS.md](STAGE6_BLACKGLASS.md) preserves both three-player Blackglass-era batches, the first batch's opaque pressure-scar consequence, the supply/forecast correction and its separate acceptance gates. All six Blackglass-era attempts completed original same-conversation interviews and were exported with verified checksums. The corrected batch naturally entered Blackglass 2/3 times, but encountered the targeted Risk 2 / spare-supply gallery state 0/3 times; it does not support a measured improvement claim for that correction. Earlier failures and incomplete exposures remain in [CYCLE2.md](CYCLE2.md).
