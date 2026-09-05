@@ -2,7 +2,7 @@
 
 A deterministic text RPG in one persistent world, built through authored stories, blind subscription playtests, and honest player interviews.
 
-The full target is the exploration breadth of Skyrim and the local choice depth of Baldur's Gate 3. The current game is a small Lowsail–Red Sluice expedition: repair and share the water, accept council control, or evacuate the market. Preparation, medicine, supplies and obligations change the return. It is not yet a large world.
+The full target is the exploration breadth of Skyrim and the local choice depth of Baldur's Gate 3. The current game follows a stolen water order from Lowsail through Red Sluice and into the Lantern Archive. Repair and share water, accept council control, or evacuate the market, then investigate the authority behind the diversion. Optional canalwright, field-medic and oathkeeper backgrounds change available approaches. Earlier choices affect evidence, witness trust, debt and the return to town. This remains a small authored game, not yet a large world.
 
 **[Play in your browser](https://adventure-forge-9.vercel.app).** Vercel deploys successful pushes to `main` automatically. Progress saves in this browser, and Save journey downloads a separate copy. Saves are tied to the game version; after a content update, keep the old save and start a new journey if it cannot resume. See [hosting details](docs/HOSTING.md).
 
@@ -49,4 +49,4 @@ For an older build, follow [the trusted-checkout replay procedure](docs/REPLAY.m
 - [Agent benchmark](docs/AGENT_BENCHMARK.md): Luna/max as the first development baseline.
 - Original briefs: preserved in Git commit `15ada58`, removed from the active tree.
 
-The subscription pipeline and town expedition have accepted live evidence. Cycles 1 and 3 support two limited presentation improvements; Cycle 2's failed broader comparisons remain documented. Connected-area development is underway. The full scale and depth goal stays active throughout.
+The subscription pipeline and town expedition have accepted live evidence. Cycles 1 and 3 support two limited presentation improvements; Cycle 2's failed broader comparisons remain documented. The [Archive expansion record](docs/STAGE5.md) separates implementation, mechanical checks and fresh-player feedback, including the corrected premature-hearing restriction. The full scale and depth goal stays active throughout.

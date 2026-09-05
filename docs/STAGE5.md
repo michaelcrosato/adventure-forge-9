@@ -1,6 +1,6 @@
 # Lantern Archive — first connected-area expansion
 
-Status: integrated candidate, not yet published or accepted. The full world-scale goal remains outstanding.
+Status: the repaired expansion meets its declared mechanical, browser and initial live-play gates; publication is being finalized. The full world-scale goal remains outstanding.
 
 The candidate adds one investigation area with seven scenes and four named inhabitants: archivist Sera Vale wants a defensible record; porter Jalen Rook wants amnesty; copyist Mara Venn wants her brother protected; Prefect Oren Vask wants to preserve his authority. Three evidence tracks lead to a hearing and a changed return to Lowsail. The complete game now has 18 authored scenes and 91 choices including exits and navigation; these are authored counts, not a claim of world-scale depth.
 
@@ -50,3 +50,23 @@ All three attempts completed, entered the Archive naturally, gave same-conversat
 Prospective correction, declared before new code or players: make an undecided hearing return to the investigation even after testimony, with no resource farming; explain the separate evidence required to remove Vask before calling the hearing; explicitly state that backgrounds are optional and selected in the starting market before visiting a location. Keep the verdict itself irreversible. Preserve existing routes and repeat the full audit plus a regression that obtains the missing counterseal after an early hearing, then publishes anonymously.
 
 After mechanical checks, freeze a new candidate and run three new neutral Luna/max players at seeds 1–3 with unchanged gameplay/interview instructions. Require the original technical/exposure/clarity gates, at least two hearing exposures, and zero reports among the hearing-exposed players that witness protection necessarily leaves Vask in office or that a premature hearing prevented further investigation. Report actual early-hearing exposure separately; absence of that trigger limits any causal improvement claim. Do not erase or relabel this first batch.
+
+## Repaired hearing batch and acceptance
+
+Frozen source: `dbabc94`, build `af9-1490bb60e9ff6ad4be06a0aa`, source SHA-256 `23df15fb883c1b578a83b96d4ad199a7950a54119d0fc634f158b3cf2f5a25e7`; trusted checkout `/tmp/af9-stage5-hearing-verified`.
+
+| Seed | Run ID | Actions / route | Clarity / enjoyment |
+| --- | --- | --- | --- |
+| 1 | `2026-09-05T02-52-07-624Z-d56340df` | 19; canalwright, clinic detour, borrowed kit, shared water, technical publication without witness contact | 5 / 5 |
+| 2 | `2026-09-05T02-52-07-628Z-99633d6e` | 18; canalwright, own kit, shared water, technical publication without witness contact | 5 / 5 |
+| 3 | `2026-09-05T02-52-07-637Z-fd616724` | 20; canalwright, clinic detour, own kit, shared water, protected testimony and technical publication | 5 / 5 |
+
+All three attempts completed, entered the hearing, passed runner integrity/replay checks, supplied original same-conversation interviews and wanted another run. The earlier mistaken protection/Vask tradeoff was reported by 0/3; no observed defects were reported. The declared gates pass. All selected the canalwright background and completed a technically sufficient case before the hearing: 0/3 encountered an early hearing or used adjournment. The batch supports initial release of the expansion and clearer requirements in these observed paths; it does not isolate the causal effect of adjournment, prove all backgrounds/origins were understood, or measure general human enjoyment.
+
+Retained feedback: seed 1 was uncertain about borrowing versus using an own kit; seed 2 was unsure whether testimony added value after technical proof; seed 3 found tool/evacuation tradeoffs dense. The first two loosely described technical evidence as protecting Mara, although they never contacted her. The engine only records omission of her name on those paths and makes no personal-protection promise. That interpretation remains a presentation/relationship caveat for further work. No original response has been corrected or substituted.
+
+The six Stage5 games took 112.962, 100.526, 104.147 seconds (first batch) and 108.218, 110.707, 123.268 seconds (repair batch), including interviews. All six were exported from their matching trusted checkouts into `~/.local/share/adventure-forge-9/exports/stage5-first-seed*` and `stage5-hearing-seed*`; each archive has a validated `.sha256` sidecar. Both batches received independent recorded-source/provider/thread/replay audits. The repaired batch matched its frozen source, model/effort and isolated player configuration in all three attempts; no provider tool-capability events were found. Original free/structured responses matched the preserved player-response events exactly, and each interview stayed on its own distinct gameplay thread. The independent reviewer confirmed the declared gates pass with no natural early-hearing exposure.
+
+Final mechanical verification has 45 passing tests, including the early-hearing regression. The current exhaustive abstraction contains 76,117 states and 129,874 legal transitions, with zero unreachable content, dead ends or unfinished states lacking a completed route. Removing the obsolete one-time adjournment condition lets previously equivalent navigation histories collapse; no completion invariant was removed. The largest representative projection measured 412 words, explicitly not every possible accumulated fact-list variant. Manager test time was 15.20 seconds in `/tmp/af9-stage5-final-publish-verify.log`; the local Vercel production build also passed.
+
+The stateless browser handler completed a 23-action early-hearing recovery journey on the repaired source. Reloads after the first and second adjournments resumed the Archive hall at revisions 16 and 18. After collecting the counterseal, anonymous publication completed with revision/journal count 23. Save download and completed reload passed. Mobile width was 375 pixels in a 390-pixel viewport, with no browser errors. Inspected screenshots: `/tmp/af9-hearing-initial.png` and `/tmp/af9-hearing-mobile.png`; downloaded checkpoint: `/tmp/af9-hearing-completed.save`. This supplies direct mechanical/browser coverage of the branch not taken by the new blind players.

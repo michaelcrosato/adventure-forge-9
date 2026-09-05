@@ -35,22 +35,23 @@ new state field must extend the key and its read analysis before this audit is
 sound.
 
 On the Stage 5 source plus the Archive path repair (`756b295`), the audit
-produced 93,491 canonical states and 149,690 transitions. After distinguishing
-document omission from personal protection (`bf6c7f1`), the manager's full
-verification produced the following current measurements:
+produced 93,491 canonical states and 149,690 transitions. Distinguishing
+document omission from personal protection (`bf6c7f1`) produced 95,213 states
+and 150,838 transitions. The final hearing repair (`dbabc94`) removes an
+obsolete one-time navigation guard and yields the following current measurements:
 
 | Measure | Result |
 | --- | ---: |
-| Canonical future-relevant states | 95,213 |
-| Legal transitions checked | 150,838 |
-| Merged successor visits checked | 55,626 |
-| Congruent successor comparisons | 158,167 |
+| Canonical future-relevant states | 76,117 |
+| Legal transitions checked | 129,874 |
+| Merged successor visits checked | 53,758 |
+| Congruent successor comparisons | 159,487 |
 | Authored scenes / choices | 18 / 91 |
 | Unreachable scenes / choices | 0 / 0 |
 | Dead ends / no-completion states | 0 / 0 |
 | Maximum legal choices | 8 |
-| Representative projection word maximum | 391 |
-| Audit test wall time in manager verification | 16.12 seconds |
+| Representative projection word maximum | 412 |
+| Audit test wall time in manager verification | 14.97 seconds |
 
 The archived full traversal for the original Stage 5 source is recorded as
 713,703 states with 168 no-completion states at `d1cd95c`; the older `2179a18` source is
