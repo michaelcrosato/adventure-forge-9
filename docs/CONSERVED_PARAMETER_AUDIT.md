@@ -92,3 +92,29 @@ completion results against existing finite exact audits on tractable
 snapshots, then run the entire current authored campaign. Report family
 counts separately from concrete-state counts. Only a complete validated run
 can satisfy the mechanical gate; this design and its component tests cannot.
+
+## Preparatory components
+
+`12a4ae2` adds the independent future-influence analysis; `8ada86d` adds
+exact parameter bindings, frame checks, partial text evaluation and binding
+substitution, with manager hardening and integration tests. Neither changes
+the active audit's resource key. The resolved shared-water shore state has
+seven active resources and three conserved ones: Archive Evidence, Evacuees
+and Tide. Eight historical flags are conserved text parameters. This is a
+measurement of one current future closure, not a claim that those fields
+are constant throughout the campaign or that the new audit already scales.
+
+Eleven component tests pass, including actual changed-hub text substitution,
+late resource and clock writes, resettable gates, unsupported behavior behind
+a closed branch, different exact displayed balances, and rejection of changed
+or missing bindings. Build and all 96 non-audit tests pass on `8ada86d`.
+Artifacts: `/tmp/af9-conservation-components.log` and
+`/tmp/af9-conservation-nonaudit-tests.log`.
+
+The next steps are a compiled analysis with a detached immutable scenario
+snapshot and safe phase cache, independent semantic review, and an explicit
+family-audit implementation. That implementation must replay actual
+authored-choice witnesses and compare completed results against tractable
+earlier exact audits before it replaces a release check. The existing
+250,000 concrete-state guard is unchanged, and full Reedway acceptance
+remains pending.

@@ -155,3 +155,8 @@ Reported counts must distinguish parameterized families from concrete states;
 the earlier resource-exact state counts cannot be relabeled as equivalent
 coverage. No sampling, changed resource balances or skipped completion
 obligations are authorized by this investigation.
+
+The narrower implementation contract is in `CONSERVED_PARAMETER_AUDIT.md`.
+Preparatory future-influence and text/binding/frame helpers are integrated in
+`12a4ae2` and `8ada86d`, with 11 component checks and 96 passing non-audit
+checks overall. No family key has replaced the concrete audit yet.
