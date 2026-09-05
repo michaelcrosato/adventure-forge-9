@@ -221,10 +221,10 @@ export const RAW_SCENARIO = {
       title: "The Canal Road",
       text: [
         {
-          text: "The road follows a dry canal toward Red Sluice. The stolen order points uphill.",
+          text: "Immediate costs: follow the canal adds 1 risk and spends 0 supplies. Paying the scouts spends 1 supply and adds 0 risk.",
         },
         {
-          text: "A scout's mark could avoid the worst washout, if you spend supplies.",
+          text: "Later, keeping a supply can support a shared repair. Scouts let all eight families cross without medicine; without them, an injured family may be left behind.",
         },
       ],
     },
@@ -516,14 +516,14 @@ export const RAW_SCENARIO = {
       id: "follow-canal",
       scene: "sluice-road",
       label: "Follow the canal",
-      description: "Keep your supplies and cross the washout without scouts. Risk rises; evacuating every family later will require medicine for an injured straggler.",
+      description: "Immediate cost: risk +1; supplies +0. Later, the kept supply can support a shared repair, but an unmarked evacuation may leave one injured family behind unless you spend medicine.",
       effects: [{ type: "adjustResource", resource: "risk", delta: 1 }, { type: "goTo", scene: "red-sluice-gate" }],
     },
     {
       id: "pay-scouts",
       scene: "sluice-road",
       label: "Pay the canal scouts",
-      description: "Spend one supply to mark a safe evacuation path for all eight families. With a borrowed kit, this spends the last supply needed for a shared repair.",
+      description: "Immediate cost: supplies -1; risk +0. Later, scouts let all eight families cross without medicine; with a borrowed kit, this spends the last supply needed for a shared repair.",
       when: [{ type: "resourceAtLeast", resource: "supplies", value: 1 }],
       effects: [
         { type: "adjustResource", resource: "supplies", delta: -1 },
