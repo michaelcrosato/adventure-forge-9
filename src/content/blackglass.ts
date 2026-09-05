@@ -167,6 +167,9 @@ export const BLACKGLASS_SCENES = [
         text: "The gallery narrows to a wet ledge above the pressure pipes. The next choice decides whether you move with the current or wait for cover.",
       },
       {
+        text: "A clean setting requires reaching the control room before Tide 3 and with Risk 2 or lower. At Risk 3+, the watch interrupts unless Nessa has agreed to help.",
+      },
+      {
         text: "Nessa's shared-repair marks still point to a brace that can carry your weight.",
         when: [{ type: "flag", flag: "shared-water", value: true }, { type: "resourceAtMost", resource: "risk", value: 1 }],
       },
@@ -443,6 +446,23 @@ export const BLACKGLASS_CHOICES = [
     ],
   },
   {
+    id: "brace-the-conduit-ledge",
+    scene: "conduit-gallery",
+    label: "Brace the conduit ledge",
+    description: "Spend one supply on rope and canvas to quiet the ledge. Tide +1; current Risk stays unchanged.",
+    when: [
+      { type: "flag", flag: "shared-water", value: true },
+      { type: "resourceAtLeast", resource: "risk", value: 2 },
+      { type: "resourceAtLeast", resource: "supplies", value: 1 },
+      { type: "resourceAtMost", resource: "tide", value: 2 },
+    ],
+    effects: [
+      { type: "adjustResource", resource: "supplies", delta: -1 },
+      { type: "advanceClock", clock: "blackglass-tide", delta: 1 },
+      { type: "goTo", scene: "pressure-control" },
+    ],
+  },
+  {
     id: "use-sealed-archive-cover",
     scene: "conduit-gallery",
     label: "Use the sealed Archive cover",
@@ -462,7 +482,7 @@ export const BLACKGLASS_CHOICES = [
     id: "ride-the-rising-conduit",
     scene: "conduit-gallery",
     label: "Ride the rising conduit",
-    description: "Take the wet ladder while the current is moving. Tide +2 and Risk +1; the valve room will feel the rush.",
+    description: "Take the wet ladder while the current is moving. Tide +2 and Risk +1; the rush can cross the Risk 2 clean-setting threshold.",
     effects: [
       { type: "advanceClock", clock: "blackglass-tide", delta: 2 },
       { type: "adjustResource", resource: "risk", delta: 1 },
