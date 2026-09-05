@@ -9,8 +9,9 @@ or a claim that the interviews establish a cause for non-entry.
 
 ## Player behavior
 
-After resolving the first local water/evacuation account, the player can
-investigate the Archive or visit Reedway in either order. An open Archive
+After resolving the first local water/evacuation account and opening its
+Archive case, the player can investigate that case or visit Reedway in either
+order. This wave does not offer Reedway before the case is opened. An open Archive
 case can be paused and resumed without losing or replaying evidence. Reedway
 remains accessible after the verdict and after Blackglass. Its existing
 scarce regulator, competing facilities and services provide the activity;
@@ -71,6 +72,11 @@ outcomes and the pressure clock are not reopened or reset.
 
 Landing, reckoning and commons text must name the currently open destinations
 and distinguish an open case from a decided or already carried record.
+Both Reedway completed choices must explicitly label and describe finishing
+the entire journey, including when an Archive case remains open. Installation
+already records a facility result; players who want to continue use the free
+return paths. Preserve both existing terminal effects and receipts.
+
 Show the regulator task before entry, distinguish a part still on the barge
 from a carried part, and stop requesting an installation once either facility
 has it. Keep explicit journey-ending labels and describe visits as optional.
