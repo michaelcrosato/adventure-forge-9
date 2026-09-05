@@ -1,7 +1,9 @@
 import { SCENARIO, type Choice } from "../engine/content.js";
+import { isDeepStrictEqual } from "node:util";
 import {
   choose,
   observe,
+  replay,
   restore,
   save,
   start,
@@ -42,33 +44,8 @@ function isObject(value: unknown): value is object {
   return typeof value === "object" && value !== null;
 }
 
-/**
- * Canonicalize JSON-shaped values without relying on authored property order.
- * Scenario identity is checked with this representation before any witness is
- * replayed. It also gives the adapter a small dependency-free deep comparison
- * for engine checkpoints and observations.
- */
-function canonical(value: unknown, ancestors = new Set<object>()): string {
-  if (value === null) return "null";
-  if (value === undefined) return "undefined";
-  if (typeof value === "string") return JSON.stringify(value);
-  if (typeof value === "boolean") return value ? "true" : "false";
-  if (typeof value === "number") {
-    if (!Number.isFinite(value)) throw new Error("Symbolic replay encountered a non-finite value");
-    return Object.is(value, -0) ? "-0" : String(value);
-  }
-  if (typeof value === "bigint") return `bigint:${value.toString()}`;
-  if (!isObject(value)) throw new Error("Symbolic replay encountered an unsupported value");
-  if (ancestors.has(value)) throw new Error("Symbolic replay encountered a cyclic value");
-  const nextAncestors = new Set(ancestors);
-  nextAncestors.add(value);
-  if (Array.isArray(value)) return `[${value.map(entry => canonical(entry, nextAncestors)).join(",")}]`;
-  const record = value as JsonRecord;
-  return `{${Object.keys(record).sort().map(key => `${JSON.stringify(key)}:${canonical(record[key], nextAncestors)}`).join(",")}}`;
-}
-
 function same(left: unknown, right: unknown): boolean {
-  return canonical(left) === canonical(right);
+  return isDeepStrictEqual(left, right);
 }
 
 function fail(message: string): never {
@@ -95,7 +72,7 @@ function requirePath(value: unknown, name: string): readonly string[] {
 function assertModelShape(model: SymbolicModel): void {
   if (!isObject(model)) fail("model must be an object");
   const candidate = model as unknown as JsonRecord;
-  for (const method of ["project", "encode", "image"] as const) {
+  for (const method of ["project", "encode", "image", "atScene"] as const) {
     if (typeof candidate[method] !== "function") fail(`model.${method} is unavailable`);
   }
   if (!isObject(candidate.bdd)) fail("model.bdd is unavailable");
@@ -103,15 +80,7 @@ function assertModelShape(model: SymbolicModel): void {
 
 function assertFixedScenario(model: SymbolicModel): void {
   assertModelShape(model);
-  let modelScenario: string;
-  let fixedScenario: string;
-  try {
-    modelScenario = canonical(model.scenario);
-    fixedScenario = canonical(SCENARIO);
-  } catch (error) {
-    fail(`scenario identity cannot be checked: ${error instanceof Error ? error.message : String(error)}`);
-  }
-  if (modelScenario !== fixedScenario) {
+  if (!isDeepStrictEqual(model.scenario, SCENARIO)) {
     fail("model scenario differs from the fixed validated SCENARIO");
   }
 }
@@ -170,6 +139,9 @@ function assertReceiptMatchesAuthored(state: GameState, choice: Choice): void {
   if (receipt === undefined || receipt.kind !== choice.outcome.status || receipt.summary !== choice.outcome.summary) {
     fail(`terminal witness ${JSON.stringify(choice.id)} has the wrong receipt`);
   }
+  if (receipt.revision !== state.revision || receipt.stateHash !== stateHash(state)) {
+    fail(`terminal witness ${JSON.stringify(choice.id)} has receipt revision/hash parity failure`);
+  }
 }
 
 function assertLegalChoices(model: SymbolicModel, state: GameState, view: Observation): number {
@@ -205,6 +177,18 @@ function assertCheckpoint(state: GameState, view: Observation): void {
   if (!same(restored, state)) fail(`save/restore changed the full state at revision ${state.revision}`);
   if (stateHash(restored) !== stateHash(state)) fail(`save/restore changed the state hash at revision ${state.revision}`);
   if (!same(observe(restored), view)) fail(`save/restore changed the observation at revision ${state.revision}`);
+}
+
+function assertFullReplay(path: readonly string[], state: GameState, view: Observation): void {
+  let replayed: GameState;
+  try {
+    replayed = replay(1, path.map((choiceId, index) => ({ choiceId, expectedRevision: index })));
+  } catch (error) {
+    fail(`engine replay rejected a sequentially accepted path: ${error instanceof Error ? error.message : String(error)}`);
+  }
+  if (!same(replayed, state)) fail("full engine replay changed the final state");
+  if (stateHash(replayed) !== stateHash(state)) fail("full engine replay changed the final state hash");
+  if (!same(observe(replayed), view)) fail("full engine replay changed the final observation");
 }
 
 function assertReachable(model: SymbolicModel, reachable: number | undefined, state: GameState, label: string): void {
@@ -287,6 +271,7 @@ function replayPath(model: SymbolicModel, path: readonly string[], reachable?: n
   // Terminal states have no legal production choices, and the same enabled
   // check above proves that no symbolic choice remains enabled there.
   assertLegalChoices(model, state, view);
+  assertFullReplay(statePath, state, view);
   return { state, stats: Object.freeze({ ...stats }) };
 }
 
@@ -354,12 +339,17 @@ export function verifySymbolicWitnesses(model: SymbolicModel, result: SymbolicRe
   assertFixedScenario(model);
   if (!isObject(result)) fail("reachability result must be an object");
   if (result.exhaustive !== true) fail("reachability result is not exhaustive");
-  if (result.deadEnds !== 0) fail("reachability result contains dead-end playing states");
-  if (result.noCompletion !== 0) fail("reachability result contains playing states without a completion path");
   const unreachableScenes = reportArray(result.unreachableScenes, "unreachableScenes");
   const unreachableChoices = reportArray(result.unreachableChoices, "unreachableChoices");
   const sceneIds = new Set(SCENARIO.scenes.map(scene => scene.id));
   const choiceIds = new Set(SCENARIO.choices.map(choice => choice.id));
+  if (!Array.isArray(model.choices) || model.choices.length !== SCENARIO.choices.length) {
+    fail("symbolic model choice vocabulary differs from the fixed scenario");
+  }
+  const modelChoiceIds = new Set(model.choices.map(choice => choice.id));
+  if (modelChoiceIds.size !== model.choices.length || [...choiceIds].some(id => !modelChoiceIds.has(id))) {
+    fail("symbolic model choice vocabulary differs from the fixed scenario");
+  }
   assertKnownWitnessKeys(witnessRecord(result.sceneWitnesses, "sceneWitnesses"), sceneIds, "sceneWitnesses");
   assertKnownWitnessKeys(witnessRecord(result.choiceWitnesses, "choiceWitnesses"), choiceIds, "choiceWitnesses");
   assertKnownWitnessKeys(witnessRecord(result.endingWitnesses, "endingWitnesses"), choiceIds, "endingWitnesses");
@@ -372,6 +362,39 @@ export function verifySymbolicWitnesses(model: SymbolicModel, result: SymbolicRe
   const endingWitnesses = witnessRecord(result.endingWitnesses, "endingWitnesses");
   for (const id of unreachableScenes) if (own(sceneWitnesses, id)) fail(`scene ${JSON.stringify(id)} is both unreachable and witnessed`);
   for (const id of unreachableChoices) if (own(choiceWitnesses, id)) fail(`choice ${JSON.stringify(id)} is both unreachable and witnessed`);
+
+  let invalidReachable = 0;
+  let initialReachable = 0;
+  try {
+    invalidReachable = model.bdd.and(result.reachable, model.bdd.not(model.validDomain));
+    initialReachable = model.bdd.and(result.reachable, model.initial);
+  } catch (error) {
+    fail(`result.reachable is not a valid BDD formula: ${error instanceof Error ? error.message : String(error)}`);
+  }
+  if (invalidReachable !== 0) fail("result.reachable contains values outside the modeled valid domain");
+  if (initialReachable === 0) fail("result.reachable omits the production initial projection");
+  for (const scene of SCENARIO.scenes) {
+    let sceneReachable: number;
+    try {
+      sceneReachable = model.bdd.and(result.reachable, model.atScene(scene.id));
+    } catch (error) {
+      fail(`scene reachability for ${JSON.stringify(scene.id)} cannot be checked: ${error instanceof Error ? error.message : String(error)}`);
+    }
+    if (unreachableSceneSet.has(scene.id) !== (sceneReachable === 0)) {
+      fail(`unreachableScenes disagrees with result.reachable for ${JSON.stringify(scene.id)}`);
+    }
+  }
+  for (const choice of model.choices) {
+    let choiceReachable: number;
+    try {
+      choiceReachable = model.bdd.and(result.reachable, choice.enabled);
+    } catch (error) {
+      fail(`choice reachability for ${JSON.stringify(choice.id)} cannot be checked: ${error instanceof Error ? error.message : String(error)}`);
+    }
+    if (unreachableChoiceSet.has(choice.id) !== (choiceReachable === 0)) {
+      fail(`unreachableChoices disagrees with result.reachable for ${JSON.stringify(choice.id)}`);
+    }
+  }
 
   const replayStats: ReplayAccumulator[] = [];
   const reachable = result.reachable;
