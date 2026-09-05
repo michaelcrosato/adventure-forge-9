@@ -49,6 +49,15 @@ interface Family {
   readonly choiceFromParent?: string;
 }
 
+interface RepresentativeMemo {
+  readonly evaluation: Evaluation;
+  readonly steps: Map<string, Evaluation>;
+}
+
+// Queue entries remain authoritative. This finite LRU only retains immutable
+// representative work long enough to avoid repeating it during collisions.
+const REPRESENTATIVE_CACHE_LIMIT = 1024;
+
 function same(left: unknown, right: unknown): boolean {
   return JSON.stringify(left) === JSON.stringify(right);
 }
@@ -190,6 +199,41 @@ export function auditScenarioFamilies(maxFamilies = 250_000): FamilyScenarioAudi
   const initial = evaluate(start(1));
   const queue: Family[] = [{ state: initial.state, parentIndex: -1 }];
   const indices = new Map([[initial.key, 0]]);
+  const representativeCache = new Map<number, RepresentativeMemo>([
+    [0, { evaluation: initial, steps: new Map<string, Evaluation>() }],
+  ]);
+
+  const representative = (index: number): Evaluation => {
+    const cached = representativeCache.get(index);
+    if (cached !== undefined) {
+      // Refresh the entry in the finite LRU. The queue is still the source of
+      // truth if an entry was evicted.
+      representativeCache.delete(index);
+      representativeCache.set(index, cached);
+      return cached.evaluation;
+    }
+    const family = queue[index];
+    if (family === undefined) throw new Error(`Family audit representative is missing: ${index}`);
+    const entry: RepresentativeMemo = { evaluation: evaluate(family.state), steps: new Map() };
+    representativeCache.set(index, entry);
+    if (representativeCache.size > REPRESENTATIVE_CACHE_LIMIT) {
+      const oldest = representativeCache.keys().next().value;
+      if (oldest !== undefined) representativeCache.delete(oldest);
+    }
+    return entry.evaluation;
+  };
+
+  const representativeStep = (index: number, choiceId: string): Evaluation => {
+    const current = representative(index);
+    const entry = representativeCache.get(index);
+    if (entry === undefined) throw new Error(`Family audit representative cache entry is missing: ${index}`);
+    const cached = entry.steps.get(choiceId);
+    if (cached !== undefined) return cached;
+    const next = step(current, choiceId);
+    entry.steps.set(choiceId, next);
+    return next;
+  };
+
   const parents: number[][] = [[]];
   const completed = new Set<number>();
   const scenes = new Set<string>();
@@ -204,7 +248,7 @@ export function auditScenarioFamilies(maxFamilies = 250_000): FamilyScenarioAudi
   let representativeMaxProjectionWords = 0;
 
   for (let index = 0; index < queue.length; index++) {
-    const current = evaluate(queue[index]!.state);
+    const current = representative(index);
     const view = current.view;
     scenes.add(view.sceneId);
     maxChoices = Math.max(maxChoices, view.choices.length);
@@ -215,7 +259,7 @@ export function auditScenarioFamilies(maxFamilies = 250_000): FamilyScenarioAudi
     }
     if (view.choices.length === 0) deadEnds.push(pathTo(queue, index));
     for (const choice of view.choices) {
-      const next = step(current, choice.id);
+      const next = representativeStep(index, choice.id);
       transitions++;
       if (!choices.has(choice.id)) {
         choices.set(choice.id, [...pathTo(queue, index), choice.id]);
@@ -237,14 +281,14 @@ export function auditScenarioFamilies(maxFamilies = 250_000): FamilyScenarioAudi
       } else {
         mergedVisits++;
         parents[existing]!.push(index);
-        const representative = evaluate(queue[existing]!.state);
-        assertEquivalent(representative, next);
-        for (const successorChoice of representative.view.choices) {
-          const left = step(representative, successorChoice.id);
+        const existingRepresentative = representative(existing);
+        assertEquivalent(existingRepresentative, next);
+        for (const successorChoice of existingRepresentative.view.choices) {
+          const left = representativeStep(existing, successorChoice.id);
           const right = step(next, successorChoice.id);
           congruenceSuccessors++;
           assertEquivalent(left, right);
-          assertNewBindings(left, right, representative.parameters);
+          assertNewBindings(left, right, existingRepresentative.parameters);
         }
       }
     }
