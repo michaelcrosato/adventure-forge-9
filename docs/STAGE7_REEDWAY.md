@@ -87,3 +87,23 @@ The independently reviewed monotone phase reduction is integrated as `c9655d1`. 
 On worker source `b49fb6d`, the 250,000 and 300,000 diagnostics both fail. One explicitly authorized larger diagnostic, capped at 1,000,000 states and a 4,096 MiB Node heap, also fails after 3:31.15 with 3,626,260 KiB maximum RSS. Preserve `/tmp/af9-audit-monotone-1m.log` alongside both smaller failures. No exhaustive result, full witness maps, live player batch or region publication is claimed. Further verification work is now investigating conserved symbolic parameters rather than increasing the default guard again; the prospective obligations are in `AUDIT_SCALING.md`.
 
 Preparatory analysis and exact binding/text/frame helpers are integrated as `12a4ae2` and `8ada86d` under `CONSERVED_PARAMETER_AUDIT.md`. Build and 96 non-audit tests pass. The active audit still uses concrete resource values; compiled analysis, independent semantic review, family-audit integration and full validation remain the next work. No new region playtest has been dispatched.
+
+## Family-audit implementation and evidence
+
+The compiled analyzer, opt-in family traversal and isolated real-engine tests
+are now integrated through `d351b52`; `e9d93d4` removes globally unread flag
+markers while preserving every future reader and pruning justifier. The
+refined influence/projection/family suite passes 22 tests. Independent
+historical comparisons preserve all 131 Blackglass choices, 34 endings,
+replayed hashes/projections and completion results; the refined method uses
+27,304 families on that earlier campaign.
+
+The initial full Reedway family attempt exceeded 250,000 families after
+4:55.67 (1,051,244 KiB). Its failure is preserved. A separate size-only probe
+finished at 260,622 families; the unread-marker refinement reduces this to
+243,426 families / 703,812 transitions, within the unchanged family guard.
+That probe omits safety, congruence, witness replay and reverse completion,
+so it does not approve the expansion. Complete current checks are running
+separately. Exact contracts, limitations, source identities and artifacts are
+in `CONSERVED_PARAMETER_AUDIT.md`. No new blind player batch or publication
+has occurred.

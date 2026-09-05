@@ -160,3 +160,28 @@ The narrower implementation contract is in `CONSERVED_PARAMETER_AUDIT.md`.
 Preparatory future-influence and text/binding/frame helpers are integrated in
 `12a4ae2` and `8ada86d`, with 11 component checks and 96 passing non-audit
 checks overall. No family key has replaced the concrete audit yet.
+
+## Opt-in family traversal
+
+`339b45a` implements the conserved-parameter traversal separately from the
+release audit. `d351b52` adds isolated real-engine parity tests, and `e9d93d4`
+excludes globally unread flag markers from active dimensions. Such markers
+remain representative metadata; they are not falsely labeled constant.
+All choice/text readers, exact resources and pruning justifiers retain their
+specified classification. The refined focused suite passes 22 tests.
+
+On the unchanged historical Blackglass engine/content, the initial family
+method completes with 33,004 families / 94,556 transitions versus 169,922
+resource-exact states / 332,402 transitions. All scene, choice and ending
+sets, completion results and replayed witness hashes match. Current Reedway
+still failed the first full family attempt at 250,000 families (4:55.67,
+1,051,244 KiB). A separate size-only traversal finished at 260,622 families;
+after removing globally unread flags it finishes at 243,426 families and
+703,812 transitions (15.80 s, 993,940 KiB). This diagnostic skips safety,
+congruence, witness replay and completion checks. It is evidence about
+workload only, and does not approve the release.
+
+See `CONSERVED_PARAMETER_AUDIT.md` for the implementation contract, exact
+historical source/code provenance and preserved artifacts. The original
+resource-exact release guard is unchanged. Complete verification of the
+current family method remains required before adopting it for releases.

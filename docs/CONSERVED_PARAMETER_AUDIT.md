@@ -1,8 +1,8 @@
 # Conserved-parameter audit contract
 
-Status: prospective implementation contract. The current audit still retains
-every concrete resource balance, and Reedway has not passed its complete
-mechanical or live acceptance gates. This document narrows the next method
+Status: implemented as an opt-in method, still awaiting full Reedway
+acceptance. The release audit still retains every concrete resource balance,
+and Reedway has not passed its complete mechanical or live gates. This document narrows the method
 to immutable parameters; it does not authorize interval widening, guessed
 entry states, symbolic arithmetic for mutable resources, or sampled routes.
 
@@ -22,6 +22,16 @@ joint concrete values of:
   declared clock's resource;
 - every flag read by such a choice, potentially written, or used to justify
   permanent pruning.
+
+Globally unread flag markers are an explicit exception to the writer rule:
+if no authored choice or scene-text condition reads a flag anywhere in the
+validated scenario, its value remains representative metadata. Current
+effects only assign constant flag values; no effect reads a flag. Such a
+marker cannot affect a future legal action, effect, text or ending identity.
+It is omitted entirely, not labeled a conserved parameter, and the actual
+engine still records its writes. This rule does not discard a writer with a
+late reader or a read behind a currently closed gate. Unknown vocabulary is
+checked before this classification. Source `e9d93d4` adds this refinement.
 
 Every remaining resource is an immutable parameter, retaining its exact
 current integer value as a binding. Future text-read flags outside the active
@@ -111,10 +121,69 @@ or missing bindings. Build and all 96 non-audit tests pass on `8ada86d`.
 Artifacts: `/tmp/af9-conservation-components.log` and
 `/tmp/af9-conservation-nonaudit-tests.log`.
 
-The next steps are a compiled analysis with a detached immutable scenario
-snapshot and safe phase cache, independent semantic review, and an explicit
-family-audit implementation. That implementation must replay actual
-authored-choice witnesses and compare completed results against tractable
-earlier exact audits before it replaces a release check. The existing
-250,000 concrete-state guard is unchanged, and full Reedway acceptance
-remains pending.
+## Implemented traversal and validation
+
+`9a02591` integrates a compiled analyzer over a detached, frozen content
+snapshot with a scene/status/monotone-gate cache and immutable results.
+`339b45a` adds `auditScenarioFamilies()` in `src/engine/family-audit.ts` as an
+opt-in traversal; `d351b52` adds five isolated real-engine adversarial tests.
+Each visited transition checks exact parameter frames, shrinking active
+field sets, resource safety and input/revision invariants. Collisions compare
+both independently derived cores, schemas, text templates, legal choices and
+successors, including newly conserved bindings. Every choice witness replays
+from `start(1)` and matches the full recorded state hash. Ending witnesses
+are recorded before terminal merging, preserving distinct authored actions
+even if their ending identity is identical.
+
+Independent review found no current-vocabulary soundness blocker. The tests
+compare both methods on small validated scenarios using isolated copies of
+the actual engine, with different exact display bindings, correlated active
+fields, resettable gates, clock writes, no-completion cycles and merged
+terminal actions. The original five tests pass in manager integration;
+the refined influence/projection/family suite also passes (22 tests).
+
+An independent historical comparison of `339b45a`'s method against the
+published Blackglass content at `139e48a` completed with both 250,000 guards:
+
+| Measure | Existing audit | Family audit |
+| --- | ---: | ---: |
+| Canonical states / parameter families | 169,922 states | 33,004 families |
+| Transitions | 332,402 | 94,556 |
+| Reachable scenes / choices / endings | 25 / 131 / 34 | 25 / 131 / 34 |
+| Dead ends / no-completion results | 0 / 0 | 0 / 0 |
+| Wall time | 32.47 s | 29.40 s |
+| Maximum RSS | 818,072 KiB | 259,408 KiB |
+
+All 131 choice and 34 ending witnesses from each method replayed; pairwise
+final hashes match. Historical engine/content were untouched. Verification
+modules were copied under `src/verification/`; manager inspection proved
+only engine import paths changed from `339b45a`. The original result export
+and checksums are in `/tmp/af9-family-crosscheck-results-go-20260904/`, with
+`VERIFIER_SOURCE.json` and `verification-source/` preserving the exact proof
+code independently of the unchanged historical game build identity. This
+comparison predates the globally unread marker refinement.
+
+The first complete-check Reedway attempt still exceeded 250,000 families:
+4:55.67, 1,051,244 KiB maximum RSS, on `339b45a`'s method. Preserve
+`/tmp/af9-family-audit-first.log` and its source checksum file. A separate
+size-only probe finished at 260,622 families and 756,568 transitions in
+17.47 seconds, using 1,068,264 KiB. It deliberately omitted safety,
+congruence, witness replay and reverse completion and therefore cannot
+approve a release. Its script/result/log are
+`/tmp/af9-family-size-profile.{mts,json,log}`. Full current validation remains
+required. The release audit and its original state guard are unchanged.
+
+After the globally unread marker refinement, the separate size-only probe
+finishes at 243,426 families / 703,812 transitions, within 250,000 families
+(15.80 s, 993,940 KiB maximum RSS). Preserve
+`/tmp/af9-family-size-profile-refined.{mts,json,log}`. This is still only a
+workload measurement; it does not satisfy the full mechanical gate.
+
+The independent historical comparison was repeated with `e9d93d4` in a new
+checkout and export, preserving the first results. The refined method uses
+27,304 families / 76,920 transitions (22.96 s, 234,000 KiB), with the same
+25 scenes, 131 choices, 34 endings and empty dead-end/no-completion results.
+Every paired witness hash and final projection matches the old audit. The
+old result is reused byte-for-byte on the unchanged historical engine.
+`/tmp/af9-family-crosscheck-results-refined-20260904/` includes code hashes,
+import-only copy diffs, full results, replay checks and verified checksums.
