@@ -51,3 +51,24 @@ The first timed-area blind batch exposed a correct but insufficiently forecast p
 The Reedway author draft needed a concrete manager contract before integration: one useful scarce part, competing installations, independent services, a meaningful social cost for free seizure, and a credit ceiling that preserves inherited obligations. Manager integration corrected the trained exchange's rationale, reward wording on revisits, invented authority, and treatment/seizure chronology. An early worker test misread the non-medic supply route and temporarily removed the source gate to pass; that source edit was rejected. Corrected tests exercise the generic route with an untrained character and retain the cheaper trained route for medics. Follow-up worker regressions and stateless HTTP probes were accepted; manager extended repeated travel checks to the alternate serviced ferry result. Exact authoring durations and cost remain unavailable.
 
 The allocation optimization matched every baseline audit count and witness, but 30.667 versus 30.055 seconds in one pair is not a material speed result. Integrated Reedway exceeds the existing 250,000-state guard in 37.54 seconds. The failure is retained and a separate worker implementation plus independent proof review now investigates sound pruning of permanently disabled choices. The audit limit and acceptance requirements were not weakened to admit the activity.
+
+Subsequent Luna/max work supplied the compiled future-influence analyzer,
+exact parameter bindings, adversarial real-engine comparisons and a bounded
+representative cache. Manager integration supplied the family traversal and
+proof contract. The first full family attempt still failed its workload
+guard; a reviewed exclusion of globally unread history flags brought the
+complete traversal within it. Independent historical comparisons replayed
+all prior choice and ending witnesses. The cache retains per-choice payloads
+in addition to its 1,024 family entries; it is not a 1,024-state memory bound.
+Full verification on `998a214` took 5:22.66, but that includes all tests and
+is not a controlled speed comparison with the standalone uncached audit.
+Exact source, measurements and limitations are in `CONSERVED_PARAMETER_AUDIT.md`.
+
+After the first regional batch supplied only one entrant out of three, the
+copy worker delivered the predeclared continuation clarification in about
+ten minutes (worker reported), with a build, 39 focused checks and a runtime
+copy probe. Manager review removed instructions to visit both claimants,
+replaced implementation language about reversible travel with explicit
+cost/return wording, and preserved the scarred line's working result. The
+revised candidate retains every choice and transition. Independent review,
+full verification and fresh player evidence remain separate acceptance steps.
