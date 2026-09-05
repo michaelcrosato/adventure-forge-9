@@ -45,6 +45,13 @@ interface Node {
   readonly high: Handle;
 }
 
+interface OperationCacheEntry {
+  readonly key: string;
+  value: Handle;
+  older: OperationCacheEntry | undefined;
+  newer: OperationCacheEntry | undefined;
+}
+
 const FALSE: Handle = 0;
 const TRUE: Handle = 1;
 const TERMINAL_VARIABLE = -1;
@@ -67,7 +74,9 @@ export class Bdd {
   // terminal or an arbitrary external handle. Internal handles start at 3.
   private readonly nodes: Node[] = [];
   private readonly unique = new Map<string, Handle>();
-  private readonly operationCache = new Map<string, Handle>();
+  private readonly operationCache = new Map<string, OperationCacheEntry>();
+  private oldestCacheEntry: OperationCacheEntry | undefined;
+  private newestCacheEntry: OperationCacheEntry | undefined;
   private readonly literalCache = new Map<number, Handle>();
 
   public constructor(variableCount: number, options: BddOptions = {}) {
@@ -207,6 +216,8 @@ export class Bdd {
   /** Drop memoized operation results while preserving canonical nodes. */
   public clearOperationCaches(): void {
     this.operationCache.clear();
+    this.oldestCacheEntry = undefined;
+    this.newestCacheEntry = undefined;
   }
 
   /** Return an immutable snapshot of manager sizes. */
@@ -458,22 +469,53 @@ export class Bdd {
   }
 
   private cacheGet(key: string): Handle | undefined {
-    const value = this.operationCache.get(key);
-    if (value === undefined) return undefined;
-    // Deterministic LRU behavior keeps bounded runs reproducible.
-    this.operationCache.delete(key);
-    this.operationCache.set(key, value);
-    return value;
+    const entry = this.operationCache.get(key);
+    if (entry === undefined) return undefined;
+    if (entry !== this.newestCacheEntry) {
+      this.detachCacheEntry(entry);
+      this.appendCacheEntry(entry);
+    }
+    return entry.value;
   }
 
   private cacheSet(key: string, value: Handle): void {
     if (this.cacheLimit === 0) return;
-    if (this.operationCache.has(key)) this.operationCache.delete(key);
-    else if (this.operationCache.size >= this.cacheLimit) {
-      const oldest = this.operationCache.keys().next().value as string | undefined;
-      if (oldest !== undefined) this.operationCache.delete(oldest);
+    const existing = this.operationCache.get(key);
+    if (existing !== undefined) {
+      existing.value = value;
+      if (existing !== this.newestCacheEntry) {
+        this.detachCacheEntry(existing);
+        this.appendCacheEntry(existing);
+      }
+      return;
     }
-    this.operationCache.set(key, value);
+    if (this.operationCache.size >= this.cacheLimit) {
+      const oldest = this.oldestCacheEntry;
+      if (oldest === undefined) throw new Error("Internal operation-cache order error");
+      this.detachCacheEntry(oldest);
+      this.operationCache.delete(oldest.key);
+    }
+    const entry: OperationCacheEntry = { key, value, older: undefined, newer: undefined };
+    this.operationCache.set(key, entry);
+    this.appendCacheEntry(entry);
+  }
+
+  // Keep the same deterministic LRU order without restarting a Map iterator
+  // at every eviction. The list contains exactly the bounded cache entries.
+  private detachCacheEntry(entry: OperationCacheEntry): void {
+    if (entry.older === undefined) this.oldestCacheEntry = entry.newer;
+    else entry.older.newer = entry.newer;
+    if (entry.newer === undefined) this.newestCacheEntry = entry.older;
+    else entry.newer.older = entry.older;
+    entry.older = undefined;
+    entry.newer = undefined;
+  }
+
+  private appendCacheEntry(entry: OperationCacheEntry): void {
+    entry.older = this.newestCacheEntry;
+    if (this.newestCacheEntry === undefined) this.oldestCacheEntry = entry;
+    else this.newestCacheEntry.newer = entry;
+    this.newestCacheEntry = entry;
   }
 
   private assertHandle(root: Handle): void {

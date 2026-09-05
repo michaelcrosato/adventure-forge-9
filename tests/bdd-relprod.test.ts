@@ -86,7 +86,7 @@ test("andExists matches an independent oracle for partial, full, empty, swapped,
 });
 
 test("andExists remains exact after cache clearing, with zero and tiny operation caches", () => {
-  for (const cacheLimit of [0, 1]) {
+  for (const cacheLimit of [0, 1, 2, 7]) {
     const bdd = new Bdd(5, { cacheLimit });
     const { left, right, width } = formula(bdd);
     const variables = [1, 3];
