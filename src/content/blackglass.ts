@@ -59,6 +59,14 @@ export const BLACKGLASS_SCENES = [
         when: [{ type: "flag", flag: "blackglass-resolved", value: true }],
       },
       {
+        text: "At the worker landing, Orin's ferry now hauls heavy freight with the regulator you recovered from the Reedway barge.",
+        when: [{ type: "flag", flag: "reedway-ferry-powered", value: true }],
+      },
+      {
+        text: "The upper-bank workers have received the relief you arranged through the Reedway landing.",
+        when: [{ type: "flag", flag: "reedway-relief-sent", value: true }],
+      },
+      {
         text: "You return with the line steady and the works' cover intact.",
         when: [
           { type: "flag", flag: "blackglass-resolved", value: true },
@@ -221,7 +229,15 @@ export const BLACKGLASS_SCENES = [
     title: "Lowsail After Blackglass",
     text: [
       {
-        text: "The boat reaches Lowsail before dawn. Blackglass has a working pressure line, and the account you bring back will change who trusts the next crossing.",
+        text: "You stand at Lowsail's quay. Blackglass has a working pressure line, and the account you bring back will change who trusts the next crossing.",
+      },
+      {
+        text: "Ilyra's annex has a working sterilizer powered by the regulator you recovered. The treatment benches can stay open after this journey.",
+        when: [{ type: "flag", flag: "reedway-clinic-powered", value: true }],
+      },
+      {
+        text: "The patients in the raised annex have received the care you arranged during the Reedway recovery.",
+        when: [{ type: "flag", flag: "reedway-patients-treated", value: true }],
       },
       {
         text: "Nessa's shared channel now has a second set of pressure marks to defend against a new diversion.",

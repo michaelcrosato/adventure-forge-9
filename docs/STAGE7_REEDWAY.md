@@ -1,6 +1,6 @@
 # Reedway Recovery — prospective regional activity
 
-Status: design and implementation in progress. No expansion acceptance or live experience claim. Baseline `139e48a` is the published Blackglass game: 25 scenes, 131 choices, 71 checks and a 169,922-state / 332,402-transition audit.
+Status: activity implementation integrated locally; independent regressions and full acceptance remain in progress. No expansion acceptance or live experience claim. Baseline `139e48a` is the published Blackglass game: 25 scenes, 131 choices, 71 checks and a 169,922-state / 332,402-transition audit.
 
 ## Purpose and scope
 
@@ -35,3 +35,27 @@ Manager owns the final activity contract, scenario integration, review, evidence
 The manager added `src/content/reedway.ts` with the four named places and ten movement choices. Resolved-only entries leave Lowsail or Blackglass for the commons. The three sites return to that commons, and the commons returns to either old hub. All movement effects are `goTo` only. The module's recovery/allocation/service behavior is still incomplete; this scaffold will not be published as the finished activity.
 
 TypeScript build passes. A replayed shared-water/public-Archive prefix returned to Lowsail, traversed all three sites and both hubs three times, saved/restored with identical state hash and closed the existing clean Blackglass ending at revision 54. Resources and flags were unchanged across all 30 travel actions. Independent multi-origin regressions and the full integrated audit remain required.
+
+## Final activity contract, before implementation or live dispatch
+
+The ordinary resource `reedway-regulator` begins at zero. There is one recoverable regulator and no repeatable source. Seven durable flags suffice: `reedway-regulator-recovered`, `reedway-salvager-hostile`, `reedway-clinic-powered`, `reedway-ferry-powered`, `reedway-patients-treated`, `reedway-relief-sent` and `reedway-crew-treated`. No survey, visit or duplicate reward flags are needed.
+
+Recovery at the barge always requires recovered=false. `buy-reedway-regulator` spends one supply; `accept-reedway-work-lien` adds one debt; `fit-reedway-regulator-as-canalwright` requires that background and spends one water. These leave Sera cooperative. `force-reedway-regulator` costs no resource but makes Sera hostile, removing her discounted relief transport. Every approach grants one regulator and records recovery. The earlier proposed force action costing more debt than a cooperative lien was rejected as dominated.
+
+`trade-reedway-repair-kit` offers a fifth recovery approach: exchange one remaining Tools for the part, cooperatively. This gives a retained kit a present use; the old council fixture can make that exchange even with no supplies and substantial debt.
+
+`install-reedway-regulator-at-clinic` and `install-reedway-regulator-at-workers` each require the part and neither facility already powered. Each consumes the part once. The clinic gets a permanent working sterilizer and shares two medicine from its usable reserve. The worker landing gets powered heavy transport and shares two supplies from the freight it can now unload. The two structural results remain mutually exclusive; direct patient care and relief deliveries are separate, smaller goals available before or after allocation.
+
+All patient-care options require patients-treated=false. At the annex, `treat-reedway-patients-with-medicine` costs one medicine; `treat-reedway-patients-with-supplies` costs two supplies and requires background-field-medic=false; `triage-reedway-patients-as-medic` costs one supply and requires that training; `order-reedway-clinic-treatment` adds two debt for imported sterile packs. The trained route replaces the generic supply route for field medics. Each treats the patients once, with no reward resource.
+
+All worker relief options require relief-sent=false. Cooperative Sera offers `send-reedway-relief-with-sera` for one supply or `commission-reedway-relief-with-sera` for one debt. Without her help, `haul-reedway-relief-with-porters` costs two supplies or `commission-reedway-relief-with-porters` adds two debt. Each delivers relief once, with no reward. This makes the salvage relationship affect a current choice and keeps zero-supply states playable.
+
+New credit cannot take total Debt above four: the one-debt lien/cooperative commission require Debt <=3; the two-debt clinic order/porter commission require Debt <=2. Show this limit with the relevant offers and location text. Earlier council obligations therefore affect credit availability now. Supplies, kits, medicine, training and direct allocation rewards remain alternatives, and the free seizure plus an installed facility still permits a completed regional ending at any inherited debt. The limit does not erase or clamp existing debt. Root added this rule before implementation acceptance because otherwise new debt would have little consequence within the activity.
+
+Deckhand Milo Fen needs care at the barge. `treat-reedway-deckhand` costs one medicine; `splint-reedway-deckhand-as-medic` requires field-medic training and costs one supply. Both require crew-treated=false, mark the treatment and restore Sera's cooperation. They preserve the historical seizure fact and cannot repeat. A later seizure can damage cooperation again after earlier treatment; the text must distinguish that order of events.
+
+Two completed choices at the commons, `close-reedway-clinic-account` and `close-reedway-ferry-account`, require their respective installed facility. Their receipts claim only that structural result, while conditional scene text records patient, relief and crew outcomes. All old campaign endings remain reachable. No new action changes global Risk, the tide, or old water/Archive/pressure flags. Regulator rewards have immediate spending destinations, and returning to a site must not repeat an already completed request.
+
+## Audit allocation work
+
+Worker source `2cfbce0` replaces copied queue paths with predecessor links, removes a duplicate canonical-state set and precomputes immutable key orders. Review found no change to retained resources/flags, serialized key semantics, congruence comparisons or reverse completion. On the identical Blackglass baseline, old/new diagnostics match every choice/ending witness and all counts: 169,922 states, 332,402 transitions, 162,481 merges, 297,211 congruent successors and 34 ending witnesses. Timings were 30.667 versus 30.055 seconds; this single close pair does not establish a material speed improvement. Artifacts `/tmp/af9-audit-allocation-baseline.json`, `/tmp/af9-audit-allocation-optimized.json`; 71 tests passed in the worker's unchanged-content checkout. Integrated regional content requires its own audit.

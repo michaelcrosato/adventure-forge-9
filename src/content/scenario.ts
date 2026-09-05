@@ -1,6 +1,6 @@
 import { BLACKGLASS_CHOICES, BLACKGLASS_CLOCKS, BLACKGLASS_SCENES } from "./blackglass.js";
 import { LANTERN_CHOICES, LANTERN_SCENES } from "./lantern.js";
-import { REEDWAY_CHOICES, REEDWAY_SCENES } from "./reedway.js";
+import { REEDWAY_CHOICES, REEDWAY_FACT_LABELS, REEDWAY_SCENES } from "./reedway.js";
 
 export type ScenarioStatus = "completed" | "departed" | "dead";
 
@@ -183,6 +183,7 @@ export const FACT_LABELS = {
   "blackglass-workers-guided": "Orin Pell's workers crossed under Nessa Quill's guidance.",
   "blackglass-aid-restored": "You spent a supply to restore Nessa Quill's aid after Mara was compelled.",
   "blackglass-chapter-closed": "You closed the Blackglass account and carried its pressure record back to Lowsail.",
+  ...REEDWAY_FACT_LABELS,
 } as const satisfies Readonly<Record<string, string>>;
 
 /**
@@ -203,6 +204,7 @@ export const RAW_SCENARIO = {
     evacuees: 0,
     "archive-evidence": 0,
     tide: 0,
+    "reedway-regulator": 0,
   },
   clocks: BLACKGLASS_CLOCKS,
   initialFacts: ["dry-tanks", "stolen-water-order"],
