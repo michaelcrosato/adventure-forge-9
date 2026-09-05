@@ -393,8 +393,8 @@ export const RAW_SCENARIO = {
     {
       id: "make-clinic-promise",
       scene: "clinic-yard",
-      label: "Promise the first clean water",
-      description: "Take two silverleaf doses: one for the intake, one for the fever ward. Promise Ilyra the first clean water.",
+      label: "Promise clean water, then go to Council Hall",
+      description: "Take two silverleaf doses: one for the intake, one for the fever ward. Promise Ilyra the first clean water, then walk to Council Hall to hear Tovan's offer.",
       when: [{ type: "flag", flag: "clinic-promise", value: false }],
       effects: [
         { type: "setFlag", flag: "clinic-promise", value: true },
@@ -406,8 +406,8 @@ export const RAW_SCENARIO = {
     {
       id: "skip-clinic-promise",
       scene: "clinic-yard",
-      label: "Refuse the promise",
-      description: "Leave the clinic's medicine behind and continue without an obligation to Ilyra.",
+      label: "Refuse the promise, then go to Council Hall",
+      description: "Leave the clinic's medicine behind without an obligation to Ilyra, then walk to Council Hall to hear Tovan's offer.",
       when: [{ type: "flag", flag: "clinic-promise", value: false }],
       effects: [
         { type: "addFact", fact: "clinic-promise-declined" },
