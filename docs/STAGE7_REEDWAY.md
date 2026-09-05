@@ -142,3 +142,82 @@ identified compiled build is `af9-0cbeabaff7dd948611fc299f`. Three neutral
 Luna/max games at seeds 1–3 and the unchanged 60-turn ceiling have now been
 dispatched under `/home/micha/.local/share/adventure-forge-9/runs-stage7-998a214`.
 No outcome, interview, acceptance or publication is inferred from dispatch.
+
+## First fresh batch: exposure gate not met
+
+All three attempts at `998a214` completed normally with original interviews,
+independent integrity/source/replay verification and checked exports. Each
+used the same neutral Luna/max protocol and one isolated conversation for
+gameplay and both interview phases. `liveAccepted` in the validator means
+protocol evidence validity; it does not mean this regional gate passed.
+
+| Seed / run suffix | Actions / ending | Clarity / enjoyment | Reedway entry / allocation |
+| --- | --- | --- | --- |
+| 1 / `4b81541d` | 19 / Archive completed | 4 / 4 | No / no |
+| 2 / `ece4a9ce` | 38 / clinic completed | 4 / 4 | Yes / clinic |
+| 3 / `2f16f93b` | 25 / Blackglass completed | 4 / 5 | No / no |
+
+Run directories are under
+`/home/micha/.local/share/adventure-forge-9/runs-stage7-998a214/`:
+`2026-09-05T06-35-21-526Z-4b81541d`,
+`2026-09-05T06-35-21-527Z-ece4a9ce` and
+`2026-09-05T06-35-21-540Z-2f16f93b`.
+
+Natural regional entries and allocations are **1/3**, below the declared
+**2/3** requirement. Median clarity/enjoyment are both four, no player
+reported a defect, and all three said they would play again. The region
+remains unaccepted and unpublished because exposure was insufficient.
+Earlier completed endings are valid player choices, not blocking defects.
+
+The single entrant visited both claimants before allocation, recovered the
+regulator by canalwright barter, powered the clinic, treated patients and
+commissioned Sera's relief on credit. The worker landing was revisited after
+clinic installation and the commons reflected completed services. This
+player did not return to either old hub after allocation or treat Milo.
+Neither non-entrant supplies side-activity experience; Blackglass's older
+`reedway-crossing` scene is not an entry to the new Reedway activity.
+
+The original interviews identify a concrete clarity issue. Seed 2 was unsure
+whether multiple locations could be visited and whether Blackglass/Reedway
+were part of the main ending or extra content. Seed 3 was unsure whether the
+Blackglass continuation was optional. Seed 1 described the water/Archive
+arc as its goal and expressed interest in Blackglass in another run. No
+interview establishes that unclear continuation caused either early ending.
+Seed 3 also reported uncertainty about which Nessa assistance counts for
+Blackglass; that is a separate unresolved wording issue.
+
+Verified exports are in
+`/home/micha/.local/share/adventure-forge-9/exports/`:
+`stage7-998a214-4b81541d.tar.gz`,
+`stage7-998a214-2026-09-05T06-35-21-527Z-ece4a9ce.tar.gz` and
+`stage7-998a214-2026-09-05T06-35-21-540Z-2f16f93b.tar.gz`, each with a checked
+`.sha256` sidecar. All original runs, including non-entrants, remain evidence.
+
+## Prospective continuation clarification
+
+Before changing the candidate or dispatching another player, the manager
+selects a focused presentation correction: distinguish finishing the entire
+journey from continuing it, explain the optional Blackglass continuation
+where the Archive closes, and name Reedway's outstanding clinic/ferry task
+at the resolved hubs before the player enters. Preserve all choices, order,
+conditions, costs, rewards, free movement and existing completed endings.
+Use conditionally appropriate text so repaired sites are not described as
+still awaiting the same repair. Do not add artificial urgency or obligations.
+This improves actual wayfinding toward the requested explorable world; it
+does not establish persistent quest/session architecture or the full target.
+
+After mechanical and rendered checks and another clean source freeze, run
+exactly three new neutral Luna/max games at seeds 1–3, retaining the same
+60-turn ceiling, instructions and original interview questions. Keep the
+entire first batch and distinguish the two sources. Initial region
+acceptance still requires at least 2/3 natural entries and allocations,
+intact original evidence/replay/interviews, median clarity >=4 and no blocking
+defect. Insufficient exposure leaves acceptance pending again; it does not
+authorize dropping the first batch or reclassifying earlier endings.
+
+A separate, narrow clarity claim would require fewer volunteered
+end/continue/optional-chapter confusion reports than the first batch's 2/3.
+Three model players per source permit only a limited observation, not a
+broad human-experience or causal claim. Region acceptance and support for a
+clarity improvement must be reported separately. The Nessa-assistance issue
+is outside this focused correction.
