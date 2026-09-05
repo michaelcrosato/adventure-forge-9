@@ -98,6 +98,19 @@ export class Bdd {
     return this.binary("and", left, right);
   }
 
+  /**
+   * Conjoin two functions and existentially quantify the supplied variables
+   * in one Shannon recursion.  Quantified levels combine their two cofactors
+   * with OR immediately, so the unquantified conjunction is never built as a
+   * separate full relation.
+   */
+  public andExists(left: Handle, right: Handle, variables: Iterable<number>): Handle {
+    this.assertHandle(left);
+    this.assertHandle(right);
+    const ordered = this.normalizeVariableSet(variables, "variables");
+    return this.andExistsInternal(left, right, new Set(ordered), ordered.join(","));
+  }
+
   public or(left: Handle, right: Handle): Handle {
     return this.binary("or", left, right);
   }
@@ -246,6 +259,53 @@ export class Bdd {
     const low = this.binaryInternal(operation, this.cofactor(left, top, false), this.cofactor(right, top, false));
     const high = this.binaryInternal(operation, this.cofactor(left, top, true), this.cofactor(right, top, true));
     const result = this.makeNode(top, low, high);
+    this.cacheSet(key, result);
+    return result;
+  }
+
+  private andExistsInternal(
+    left: Handle,
+    right: Handle,
+    quantified: ReadonlySet<number>,
+    quantifiedKey: string,
+  ): Handle {
+    // Conjunction is commutative. Canonicalizing the pair here makes both the
+    // public operation and every recursive subproblem share one cache entry.
+    if (left > right) [left, right] = [right, left];
+    const key = `andExists:${left}:${right}:${quantifiedKey}`;
+    const cached = this.cacheGet(key);
+    if (cached !== undefined) return cached;
+
+    let result: Handle;
+    if (left === FALSE || right === FALSE) {
+      result = FALSE;
+    } else if (left === TRUE && right === TRUE) {
+      result = TRUE;
+    } else if (quantified.size === 0) {
+      // At this point no quantified variable remains; using the existing
+      // exact binary operation avoids an unnecessary Shannon descent.
+      result = this.binaryInternal("and", left, right);
+    } else {
+      const top = Math.min(this.level(left), this.level(right));
+      const lowLeft = this.cofactor(left, top, false);
+      const lowRight = this.cofactor(right, top, false);
+      const highLeft = this.cofactor(left, top, true);
+      const highRight = this.cofactor(right, top, true);
+      if (quantified.has(top)) {
+        const remaining = new Set(quantified);
+        remaining.delete(top);
+        const remainingKey = [...remaining].join(",");
+        // exists x. F is F[x=0] OR F[x=1]; each branch continues with the
+        // same remaining quantified set, preserving exact ROBDD reduction.
+        const low = this.andExistsInternal(lowLeft, lowRight, remaining, remainingKey);
+        const high = this.andExistsInternal(highLeft, highRight, remaining, remainingKey);
+        result = this.binaryInternal("or", low, high);
+      } else {
+        const low = this.andExistsInternal(lowLeft, lowRight, quantified, quantifiedKey);
+        const high = this.andExistsInternal(highLeft, highRight, quantified, quantifiedKey);
+        result = this.makeNode(top, low, high);
+      }
+    }
     this.cacheSet(key, result);
     return result;
   }
