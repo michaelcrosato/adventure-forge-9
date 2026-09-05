@@ -1385,7 +1385,7 @@ test("allocation intervals avoid repeated copies for duplicate disabled choices 
       ...Array.from({ length: disabledChoices }, (_, index): RawChoice => ({
         id: `unused-${index}`, scene: "start", label: "Unused", description: "Unreachable action.",
         when: [{ type: "flag", flag: "never", value: true }],
-        effects: [{ type: "goTo", scene: "start" }],
+        effects: [{ type: "setFlag", flag: "never", value: false }, { type: "goTo", scene: "start" }],
       })),
     ],
   });
