@@ -12,18 +12,20 @@ Updated: 2026-09-04 (America/Vancouver). The full Skyrim-breadth/BG3-depth goal 
 
 ## Unresolved evidence and active work
 
-Cycle 2 A/B failed their declared global rating gate and did not encounter the depleted chamber in normal play. A focused screen test found both B readers understood the supply shortfall, but one questioned medicine/silverleaf naming and the order's seal. It failed the full focused criterion. Terminology revision C is being prepared on a separate trusted checkout; all failed/null results remain in CYCLE2.md. Specialist screen tests cannot grant gameplay acceptance or replace authentic interviews.
+Cycle 2 A/B failed their declared global rating gate and did not encounter the depleted chamber in normal play. The focused B check failed its complete criterion. Revision C's two readers correctly explained the supply/kit/medicine/seal relationships, supporting the narrow correction; one exposed a remaining fact-label inconsistency, now fixed in source. All failed/null results and that final untested wording remain in CYCLE2.md. Specialist screen tests cannot grant gameplay acceptance or replace authentic interviews.
 
 Stage 5 candidate: Lantern Archive, one linked investigation area, consequential player backgrounds through existing data vocabulary, multiple evidence approaches, hearing tradeoffs, and consequences in Lowsail. Prepared in an isolated branch before integration. Original small-game endings must remain valid; continuing must close their actual resource/obligation effects before travel. No new area is accepted or live tested yet.
 
-An independent engine performance candidate will avoid repeatedly replaying histories for privately constructed immutable states while preserving full checks for external saves/objects. It is not integrated yet. No world-scale performance claim follows from that optimization.
+The engine performance correction is integrated: privately constructed frozen states avoid repeated history verification, while external saves/objects still receive full checks. No world-scale performance claim follows from the short-witness benchmark.
+
+The user's hosting request is fulfilled: https://adventure-forge-9.vercel.app is public, connected to GitHub main, and two successive Git-triggered production deployments were verified. Hosted play completed, save/download/load/reload and mobile layout passed, and a checkpoint survived the documentation-only update. Twenty-five tests pass. Automatic browser checkpoints survive stateless function requests; game-content updates can still require a new journey. See HOSTING.md.
 
 Current main's source freeze for Cycle 3 has ended; both runs are closed and exported. The exact frozen source remains at commit `34af626` and trusted checkout `/tmp/af9-cycle3-verified`. Future live runs require their own source freeze.
 
 ## Required next work
 
-1. Record the focused terminology result honestly, preserving original evidence and failures.
-2. Review and integrate the connected-area candidate and engine optimization, with all existing regressions, cross-area witnesses, character counterfactuals, replay/save and traversal checks. Do not weaken checks to fit content.
+1. Review the completed connected-area branch and its independent audit; the published main still contains the small game.
+2. Integrate the connected-area candidate with all existing regressions, cross-area witnesses, character counterfactuals, replay/save and traversal checks. Do not weaken checks to fit content.
 3. Verify human play surfaces and collect authentic fresh cross-area feedback on a frozen build.
 4. Expand authored systems and areas in reviewed waves, including long sessions, cross-area consequences and measured breadth/depth. The full completion audit remains outstanding.
 
