@@ -1,3 +1,4 @@
+import { BLACKGLASS_CHOICES, BLACKGLASS_CLOCKS, BLACKGLASS_SCENES } from "./blackglass.js";
 import { LANTERN_CHOICES, LANTERN_SCENES } from "./lantern.js";
 
 export type ScenarioStatus = "completed" | "departed" | "dead";
@@ -176,6 +177,11 @@ export const FACT_LABELS = {
   "archive-record-negotiated": "The Archive filed a provisional record without a public verdict.",
   "archive-hearing-adjourned": "You adjourned the Lantern hearing to investigate further before choosing a verdict.",
   "archive-case-closed": "You closed the Lantern case after carrying its record back to Lowsail.",
+  "blackglass-pressure-stabilized": "The Blackglass pressure line was stabilized before the next surge.",
+  "blackglass-pressure-scarred": "The Blackglass pressure line was stabilized under dangerous pressure.",
+  "blackglass-workers-guided": "Orin Pell's workers crossed under Nessa Quill's guidance.",
+  "blackglass-aid-restored": "You spent a supply to restore Nessa Quill's aid after Mara was compelled.",
+  "blackglass-chapter-closed": "You closed the Blackglass account and carried its pressure record back to Lowsail.",
 } as const satisfies Readonly<Record<string, string>>;
 
 /**
@@ -195,7 +201,9 @@ export const RAW_SCENARIO = {
     water: 0,
     evacuees: 0,
     "archive-evidence": 0,
+    tide: 0,
   },
+  clocks: BLACKGLASS_CLOCKS,
   initialFacts: ["dry-tanks", "stolen-water-order"],
   scenes: [
     {
@@ -416,6 +424,7 @@ export const RAW_SCENARIO = {
       ],
     },
     ...LANTERN_SCENES,
+    ...BLACKGLASS_SCENES,
   ],
   choices: [
     {
@@ -1180,5 +1189,6 @@ export const RAW_SCENARIO = {
       },
     },
     ...LANTERN_CHOICES,
+    ...BLACKGLASS_CHOICES,
   ],
-} as const satisfies ScenarioData;
+} as const as unknown as ScenarioData & { readonly clocks: typeof BLACKGLASS_CLOCKS };
