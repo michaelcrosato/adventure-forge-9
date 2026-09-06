@@ -580,6 +580,32 @@ No prior verdict is rewritten or promoted.
 | `/tmp/af9-selected-generator-test-path-restoration-root-v1.json` | `32dc5343717071a3644aed686e6ac7f932a260cedabb4f166fa06aa9337ac0fe` |
 | `/tmp/af9-selected-generator-restored-inputs-root-v1.json` | `e72a10e6961ed9e9eb3f6b476d346d0903989fdb234e60208c6daa65b15fa1e0` |
 
+## Reviewed v4 within-round generator
+
+The v3 correction uses an absolute 750,000-node watermark after an allocating
+choice, numeric progress rounds, and a separate before-choice diagnostic
+callback. Root retains this behavior in v4 and restores unconditional copying
+after every nonfixed round. A within-round copy retains both the fixed round
+base and the accumulator; the next boundary copy can discard nodes needed
+only by that old base even when no later choice allocated. Independent review
+finds no correctness blocker. The predecessor equation, ownership guards,
+source/core bytes and proof limits remain unchanged.
+
+Root runs all nine focused v4 tests in 0.264 seconds. The independent finite
+fixture matches completion, completion-or-failure, failure seeds and both
+selected cones with copying disabled and forced after allocating choices.
+It also checks exactly one boundary copy per nonfixed round. Before/after
+hashes match for the v4 module/tests, release verifier modules and preserved
+v1/v2/v3 artifacts. This accepts the small generator checks only; the final
+failure-union campaign candidate is still missing and no v4 campaign run has
+started at this checkpoint.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `/tmp/af9-selected-certificate-candidates-v4.mjs` | `23829fce91f3802bfd42cb718a77c4bc42bd8d4e8071ea015f102672a0f1e88c` |
+| `/tmp/af9-selected-certificate-candidates-v4-focused-root-v1.json` | `e53666046e6416a264af4c11d5395a558bae732fe38d68f96e1c8ad0a9acf3ea` |
+| `/tmp/af9-selected-certificate-candidates-v4-focused-root-v1.log` | `4fa4dc9ff43a419a63fe945ab50d0c4c2b96be678bc5eebf8496c9bc5d563f31` |
+
 ## Required acceptance
 
 1. Complete the remaining failure-union candidate and fresh full certificate

@@ -358,3 +358,35 @@ and current runtime input paths before removing
 All diagnostics and evidence remain. Cumulative cleanup is now 82 worktrees
 and 41 topic branches removed; 14 worktrees and three branches remain:
 `main`, `audit-symbolic-certificates` and `audit-certificate-release`.
+
+
+## Five superseded diagnostic source freezes
+
+Root independently verifies and removes the detached exists-key-hoist
+historical freeze, fixed-point-compact current/historical freezes, and
+grouped-failures current/historical freezes. The durable archive is
+`/home/micha/.local/share/adventure-forge-9/worktree-archives/20260906T054500Z-superseded-diagnostic-freezes/`.
+It preserves exact tracked trees, untracked verifier overlays, modes, Git
+status/diffs, complete detached-HEAD bundles and 143 external evidence files.
+Root makes new bundle clones and source-tar restores for all five and compares
+every archived source entry and overlay with the originals.
+
+Immediately before removal, root rechecks HEADs, detached status, source
+inventories and process CWD/argument boundaries. The current original-generation,
+selected-generation and endpoint manifests have no direct path inside any
+removed directory. Their historical sibling evidence files remain present;
+all declared evidence hashes are rechecked after removal. The three current
+runtime source roots and clean release `4a78944` remain available. No old
+CLI, game, player or proof process is run during cleanup.
+
+Inventory falls from 14 to nine worktrees, with three branches unchanged.
+Cumulative cleanup accounts for 87 worktree and 41 topic-branch removals.
+The archive's two incomplete staging predecessors are preserved and explicitly
+have no completion manifest; only the completed archive below is accepted.
+
+| Archive artifact | SHA-256 |
+| --- | --- |
+| `archive-manifest.json` | `8cf59ae326bbec2e32b4575e4b5064ebf9db040089b1977d165a2df20a719b42` |
+| `root-review-v1.json` | `3ebd78488a0192d18d94dcbe6f187fa01e71dbbd7a31b474d88a7a0fd0e43344` |
+| `root-removal-v1.json` | `26a5f5a4ee381c58f4b1a1dcdedacd36572f12138cd5deeb934cca0125e8cb87` |
+| `af9-review-superseded-freezes-root-v1.py` | `db54c79114230d2c05da242add13bb7ef2f308642db9abfad568baac0754fa42` |

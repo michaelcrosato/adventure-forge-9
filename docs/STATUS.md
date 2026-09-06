@@ -51,7 +51,11 @@ landing candidate, then hits the two-million-node guard while computing the
 failure union. Root seals the closed failure and sole new file. There are now
 29 preserved candidates across two failed runs; the failure union is still
 missing, and all 30 must pass fresh verification before release adoption.
-Within-round compaction is being investigated without changing proof limits.
+The reviewed external v4 generator now passes nine focused tests, including
+independent finite-state semantics under forced between-choice copying. It
+uses an absolute node watermark and preserves copying after every nonfixed
+round. The final failure-union-only profile is being prepared with unchanged
+proof limits; no large v4 run or full acceptance is claimed yet.
 The separately bound 231 symbolic/public-engine
 endpoint replays now pass on the exact current source: 2,712 actions and 2,943
 checkpoints in 21.52 seconds. This closes endpoint replay coverage, not the
@@ -268,3 +272,12 @@ removes them following fresh process/dependency checks. Inventory is 14
 worktrees and three branches; cumulative removals are 82 worktrees and 41
 topic branches. No current proof, fresh live acceptance or new deployment is
 claimed from this work.
+
+
+Five superseded diagnostic source checkouts are now archived and removed after
+root checks fresh bundle restores, exact source/overlay bytes and modes, all
+143 copied evidence files, and current runtime dependencies. Archive
+`worktree-archives/20260906T054500Z-superseded-diagnostic-freezes/` retains the
+originals. Nine worktrees and three branches remain; cumulative cleanup is
+87 worktrees and 41 topic branches. Current sources and direct evidence files
+remain available and hash-matched.
