@@ -470,3 +470,12 @@ The manager is preparing a fresh current probe and independent result checker.
 Workers also archived four completed diagnostic sources and fifteen older
 BDD probes. Root independently reviewed and removed the four; the fifteen
 remain until removal review. No provider cost figure is available.
+
+The fresh current probe builds and passes constructor/input checks, but its
+baseline reaches the node cap during the initial completion-or-failure fixed
+point after 69.37 seconds / 1,007,832 KiB maximum RSS. Strong completion finishes;
+no safety obligation or symbolic replay does. The manager preserves the closed
+run and is reviewing exact compaction for C/W with the source worker. Output
+checking remains independent; no current acceptance or production adoption is
+claimed. The fifteen older BDD worktrees also pass root archive/removal review
+and are removed, leaving 28 worktrees and two branches including the fresh probe.

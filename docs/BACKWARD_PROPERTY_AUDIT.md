@@ -498,6 +498,42 @@ all 231 authored witnesses, using a fresh model per replay path. Candidate
 resource bounds remain obligations to prove; endpoint samples do not establish
 universal bounds.
 
+### First current grouped run
+
+Fresh detached `97b04d56a38e0a9324ca5c052d9a42dff7e44afa` has its own locked
+dependencies and a passing build. Its four symbolic modules match the clean
+59-test freeze; engine/content/package bytes match the accepted current
+catalog and trusted source, with build ID `af9-dce7b1dc57b6d6febcc9bb72`.
+Source hash is `f8d713200b9fdfd64a03b197f453d4c2d074ce86c6fbd653826b1f90cfcba299`.
+The constructor reports 58,572 nodes and 29 scenes / 166 choices / 10 resources /
+62 flags. Independent preparation review finds no launch blocker. The frozen
+profile specifies all 30 obligations, all 664 seed records and 231 subsequent
+symbolic/actual-engine paths. Root launches while the independent output
+checker is being completed; acceptance criteria remain frozen in the profile.
+
+The run closes at the two-million-node cap during completion-or-failure round
+five, before any safety obligation completes. Strong completion fixes at
+round 18 with 1,366,218 nodes and 51,351 ms. Completion-or-failure round four
+reaches 1,883,639 nodes at 66,169 ms. External runtime is 69.37 seconds /
+1,007,832 KiB maximum RSS. The runner records unchanged source, input and
+artifact bindings and closed PID 1354666; root has polled the closed process.
+The proof and all 231 symbolic witness replays are incomplete. The independent
+checker validates the incomplete evidence with no errors and denies acceptance.
+Root additionally checks the exact 24-event phase/round/fixed-point prefix,
+the full runner command, zero proof/replay output, all input/output hashes and
+unchanged source snapshots. This is a capacity failure, with no accepted
+current safety verdict. Existing copying applies only within later bad-state
+obligations; exact copying of the initial C/W calculations is the next reviewed
+change. Bounds and memory/round/time guards are not increased.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `/tmp/af9-symbolic-grouped-failures-current-manifest-v1.json` | `413a953f2c8bce4c6a6138c73f28b6492c9fce7d429bc3e9d623aa47c4f6d967` |
+| `/tmp/af9-symbolic-grouped-failures-current-profile-v5.mjs` | `e4d261b7b9914818eeebcea31a31e88bdb9458eaae10889e1e13fa37cc613178` |
+| `/tmp/af9-symbolic-grouped-failures-current-97b04d5.json` | `29191d3b5339609dd18b756f87e3de8e4a93054cc3e3289c57cb5e5511fd2da3` |
+| `/tmp/af9-symbolic-grouped-failures-current-97b04d5.finalization.json` | `a6e802122696c09c5c447b3ef8209a867c38d16dd265eefbd08c94c5ce96627d` |
+| `/tmp/af9-symbolic-grouped-failures-current-failure-root-seal-v1.json` | `9adee126cafac90803eeab55e597690ed6603fe41e8796e0d52bebffb0336eb9` |
+
 ## Repository endpoint regression
 
 The accepted current path maps are materialized in

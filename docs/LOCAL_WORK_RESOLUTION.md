@@ -218,4 +218,17 @@ Fifteen additional completed historical BDD probes are nondestructively
 archived under `worktree-archives/20260906T001532Z-fifteen-historical-bdd/`.
 Manifest SHA-256 is
 `b0320f51815b755caacb801bd1ba8083851e8d97d953a5070fbde7b13ba8c29d`.
-They remain present pending root removal review; no further cleanup is claimed.
+Root subsequently verifies every retained source and mode, exact tar content
+and extraction, all 15 detached bundle heads, status/diff sidecars, all 131
+copied evidence records, live process references and the accepted historical
+and current runtime manifests. The two excluded system binaries are recorded
+by path, size, reason and hash observed during review; neither is removed.
+Historical inventory mentions are distinguished from runtime dependencies,
+and sibling evidence paths are distinguished from files inside a worktree.
+Each candidate is rechecked immediately before removal. All 15 are removed;
+root report `root-removal-v2.json` has SHA-256
+`c8439828169f1c4c5628a0a7ddc8cd0a3e3cf9e51464f94ed60239d755c019d5`.
+Both review-script versions and the execution log are preserved alongside
+the original unchanged archive manifest. Cumulative removals are 58 worktrees
+and 38 topic branches. The fresh current probe was added between batches,
+so 28 worktrees and two branches remain after this removal.

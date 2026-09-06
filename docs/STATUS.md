@@ -16,8 +16,10 @@ seeds and copying after each nonfixed round pass 59 BDD/symbolic checks at
 26 obligations are disjoint from the initial state, and comparison covers
 all 169,922 reference states. It finishes in 616.66 seconds / 1,490,792 KiB
 maximum RSS under a 720-second checked limit. Earlier node/time failures
-remain preserved. The current campaign proof is being prepared and has no
-result yet. The separate current
+remain preserved. The first current campaign run completes strong completion
+but reaches the node cap during completion-or-failure round five, before any
+safety obligation or symbolic witness replay completes. Extending exact
+compaction to these initial fixed points is under review. The separate current
 231-endpoint catalog now has a repository regression test; it proves authored
 path and metadata coverage, not universal safety. See
 [BACKWARD_PROPERTY_AUDIT.md](BACKWARD_PROPERTY_AUDIT.md) for scope and evidence.
@@ -64,7 +66,14 @@ obligations, 524 original failure-seed records and the full static comparison.
 Root verifies the entire earlier logical progress prefix, exact catalogs,
 source/artifact bindings and closed process. The current profile has passed
 real catalog/source/schema preflight after correcting draft field assumptions;
-this is input validation only. Its first current campaign run remains pending.
+this is input validation only. Fresh current probe `97b04d5` builds and starts
+under the same 720/750-second limits, but reaches the node cap after 69.37
+seconds / 1,007,832 KiB maximum RSS. Strong completion fixes at round 18;
+completion-or-failure reaches round four before the next round exhausts the
+append-only manager. There are no completed safety obligations or replays.
+Root independently verifies the closed run's exact 24-event prefix, unchanged
+source/artifact bindings and empty proof/replay results. Exact compaction of
+the initial fixed points remains under review.
 The complete current endpoint catalog has separate main-engine replay evidence
 in [BACKWARD_PROPERTY_AUDIT.md](BACKWARD_PROPERTY_AUDIT.md). Its committed
 231-path regression and all 116 selected regular checks pass on clean
@@ -134,5 +143,7 @@ Four completed copy/packed diagnostic checkouts were subsequently archived
 and removed after independent source, mode, bundle, evidence and process
 checks. Archive `worktree-archives/20260905T235558Z/` records 43 cumulative
 worktree removals and 38 topic-branch removals, leaving 42 worktrees and two
-branches at removal. Fifteen additional historical BDD checkouts have a
-verified nondestructive archive; root removal review is still pending.
+branches at removal. Fifteen additional historical BDD checkouts were then
+independently checked against their archive and removed. Cumulative cleanup
+now accounts for 58 worktrees and 38 topic branches. With the fresh current
+probe added between batches, 28 worktrees and two branches remain.
