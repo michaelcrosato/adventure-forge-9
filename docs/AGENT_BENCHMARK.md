@@ -583,3 +583,20 @@ including existing game/player regressions: 21.44 seconds overall, 19.42
 seconds / 1,161,396 KiB for tests. Before/after tracked source is identical.
 Only the unchanged full campaign invocation is excluded; full verification
 and production adoption are still pending. No provider/player run is made.
+
+Root adds repository certificate file I/O at isolated `6ab23f8`; build and
+five boundary tests pass, and all 26 historical artifacts are read with the
+same encoding. The independent reviewer finds no blocker and correctly leaves
+parent paths/catalog/cumulative guards to the next layer. Root clarifies that
+forest caps are 32 MiB compressed / 128 MiB expanded; 4 MiB is the metadata cap.
+The layout worker confirms copied hashes were printed before the 104-test
+run and recomputed in its report afterward; root's separate committed 223-test
+freeze remains the explicit full before/after tracked-source record.
+
+Read-only production contracts are corrected to separate core generation
+provenance from runtime adapter binding, allow repository source paths outside
+the forest directory, and distinguish BDD graph validation from current-only
+certificate checks. Root review of current generation drafts catches guessed
+schema/field assertions, incorrect 605-bit sizing and a log-absence check that
+would reject the runner's own log. Corrections precede any current launch.
+No provider run or cost figure is introduced.

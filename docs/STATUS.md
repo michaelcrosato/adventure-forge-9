@@ -211,3 +211,10 @@ regular checks pass; only the unchanged failing full campaign invocation is
 excluded. The runtime adapter, current certificates and full release gates
 remain unfinished. Fourteen worktrees and five branches now remain after
 adding this isolated integration checkout.
+
+The release branch now includes reviewed file I/O at `6ab23f8`: build and five
+focused boundary checks pass, and the reader accepts every historical forest
+byte-for-byte. The catalog/adapter remain unfinished. Current generation
+preparation remains unrun while source/schema/constructor/runner assertions
+are corrected against actual evidence. No current proof or deployment is
+claimed from these checks.

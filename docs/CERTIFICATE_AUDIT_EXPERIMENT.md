@@ -235,6 +235,41 @@ current transitions. External generation paths and Git commit labels are
 provenance; copying the same forest bytes to repository paths must not be
 misreported as identical whole-source snapshots or a new generation run.
 
+## Repository file boundary
+
+Isolated `6ab23f82a625c2c69abd76d7a3e17ebf5bb96601` adds typed certificate
+file I/O without changing any proof core module. Reads validate exact entry
+fields, file names, byte/node limits and hashes, use one bounded regular-file
+descriptor with inode/device/size checks, reject symlinked files, cap gzip
+expansion, and decode UTF-8 strictly. The envelope check grants no graph or
+safety verdict; BDD import and fresh certificate verification remain required.
+The future catalog layer owns parent paths, exact file/ID sets, hardlink
+aliases and cumulative limits. Writes use exclusive creation and retain the
+external generator's JSON/gzip encoding.
+
+The build and five focused tests pass, including independent imported graph
+truth, zero roots, traversal/metadata/accessor rejection, corruption, sparse
+oversized files, decompression overflow and symlink handling. Tests take
+0.13 seconds / 93,412 KiB maximum RSS. The repository reader also reads all
+26 accepted historical forests unchanged; this is an I/O compatibility check,
+not a semantic proof rerun. Independent source review finds no blocker.
+The caller must retain the fixed byte caps; the generic helper accepts limits
+from its trusted caller. The 223-test combined freeze remains at `59bab44`;
+these five additional checks do not constitute a new full combined run.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `/tmp/af9-certificate-files-review-v1.json` | `770b4e59a5b90182d92e6bf617bce7f4d55e264feea4cf82003be3d40bf75ced` |
+| `/tmp/af9-certificate-files-focused-v1.log` | `0a0eec4bbcb0231ffaf827de58cf141548f8f74b6c14028de01b7a8f4f315af1` |
+| `/tmp/af9-certificate-files-historical-read-v1.json` | `1e0d30f9b65aa48c27c0d57de5fb1439583c435525cf46567d51dad2c2c1f8ce` |
+
+Current generation scripts remain unrun during review. Root catches a guessed
+historical replay field, the wrong failed-current schema, a 605-bit constructor
+assumption (the current model has 106 state bits / 212 BDD variables), and a
+log-absence assertion incompatible with the shared runner opening that log
+before launch. These preparation defects are being corrected before a current
+worktree or generation run is created. No incomplete current proof is accepted.
+
 ## Remaining gates
 
 1. Complete corresponding current generation, fresh certificate verification
