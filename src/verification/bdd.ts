@@ -260,13 +260,36 @@ export class Bdd {
     const visit = (root: Handle): number => {
       const existing = wireByHandle.get(root);
       if (existing !== undefined) return existing;
-      const node = this.nodeAt(root);
-      const low = visit(node.low);
-      const high = visit(node.high);
-      const wire = nodes.length + 2;
-      nodes.push(Object.freeze([node.variable, low, high] as const));
-      wireByHandle.set(root, wire);
-      return wire;
+      const stack: Array<{ handle: Handle; child: 0 | 1 | 2 }> = [{ handle: root, child: 0 }];
+      while (stack.length > 0) {
+        const frame = stack[stack.length - 1]!;
+        const mapped = wireByHandle.get(frame.handle);
+        if (mapped !== undefined) {
+          stack.pop();
+          continue;
+        }
+        const node = this.nodeAt(frame.handle);
+        if (frame.child === 0) {
+          frame.child = 1;
+          if (wireByHandle.get(node.low) === undefined) stack.push({ handle: node.low, child: 0 });
+          continue;
+        }
+        if (frame.child === 1) {
+          frame.child = 2;
+          if (wireByHandle.get(node.high) === undefined) stack.push({ handle: node.high, child: 0 });
+          continue;
+        }
+        const low = wireByHandle.get(node.low);
+        const high = wireByHandle.get(node.high);
+        if (low === undefined || high === undefined) throw new Error("BDD forest export order error");
+        const wire = nodes.length + 2;
+        nodes.push(Object.freeze([node.variable, low, high] as const));
+        wireByHandle.set(frame.handle, wire);
+        stack.pop();
+      }
+      const result = wireByHandle.get(root);
+      if (result === undefined) throw new Error("BDD forest export root error");
+      return result;
     };
 
     const wireRoots = Object.freeze(snapshot.map(root => visit(root)));
@@ -294,8 +317,13 @@ export class Bdd {
     const variableCount = this.readForestSafeInteger(this.readForestData(record, "variableCount"), "forest.variableCount");
     if (variableCount !== this.variableCount) throw new RangeError("forest variable count does not match this BDD");
 
+    const nodesInput = this.readForestData(record, "nodes");
+    const nodeCount = this.forestArrayLength(nodesInput, "forest.nodes");
+    if (nodeCount > this.nodeLimit) {
+      throw new BddLimitError(`BDD forest contains ${nodeCount} nodes but the target limit is ${this.nodeLimit}`);
+    }
     const rawRoots = this.snapshotForestArray(this.readForestData(record, "roots"), "forest.roots");
-    const rawNodes = this.snapshotForestArray(this.readForestData(record, "nodes"), "forest.nodes");
+    const rawNodes = this.snapshotForestArray(nodesInput, "forest.nodes");
 
     const nodes: Array<readonly [number, number, number]> = [];
     const triples = new Set<string>();
@@ -343,9 +371,6 @@ export class Bdd {
       pending.push(node![1], node![2]);
     }
     if (reachable.size !== nodes.length) throw new RangeError("forest contains unreachable nodes");
-    if (nodes.length > this.nodeLimit) {
-      throw new BddLimitError(`BDD forest contains ${nodes.length} nodes but the target limit is ${this.nodeLimit}`);
-    }
 
     const imported = new Array<Handle>(nodes.length);
     for (let index = 0; index < nodes.length; index += 1) {
@@ -700,15 +725,20 @@ export class Bdd {
     return record[key];
   }
 
-  private snapshotForestArray(value: unknown, label: string): unknown[] {
+  private forestArrayLength(value: unknown, label: string): number {
     if (!Array.isArray(value)) throw new TypeError(`${label} must be an array`);
     const lengthDescriptor = Object.getOwnPropertyDescriptor(value, "length");
     if (lengthDescriptor === undefined || !("value" in lengthDescriptor)
       || !Number.isSafeInteger(lengthDescriptor.value) || lengthDescriptor.value < 0) {
       throw new TypeError(`${label} must have a safe integer length`);
     }
+    return lengthDescriptor.value as number;
+  }
+
+  private snapshotForestArray(value: unknown, label: string): unknown[] {
+    const length = this.forestArrayLength(value, label);
     const result: unknown[] = [];
-    for (let index = 0; index < lengthDescriptor.value; index += 1) {
+    for (let index = 0; index < length; index += 1) {
       const descriptor = Object.getOwnPropertyDescriptor(value, String(index));
       if (descriptor === undefined || !("value" in descriptor)) {
         throw new TypeError(`${label}[${index}] must be an own data property`);

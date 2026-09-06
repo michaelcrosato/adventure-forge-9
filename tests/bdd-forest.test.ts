@@ -89,6 +89,7 @@ test("invalid or accessor-backed forests fail before target mutation", () => {
     { ...valid, roots: [2.5] },
     { ...valid, roots: "2" },
     { ...valid, nodes: [[-1, 0, 1]] },
+    { ...valid, nodes: [[0, 0, 0]] },
     { ...valid, nodes: [[0, 0]] },
     { ...valid, nodes: [[0, 0, 2]] },
     { ...valid, nodes: [[0, 0, 1], [0, 0, 1]], roots: [2, 3] },
@@ -159,4 +160,73 @@ test("target node limits throw BddLimitError after permitted partial canonicaliz
   const before = target.stats();
   assert.throws(() => target.importForest(wire), error => error instanceof BddLimitError);
   assert.ok(target.stats().uniqueEntries >= before.uniqueEntries, "partial target mutation is documented on limit failure");
+});
+
+test("over-limit forest length rejects before reading node elements or mutating the target", () => {
+  const nodes = new Array<unknown>(3);
+  let elementReads = 0;
+  Object.defineProperty(nodes, "0", {
+    configurable: true,
+    enumerable: true,
+    get() {
+      elementReads += 1;
+      throw new Error("over-limit input must not read node elements");
+    },
+  });
+  const target = new Bdd(2, { nodeLimit: 2 });
+  target.variable(1);
+  const before = target.stats();
+  assert.throws(
+    () => target.importForest({ schema: "af9-bdd-forest-v1", variableCount: 2, roots: [], nodes }),
+    error => error instanceof BddLimitError,
+  );
+  assert.equal(elementReads, 0);
+  assert.deepEqual(target.stats(), before, "early length rejection must leave the target unchanged");
+});
+
+test("independently authored dense forest descriptor has the expected truth table", () => {
+  const fixture: BddForest = {
+    schema: "af9-bdd-forest-v1",
+    variableCount: 4,
+    roots: [4],
+    nodes: [
+      [3, 0, 1],
+      [1, 1, 0],
+      [0, 2, 3],
+    ],
+  };
+  const bdd = new Bdd(4);
+  const [root] = bdd.importForest(fixture);
+  assert.ok(root !== undefined);
+  for (let value = 0; value < 16; value += 1) {
+    const bits = assignment(4, value);
+    assert.equal(
+      bdd.evaluate(root!, bits),
+      bits[0] ? !bits[1] : bits[3],
+      `dense fixture changed assignment ${value}`,
+    );
+  }
+  assert.equal(bdd.count(root!, [0, 1, 2, 3]), 8n);
+  assert.deepEqual(bdd.exportForest([root!]), fixture);
+});
+
+test("forest export handles a deep imported chain without recursive stack growth", () => {
+  const nodeCount = 10_000;
+  const nodes: Array<readonly [number, number, number]> = [];
+  for (let index = 0; index < nodeCount; index += 1) {
+    nodes.push([nodeCount - index, 0, index === 0 ? 1 : index + 1]);
+  }
+  const wire: BddForest = {
+    schema: "af9-bdd-forest-v1",
+    variableCount: nodeCount + 1,
+    roots: [nodeCount + 1],
+    nodes,
+  };
+  const bdd = new Bdd(nodeCount + 1, { nodeLimit: nodeCount, cacheLimit: 0 });
+  const [root] = bdd.importForest(wire);
+  const exported = bdd.exportForest([root!]);
+  assert.equal(exported.nodes.length, nodeCount);
+  assert.deepEqual(exported.roots, [nodeCount + 1]);
+  assert.equal(exported.nodes[0]?.[0], nodeCount);
+  assert.equal(exported.nodes[nodeCount - 1]?.[0], 1);
 });
