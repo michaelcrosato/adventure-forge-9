@@ -18,9 +18,15 @@ disjoint from the initial state and all 169,922 reference classifications
 match. It finishes in 639.25 seconds / 1,555,724 KiB maximum RSS. The current
 run now completes C/W and 14 safety obligations, then hits the 720-second
 checked limit. It returns no full proof or symbolic endpoint replay; every
-failure and its source/progress evidence is retained. A small quantifier-key
-performance change at isolated `ccf3dc1` passes independent review and all
-64 focused checks; its historical/current campaign comparisons are pending.
+failure and its source/progress evidence is retained. The quantifier-key
+performance change at isolated `ccf3dc1` passes all 64 focused checks and the
+historical gate: all 600 allocation/semantic events and the complete proof
+match the prior run. It takes 590.50 seconds / 1,440,880 KiB maximum RSS;
+this one comparison does not establish the larger current campaign's runtime.
+A certificate validator is now being prototyped in isolated worktrees. It
+will recompute exact completion and check supplied bad-state predicates
+against the current transitions, including all failure seeds and scene
+coverage. Production adoption and current proof remain pending.
 The separate current
 231-endpoint catalog now has a repository regression test; it proves authored
 path and metadata coverage, not universal safety. See

@@ -518,3 +518,21 @@ Independent review and three guarded regressions pass; all 119 selected
 regular checks pass, with the full campaign audit still excluded. The run is
 not counted as a Stage 8 sample or accepted player feedback. Exact evidence
 and the termination-record limits are in `PLAYTEST_HELP_INCIDENT.md`.
+
+### Quantifier-key optimization and certificate review
+
+Root reviews the five-line quantifier-key hoist and verifies the clean build
+plus all 64 focused checks at `ccf3dc1`. The historical run completes after
+590.50 seconds / 1,440,880 KiB maximum RSS. Independent checking and a separate
+root seal agree on the exact 600-event allocation/semantic trace, all 26
+obligations and the full 169,922-state reference comparison. The worker's
+microbenchmark upper-middle statistic is preserved and explicitly corrected
+to an even-sample median in a separate note. No current-campaign timing or
+acceptance follows from that microbenchmark.
+
+Two read-only reviews support verifying generated backward predicates through
+seed coverage, predecessor closure and initial disjointness, with fresh exact
+completion and direct scene coverage through the failure cone. Root assigns
+isolated BDD serialization and certificate-validator prototypes while retaining
+the existing generator and release command. These prototypes have no campaign
+or production acceptance yet. No provider cost measurement is available.

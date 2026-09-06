@@ -632,6 +632,75 @@ is accepted.
 | `/tmp/af9-symbolic-fixed-point-compact-current-root-check-v3.json` | `a2ea513a7d08d28bfc912f67b056b5ec4e4dba04cf7ccc70423aef5b2ca12363` |
 | `/tmp/af9-symbolic-fixed-point-compact-current-failure-root-seal-v1.json` | `ed97e7edcb773474cefe4a3ba3aff80a35bd54d435df9007ce70d3687e5dc0c2` |
 
+### Quantifier-key hoist historical acceptance
+
+Experimental `ccf3dc1abec85cd3da1c8e258b9d3121325a1593` moves the unchanged
+existential-quantifier cache-key string construction outside recursive calls.
+It changes neither cache keys nor BDD operation/allocation order. Root's clean
+build and all 64 focused checks pass in 21.35 seconds overall. The small
+alternating eight-pair benchmark matches truth, canonical handles and manager
+statistics. Its original v3 report calls upper-middle samples medians; the
+preserved correction note gives the true even-sample medians as 18.7858695 ms
+before and 15.605057 ms after. Those are microbenchmark measurements only.
+
+The separately prepared historical run on `139e48a` retains the same bounds,
+node/cache/heap/round limits and checked/external 720/750-second limits. Its
+probe source hash is
+`0ec3b46732f3f75a186e545a00f9cf1336ed76d811e5398163799d6a34af3916`.
+Input-only preflight passes against the actual manifest and evidence.
+PID 1386170 closes with exit zero: 590.50 seconds / 1,440,880 KiB maximum RSS
+(the Python wrapper measures 590.523 seconds). Root polls the closed session
+and verifies the exact command, source/evidence hashes and all 600 progress
+events against the prior accepted run, excluding only elapsed time and RSS.
+The complete proof and static comparison are identical: 26 obligations, 524
+original failure seeds, 262 zero compiler-closure seeds, C/W rounds 18/10,
+17/9 C/W copies, 224 obligation copies, 169,922 classified states and 332,402
+reference edges. Every initial intersection is empty. The 190 historical
+engine witnesses remain reused unchanged evidence, not new executions.
+The independent checker also passes with zero errors. This accepts the
+historical optimization; it does not accept the current campaign or change
+the production release audit.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `/tmp/af9-symbolic-exists-key-hoist-focused-tests-v1.json` | `edbb5389755bef6f6bb45c41334be2615481e38978d9c50b0c0e58788f580ea3` |
+| `/tmp/af9-symbolic-exists-key-hoist-benchmark-root-median-note-v1.json` | `d72475fa13349c19004a58b25eec6a5482908c3efb11eb655e160431887592fe` |
+| `/tmp/af9-symbolic-exists-key-hoist-historical-manifest-v1.json` | `845a50e26335908dd2fcba58118a9eb2cdeb837abc71e5d8b01dab817ddc29ea` |
+| `/tmp/af9-symbolic-exists-key-hoist-historical-input-preflight-v1.json` | `eadc7b28add67c67c5b28baa45e2988048c0c43b28da502cdcf5cfe8e06a860a` |
+| `/tmp/af9-symbolic-exists-key-hoist-historical-139e48.json` | `08983cac3f227239bd563e68ecd1011f2803722bd14f1220671cbfcc04d3e14d` |
+| `/tmp/af9-symbolic-exists-key-hoist-historical-139e48.finalization.json` | `f32d1166b3e0a83ab5234243b06bfcd7cc74cd4b2f8af45d9dec042925bae840` |
+| `/tmp/af9-symbolic-exists-key-hoist-historical-root-check-v1.json` | `06cfddf2fce834f44a61c5dc731a3662637deb6365d23b6267394c972bff1540` |
+| `/tmp/af9-symbolic-exists-key-hoist-historical-root-seal-v1.json` | `0b36b9da79f0801012d7349a36af8b057f980622579592f0c4ea89c25e02f25a` |
+
+### Certificate verification prototype
+
+The current timeout occurs after 14 of 30 obligations, so a single historical
+speed improvement is insufficient evidence to repeat the same current
+720-second attempt. Two independent reviews support a different measured
+optimization: generate bad-state predicates once, then validate them with
+exact symbolic inclusions against the current model. For failure predicate
+`B_F`, require all four freshly generated failure sources for every choice
+to be contained, `Pre(B_F) ⊆ B_F`, and `initial ∩ B_F = ∅`. Freshly compute
+exact strong completion `C`. For every authored scene, require
+`P_s \ C ⊆ B_s ∪ B_F`, `Pre(B_s) ⊆ B_s`, and `initial ∩ B_s = ∅`, where
+`P_s` is the complete valid playing-state slice for that scene. Every `Pre`
+uses every authored successful choice, including cross-scene predecessors.
+These conditions prove the same safety and finite completed-continuation
+property without claiming that the supplied cones are least fixed points or
+that an unverified `W` is exact.
+
+The prototype needs a strict dense BDD forest boundary, exact current-only
+ownership and model/configuration binding, disposable managers, adversarial
+finite fixtures, and measured historical/current generation and verification.
+A closed overapproximation of `C` is insufficient and must never be accepted.
+Certificate claims, sampled paths and old verdict fields are not proof inputs.
+Source/byte limits, incomplete generation and absent or malformed artifacts
+must fail closed. No production command, workload budget, acceptance criterion
+or game behavior has changed. The review is preserved at
+`/tmp/af9-backward-certificate-proposal-v1.md`, SHA-256
+`494647ca7cae605b720e4d20876f4393c4d358d47658e3f5789944006ed111ce`.
+Implementation and the source-bound historical/current gates remain pending.
+
 ## Repository endpoint regression
 
 The accepted current path maps are materialized in
