@@ -5,21 +5,23 @@ Updated: 2026-09-05 (America/Vancouver). The full Skyrim-breadth/BG3-depth goal 
 Stage 8 is integrated locally at game source `2f6212d`: earlier Reedway access,
 safe Archive pause/resume and decided-record revisits, and Sera's salvage credit
 consequence (29 scenes, 166 choices, 36 terminal-choice IDs). Final-copy browser
-checks and all 115 non-audit checks pass. Both earlier Stage 7 live batches
+checks pass; the endpoint catalog and CLI correction bring regular checks to
+119 passing tests. Both earlier Stage 7 live batches
 missed the regional exposure gate at 1/3; Stage 8 has no fresh live acceptance.
 Production remains the accepted Blackglass source `139e48a`, public on Vercel
 and connected to GitHub main automatic deployment.
 
-The release audit remains open. Exact scene partitions, combined failure
-seeds and copying after each nonfixed round pass 59 BDD/symbolic checks at
-`b8f1b3c`. The historical property proof is now independently accepted: all
-26 obligations are disjoint from the initial state, and comparison covers
-all 169,922 reference states. It finishes in 616.66 seconds / 1,490,792 KiB
-maximum RSS under a 720-second checked limit. Earlier node/time failures
-remain preserved. The first current campaign run completes strong completion
-but reaches the node cap during completion-or-failure round five, before any
-safety obligation or symbolic witness replay completes. Extending exact
-compaction to these initial fixed points is under review. The separate current
+The release audit remains open. Exact scene/failure partitions and copying
+through both initial fixed points pass 64 BDD/symbolic checks at `a065fd5`.
+The historical proof is independently accepted: all 26 obligations are
+disjoint from the initial state and all 169,922 reference classifications
+match. It finishes in 639.25 seconds / 1,555,724 KiB maximum RSS. The current
+run now completes C/W and 14 safety obligations, then hits the 720-second
+checked limit. It returns no full proof or symbolic endpoint replay; every
+failure and its source/progress evidence is retained. A small quantifier-key
+performance change at isolated `ccf3dc1` passes independent review and all
+64 focused checks; its historical/current campaign comparisons are pending.
+The separate current
 231-endpoint catalog now has a repository regression test; it proves authored
 path and metadata coverage, not universal safety. See
 [BACKWARD_PROPERTY_AUDIT.md](BACKWARD_PROPERTY_AUDIT.md) for scope and evidence.
