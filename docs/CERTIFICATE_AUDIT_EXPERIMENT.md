@@ -270,6 +270,28 @@ log-absence assertion incompatible with the shared runner opening that log
 before launch. These preparation defects are corrected before the current
 worktrees and generation run are created. No incomplete current proof is accepted.
 
+## Repository bundle reviewed
+
+The production bundle layer is now reviewed and committed separately at
+`019f94d9c00c2d8688e7e2fda8be1e3b17887a03`. It binds exact source/config/catalog
+values supplied by the current adapter, requires the complete source and
+artifact file sets, rejects symlink/hardlink aliases and enforces cumulative
+caps. Each load returns a fresh bounded forest; the bundle retains only IDs.
+The final integrity pass rereads sources and every forest before acceptance.
+Canonical descriptor equality and semantic BDD checks remain in the tested
+core verifier.
+
+The initial ten bundle tests passed before root found memory retention,
+shallow nested freezing, a dropped own `__proto__` bound and missing canonical
+ID checks. After those corrections, v2's fixture/exception expectations failed
+7/10 tests; v3 retained one exception-message mismatch; corrected v4 passes
+10/10 and builds. All four logs and the v1 source/test snapshots are preserved.
+The root review is `/tmp/af9-certificate-bundle-review-v1.json`, SHA-256
+`7759c3ecc9bebda017527162284f0c33424cb5412d7e4c5394a560bd0cdbe086`.
+These component checks do not constitute a new combined regular run or a
+current certificate proof. The adapter and standalone worker are still under
+integration review; the original full scenario test remains unchanged.
+
 ## Current generation launched
 
 The executed v2 preparer installs locked dependencies and builds the fresh

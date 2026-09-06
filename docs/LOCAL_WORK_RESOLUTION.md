@@ -332,3 +332,18 @@ The live inventory is now 16 worktrees and five branches. Cumulative removals
 remain 80 worktrees and 39 topic branches. The superseded quantifier/manager
 topic archives are prepared but their source worktrees and branches have not
 been removed while this generation is live.
+
+Root independently verifies the prepared archive at
+`worktree-archives/20260906T035500Z-superseded-symbolic-topics` in the durable
+evidence root. The manifest SHA-256 is
+`3c6d15b01681e7a5b8b33333ce6b9d606151e11bf4d5230c0b61568d39aeaf74`;
+root review `af9-superseded-symbolic-topics-root-review-v1.json` is
+`a1dee617ba51e56e4d1dc74224746970588ffc66cf6fa06ee48becefe46baada`.
+Each topic has 102 tracked files, exact source bytes and Git modes, and a fresh
+bundle reconstruction; the two histories have 154 and 153 commits. Root
+rechecks all 79 existing regular external evidence files in each 113-reference
+inventory. Tar files use Git archive's 0664 normalization; executable bits and
+exact live/restored 0644 modes are checked separately. Root review, log and
+script are preserved alongside the archive. No worktree or branch removal is
+authorized by this read-only record; current process dependencies and status
+must be checked again after generation closes.
