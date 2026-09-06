@@ -144,11 +144,12 @@ export class Bdd {
     this.assertHandle(root);
     const ordered = this.normalizeVariableSet(variables, "variables");
     if (ordered.length === 0 || root < 2) return root;
-    const key = `exists:${root}:${ordered.join(",")}`;
+    const quantifiedKey = ordered.join(",");
+    const key = `exists:${root}:${quantifiedKey}`;
     const cached = this.cacheGet(key);
     if (cached !== undefined) return cached;
     const quantified = new Set(ordered);
-    const result = this.existsInternal(root, quantified, ordered);
+    const result = this.existsInternal(root, quantified, quantifiedKey);
     this.cacheSet(key, result);
     return result;
   }
@@ -393,9 +394,9 @@ export class Bdd {
     return result;
   }
 
-  private existsInternal(root: Handle, quantified: ReadonlySet<number>, quantifiedKey: readonly number[]): Handle {
+  private existsInternal(root: Handle, quantified: ReadonlySet<number>, quantifiedKey: string): Handle {
     if (root < 2) return root;
-    const key = `exists-step:${root}:${quantifiedKey.join(",")}`;
+    const key = `exists-step:${root}:${quantifiedKey}`;
     const cached = this.cacheGet(key);
     if (cached !== undefined) return cached;
     const node = this.nodeAt(root);
