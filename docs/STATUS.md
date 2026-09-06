@@ -43,6 +43,13 @@ The separate current
 path and metadata coverage, not universal safety. See
 [BACKWARD_PROPERTY_AUDIT.md](BACKWARD_PROPERTY_AUDIT.md) for scope and evidence.
 
+The external selected-candidate generator now passes seven small oracle,
+zero-cone and owner-transfer tests. Root and independent review agree with
+its equations; its declared scope remains candidate generation only. A
+separate bounded profile is being prepared for the missing worker-landing
+and failure-union forests. All 30 candidates still need fresh verification
+and the 231 symbolic/public-engine endpoint replays before release adoption.
+
 ## Accepted foundation
 
 - Public repository: https://github.com/michaelcrosato/adventure-forge-9 (`main`). Original briefs archived in `15ada58`; consolidated plan in `4581f73`.

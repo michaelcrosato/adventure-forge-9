@@ -631,3 +631,14 @@ verification. Historical failure-union timing is 408.248 seconds measured
 from its previous event to completion; the worker's initial 588-second
 duration conflated elapsed time since process start with that phase's duration.
 No large selective run or provider/player dispatch has occurred.
+
+The selected-generator worker supplies four finite-fixture tests, then a
+separate three-test file after root distinguishes an empty selection from
+an actual zero cone. Root runs all seven together: 0.20 seconds / 93,620 KiB,
+unchanged generator/tests and all nine release source modules. The original
+failed fixture log is retained; its exact failed source was not preserved.
+Independent read-only review confirms the equations and identifies limited
+duck-typed owner guards, final-owner allocation retention, F/BF callback naming
+and narrow new failure-fixture coverage. Root records those limits and approves
+only the pinned, bounded offline candidate run; no current proof is granted.
+See the selected-generator review in `CERTIFICATE_AUDIT_EXPERIMENT.md`.

@@ -388,6 +388,43 @@ certificate and endpoint/replay gates.
 | `/tmp/af9-certificate-release-regular-tests-v2.log` | `bd3810961f92718bebd5636c49d3778682c681ea2d6cce09dccaf1bb0b7ca115` |
 | `/tmp/af9-campaign-certificate-adapter-bindings-root-v2.json` | `a158afd831c98ebe858f9a1cad448ba8ebcf2cd22a5938f32f37d8cf39d1911c` |
 
+## Selected-candidate generator review
+
+The external selected generator recomputes exact C, all four failure seeds
+per authored choice and W, then solves only requested scene or failure-union
+closures. It transfers live roots to fresh owners after nonfixed rounds and
+exports each selected forest synchronously. Its result explicitly declares
+selected-only scope and `fullCampaignAcceptance: false`.
+
+Root's combined seven small tests pass in 0.20 seconds / 93,620 KiB maximum
+RSS with unchanged generator, both test files and all nine release modules.
+Coverage includes a finite raw-state oracle with bound exit, cycles and
+reconvergence, an actual zero scene cone, same-owner rejection and a
+same-width/different-bound anchor rejection. These tests do not independently
+exercise every failure kind; the retained core fixtures remain necessary.
+The initial invalid-content fixture failure log is preserved, but its exact
+failed fixture source was not retained.
+
+Independent review agrees with the C/F/W and cone equations. Root records
+three limits: arbitrary duck-typed fresh owners are not checked for every
+compiled transition root; the final W owner retains its last allocations;
+and `onFoundation.failureUnion` is raw F, while the selected failure-union
+cone is its predecessor closure BF. The bounded profile must use the pinned
+deterministic `SymbolicModel.fresh()` and serialize only `onCone` forests.
+Fresh full verification of all candidates remains authoritative.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `/tmp/af9-selected-certificate-candidates-v1.mjs` | `23d5a748936788f1061860a21c4f9504934a6fd4b6b0b55111b80f01c049c20c` |
+| `/tmp/af9-selected-certificate-candidates-v1.test.mjs` | `0534c9b4fcb32c03c0fe9499594990707727745d54c3859a439cc78a05c5278b` |
+| `/tmp/af9-selected-certificate-candidates-v2.test.mjs` | `9a321ffc044a1d2d6350183fc63d760fab90bc4eb9ef9fabc7e19767f833e5f2` |
+| `/tmp/af9-selected-certificate-candidates-root-tests-v1.json` | `41873ded4539c20ab7728938ad3c7abdf99e80e3fa96d929cafe97f2b505f136` |
+| `/tmp/af9-selected-certificate-candidates-root-tests-v1.log` | `1841141e5597f6266103e41b36ee308c92e3a05111a98cbbddf36f0cb23d13bc` |
+| `/tmp/af9-selected-certificate-candidates-root-review-v1.json` | `d336ddeb67f2bc4d7b8717c23f397b5df9622c4d6f5d57aa22cb907b165ffa80` |
+
+Only bounded candidate generation is approved at this checkpoint. The two
+missing current forests, fresh full proof and endpoint replay remain pending.
+
 ## Required acceptance
 
 1. Complete corresponding current generation, fresh certificate verification
