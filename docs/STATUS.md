@@ -55,7 +55,10 @@ The reviewed external v4 generator now passes nine focused tests, including
 independent finite-state semantics under forced between-choice copying. It
 uses an absolute node watermark and preserves copying after every nonfixed
 round. The final failure-union-only profile is being prepared with unchanged
-proof limits; no large v4 run or full acceptance is claimed yet.
+proof limits. Its source/model preflight passes and the one bounded run is
+now live in root session 38645, timed child PID 1611551. C fixes in 18 rounds
+and W in 12; failure-union generation is in progress. This launch grants no
+new candidate, certificate or release acceptance.
 The separately bound 231 symbolic/public-engine
 endpoint replays now pass on the exact current source: 2,712 actions and 2,943
 checkpoints in 21.52 seconds. This closes endpoint replay coverage, not the

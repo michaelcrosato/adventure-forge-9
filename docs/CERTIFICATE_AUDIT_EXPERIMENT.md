@@ -606,6 +606,40 @@ started at this checkpoint.
 | `/tmp/af9-selected-certificate-candidates-v4-focused-root-v1.json` | `e53666046e6416a264af4c11d5395a558bae732fe38d68f96e1c8ad0a9acf3ea` |
 | `/tmp/af9-selected-certificate-candidates-v4-focused-root-v1.log` | `4fa4dc9ff43a419a63fe945ab50d0c4c2b96be678bc5eebf8496c9bc5d563f31` |
 
+## Final failure-union-only run launched
+
+Root completes the 239-line external profile and reviews the v4-bound preparer.
+The exact exported `prepareInputs` function passes an input-only preflight,
+including the real constructor and descriptor: 75 logical fields, 106 current
+and 106 next bits, 10 resources, 62 flags and 58,572 constructor nodes. Every
+source/evidence byte matches before and after, and no run output is created.
+The manifest binds 212 evidence files and preserves both original failed runs.
+
+The unchanged generic runner launches once in root session **38645**, timed
+child PID **1611551**, against manifest SHA-256
+`6abb40c83cba32e759b941cebc38a05c7bb0b905867c2eda7d15e0d6c32c11c7`.
+The only selection is `failure-union:` at index 29. Node/cache/round limits
+remain 2,000,000 / 500,000 / 128, heap 1,536 MiB, and checked/external time
+1,800/1,830 seconds. C fixes in 18 rounds and W in 12. Failure-union copying
+is active between choices; no final candidate result is available at this
+launch checkpoint. Process status must be read from the live handle.
+
+The before-choice diagnostic is a separate count/last-event sidecar, not an
+unbounded array inside the progress report. Round and compaction events retain
+numeric rounds; constructor/export/publication lifecycle events have no round.
+The callback checks current-only roots, seed containment, playing-domain
+containment and initial disjointness, then persists the sole forest. It does
+not repeat an aggregate predecessor operation; fresh complete verification
+remains mandatory. All output and eventual root-seal claims remain separate
+from full campaign proof and release acceptance.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `/tmp/af9-final-failure-candidate-profile-v1.mjs` | `5cbe0292f278c7b79f4af896143fe965d7f283574746e2c0b3f534a4cd48980f` |
+| `/tmp/af9-prepare-final-failure-candidate-v1.py` | `6b7a076d5fb4f2d3edc45178cde3e3642d823b8b08f595ac47797697b0372ef6` |
+| `/tmp/af9-prepare-final-failure-candidate-root-v1.log` | `fbc44d7e0586c27e3beb70e330110b88cb0643c44a130e4c19364c601ce11978` |
+| `/tmp/af9-final-failure-candidate-input-preflight-root-v1.json` | `6ab36a2d5c2cdbd90fcea0bb279a0a44d69a0c3a82f4a4826424281d8cc43367` |
+
 ## Required acceptance
 
 1. Complete the remaining failure-union candidate and fresh full certificate
