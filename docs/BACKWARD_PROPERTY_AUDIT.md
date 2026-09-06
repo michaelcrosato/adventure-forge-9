@@ -747,7 +747,10 @@ and full release gates remain pending. See `CERTIFICATE_AUDIT_EXPERIMENT.md` for
 source bindings, file sizes and the separate current generation allowance.
 
 The corrected current preparation and input-only preflight now pass. One
-generation is running from frozen `eb85c76` sources under the declared
-1,800/1,830-second window. It requires all 30 forests and all 231 complete
-symbolic/public-engine endpoint replays; no partial progress is accepted as
-a current proof. The release adapter remains under review.
+generation from frozen `eb85c76` sources reaches the declared 1,800-second
+checked limit after 28 of 30 forests. It returns no complete property proof,
+certificate manifest or endpoint replay. The closed failure is independently
+sealed and its files retained. Selective completion of the two missing
+candidates is being prepared; all 30 must still pass fresh certificate
+verification and the complete endpoint/replay gates. No partial result is
+accepted as a current proof.

@@ -31,9 +31,11 @@ Historical generation and separate verification both pass. Generation takes
 592.61 seconds; fresh verification takes 62.46 seconds / 1,470,332 KiB maximum
 RSS, including all 26 forests, 524 failure seeds and the full historical
 169,922-state C comparison. Root accepts the source-bound historical result;
-the supplementary independent output review also passes. Current generation is running
-with a separate 1,800/1,830-second one-off window after the preserved
-720-second timeout. Production adoption and current proof remain pending;
+the supplementary independent output review also passes. The current generation
+also reaches its separate 1,800-second checked limit: 28 of 30 forests are
+written, with no full proof, certificate manifest or endpoint replay. The
+failure and every partial artifact are preserved. Production adoption and
+current proof remain pending;
 prototype review and file-memory measurements are in
 [CERTIFICATE_AUDIT_EXPERIMENT.md](CERTIFICATE_AUDIT_EXPERIMENT.md).
 The separate current
@@ -220,10 +222,31 @@ fields, 106 state bits, 212 BDD variables and 58,572 constructor nodes; the
 preparer stdout's incorrect `fieldBits: 75` label is preserved and explained
 in the root review. The actual manifest records the correct units.
 
-One current generation is now running under manifest
+The one current generation under manifest
 `ebef2cb9cae44434118d0fcb4174e8a5d6c842b2acf1c9f2229d10ca9c3c5635`,
-root session 69524, runner child PID 1425424. It must finish all 30 forests
-and 231 complete symbolic/public-engine endpoint replays. Separate fresh
-certificate verification remains required afterward. The two current source
-freezes bring the inventory to 16 worktrees and five branches. No current
-proof or deployment is claimed from preparation or an in-progress run.
+root session 69524, runner child PID 1425424, is closed with exit 1. It stops
+at 1,800.64 seconds / 1,538,112 KiB maximum RSS after 28 scene forests; the
+last scene and failure-union forest are missing. Root verifies all 809
+progress events, partial forest hashes/envelopes, unchanged sources and the
+closed process. The failure seal is
+`/tmp/af9-symbolic-certificate-current-generation-failure-root-seal-v1.json`,
+SHA-256 `6226352b2fdf26c576af93b757ff9e63c76ec7719fc51b99908d1f8ebd9b1ddd`.
+It grants no current generation or certificate acceptance.
+
+The next bounded work prepares only the two missing candidate forests from a
+fresh model with unchanged gameplay/core bytes and bounds. The existing 28
+remain untrusted inputs. A complete assembled set must pass fresh semantic
+verification and all endpoint/replay gates; the failed generation verdict
+will not be changed. The bundle is committed at isolated `019f94d`; its ten
+focused tests pass. The adapter/worker are reviewed and still await real
+certificate integration. The original scenario test remains unchanged.
+The reviewed adapter/worker are now committed at isolated `a92828d`; its clean
+build and all 238 regular checks pass with identical before/after source.
+This excludes only the unchanged scenario invocation and is not a full
+`npm run verify` or current-certificate result.
+
+After reconstructing and checking the two superseded source topics, root
+removes them following fresh process/dependency checks. Inventory is 14
+worktrees and three branches; cumulative removals are 82 worktrees and 41
+topic branches. No current proof, fresh live acceptance or new deployment is
+claimed from this work.

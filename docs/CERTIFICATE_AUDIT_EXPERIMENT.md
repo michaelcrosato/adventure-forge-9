@@ -183,8 +183,8 @@ The original 190 engine witnesses are reused unchanged, not newly replayed.
 
 This verifier does not recompute W or claim minimal bad cones. Its measured
 historical runtime supports a separate verification step; current generation
-and verification remain required. A one-off current generation is now running
-with an explicit 1,800/1,830-second checked/external window, following
+and verification remain required. A one-off current generation uses
+an explicit 1,800/1,830-second checked/external window, following
 the preserved 720-second 14-of-30 timeout. The node/cache/round/heap guards and
 all proof obligations remain unchanged. This generation allowance does not
 change the prospective 720/750-second release-verification window. No current
@@ -324,7 +324,71 @@ for separate fresh certificate verification or the repository release gate.
 | `/tmp/af9-symbolic-certificate-current-generation-input-preflight-root-v1.json` | `fd94e6381b7ef702ad09801f3c7b2d795bc128ca07fa34183b1f846f8b3a803c` |
 | `/tmp/af9-current-certificate-preparation-root-v1.json` | `b0894a8a55eb52dfeb022b299d6c52745e084dddf4f732a0e53cd904fc753686` |
 
-## Remaining gates
+## Current generation time-limit failure
+
+The current generation closes with exit 1 at the checked time limit:
+1,800.64 seconds external / 1,800.664717 seconds including wrapper validation,
+maximum RSS 1,538,112 KiB. It completes C in 18 rounds and W in 12 rounds, then
+28 scene forests. At failure, `reedway-worker-landing` is still nonfixed at
+round 18 with 659,449 nodes. That scene and `failure-union:` have no files.
+No full property proof, certificate manifest or symbolic/public-engine
+endpoint replay is returned. The report's constructor-only BDD stats do not
+describe the last temporary obligation owner.
+
+Root checks all 809 events against both the report and log, every partial
+file's hash/bounded envelope, unchanged source/evidence bindings, the closed
+actual process and the absent certificate manifest. The 28 files total
+20,119,565 JSON bytes / 5,541,263 gzip bytes. They remain candidate data with
+no current acceptance.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `/tmp/af9-symbolic-certificate-current-generation-eb85c76.json` | `36e330dac13a8d70092223084b84f77ba43f36271132630264af4cba131ad155` |
+| `/tmp/af9-symbolic-certificate-current-generation-eb85c76.progress.json` | `d63f0ce87a0071cb20d538be54e86438c76132b5a912d575bd437105e80f790e` |
+| `/tmp/af9-symbolic-certificate-current-generation-eb85c76.log` | `a445d8f063cc285e50cfa44c91f7b1e00f440fc9daa0d3ed287d4a19da176e19` |
+| `/tmp/af9-symbolic-certificate-current-generation-eb85c76.finalization.json` | `06b7eb51038bc0f01b3716f2b56a35cfef1a1cd817ec6877a920e71a2363990b` |
+| `/tmp/af9-symbolic-certificate-current-generation-failure-root-seal-v1.json` | `6226352b2fdf26c576af93b757ff9e63c76ec7719fc51b99908d1f8ebd9b1ddd` |
+
+A selective candidate generator is now being prepared. It will recompute
+fresh C, all four failure seeds per choice and W, then solve only the missing
+scene and failure-union closures. It may carry the 28 existing files forward
+only as untrusted, source-bound candidates. Every one of the eventual 30
+forests must pass the existing fresh semantic verifier; the failed generation
+remains failed. Endpoint and release runtime gates remain unchanged. This
+avoids recomputing already preserved candidates without trusting their prior
+verdicts or weakening the complete proof requirements.
+
+The draft success checkers remain unused. Root review corrects nonexistent
+proof-summary fields and observes that witness-map choice insertion order
+differs from authored order; `catalog.targets.choices` matches actual SCENARIO
+order. The v2 checker preserves those corrections but cannot accept this
+incomplete run. The original success-only adopter is also preserved unused.
+
+## Adapter integration freeze
+
+Isolated `a92828dac4eab9c802fffdc2691b696e0b322163` adds the current source-mode
+adapter and a standalone worker. The adapter computes the exact build inputs,
+explicit disjoint source roles and authored catalog, constructs fresh C/BF/Bs
+verification, rechecks every source/artifact afterward and returns both the
+verified owner/root result and serializable report. The worker checks its
+1,536 MiB heap configuration and emits only report metadata; its parent must
+enforce the external deadline. The compiled-mode entrypoint is rejected.
+
+After review, the clean committed build and all 238 regular checks pass in
+21.65 seconds overall. Tests take 19.52 seconds / 1,205,320 KiB maximum RSS.
+Before/after hashes of every tracked file are identical. The 40-file test
+selection excludes only the unchanged `tests/scenario.test.ts`; there is no
+full `npm run verify` or real-current-certificate claim. The draft future
+scenario invocation remains outside the repository pending the complete
+certificate and endpoint/replay gates.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `/tmp/af9-certificate-release-regular-tests-v2.json` | `8315700d8ca22dea206401dd9c87f9d7d4c48233432d0b0ba687babed1174047` |
+| `/tmp/af9-certificate-release-regular-tests-v2.log` | `bd3810961f92718bebd5636c49d3778682c681ea2d6cce09dccaf1bb0b7ca115` |
+| `/tmp/af9-campaign-certificate-adapter-bindings-root-v2.json` | `a158afd831c98ebe858f9a1cad448ba8ebcf2cd22a5938f32f37d8cf39d1911c` |
+
+## Required acceptance
 
 1. Complete corresponding current generation, fresh certificate verification
    and endpoint replay. Adopt a repository-contained release check only after

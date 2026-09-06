@@ -610,3 +610,24 @@ while root reviews repository integration. The bundle review finds retained
 forest objects, shallow-frozen descriptor children and a dropped `__proto__`
 bounds key; these are corrected before accepting the loader. These are local
 implementation/review activities, not new gameplay or experience evidence.
+
+Current generation reaches its 1,800-second checked limit after 28 of 30
+forests. Root independently seals the closed failure, all 809 events and
+28 artifact hashes/envelopes; no full proof or replay is accepted. The
+reviewer catches the adapter's discarded verified owner; root returns
+`{ verification, report }`, while the worker emits only the report. The
+reviewed adapter is committed at isolated `a92828d`, followed by a clean
+build and all 238 selected regular tests: 21.65 seconds overall, 19.52 seconds
+/ 1,205,320 KiB for tests. Only the unchanged full scenario invocation is
+excluded. All tracked bytes and clean status match before/after.
+
+The success-checker review corrects nonexistent proof summary fields and the
+choice order: authored targets retain SCENARIO order while witness-map
+insertion order differs. Both success checkers and the original success-only
+adopter remain unused for the failed run. A separate selective-candidate
+generator is being prepared for the two missing cones without changing the
+tested core. The existing 28 are untrusted candidates requiring fresh full
+verification. Historical failure-union timing is 408.248 seconds measured
+from its previous event to completion; the worker's initial 588-second
+duration conflated elapsed time since process start with that phase's duration.
+No large selective run or provider/player dispatch has occurred.

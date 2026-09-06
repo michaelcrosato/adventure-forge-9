@@ -347,3 +347,14 @@ exact live/restored 0644 modes are checked separately. Root review, log and
 script are preserved alongside the archive. No worktree or branch removal is
 authorized by this read-only record; current process dependencies and status
 must be checked again after generation closes.
+
+The generation has now closed with a preserved time-limit failure. Root
+rechecks both source trees, archive hashes, ancestry, actual process CWD/argv
+and current runtime input paths before removing
+`/tmp/af9-symbolic-exists-key-hoist` / `audit-exists-key-hoist` and
+`/tmp/af9-symbolic-manager` / `audit-symbolic-manager`. Archive
+`root-removal-v1.json` SHA-256 is
+`41a2a4a93aa78bdb1d17b6c150c75c36804a1caeb16dc5faf09d5df58647b9a3`.
+All diagnostics and evidence remain. Cumulative cleanup is now 82 worktrees
+and 41 topic branches removed; 14 worktrees and three branches remain:
+`main`, `audit-symbolic-certificates` and `audit-certificate-release`.
