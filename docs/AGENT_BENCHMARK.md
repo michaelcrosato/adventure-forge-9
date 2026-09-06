@@ -642,3 +642,13 @@ duck-typed owner guards, final-owner allocation retention, F/BF callback naming
 and narrow new failure-fixture coverage. Root records those limits and approves
 only the pinned, bounded offline candidate run; no current proof is granted.
 See the selected-generator review in `CERTIFICATE_AUDIT_EXPERIMENT.md`.
+
+Root separates the 231 current symbolic/public-engine endpoint paths from
+candidate generation, binding the same exact sources and tested semantic core.
+Actual-profile input preflight passes, then all paths pass in 21.52 seconds /
+251,728 KiB. Root checks all 233 ordered events and before/after bindings.
+This closes the endpoint replay gate; no certificate proof or player acceptance
+follows. Review of the selected profile draft catches a seal hash from the
+earlier 14-obligation failure, confusion between exported wire IDs and manager
+handles, overstrict caller cache-stat equality, and a directory listed among
+the generic runner's file artifacts. Corrections precede any selected launch.

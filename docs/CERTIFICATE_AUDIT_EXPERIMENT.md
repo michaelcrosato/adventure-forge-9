@@ -423,7 +423,38 @@ Fresh full verification of all candidates remains authoritative.
 | `/tmp/af9-selected-certificate-candidates-root-review-v1.json` | `d336ddeb67f2bc4d7b8717c23f397b5df9622c4d6f5d57aa22cb907b165ffa80` |
 
 Only bounded candidate generation is approved at this checkpoint. The two
-missing current forests, fresh full proof and endpoint replay remain pending.
+missing current forests and fresh full proof remain pending.
+
+## Separate current symbolic endpoint replay
+
+The current endpoint gate executes separately while the two-candidate profile
+is prepared. It uses the same frozen main/probe/trusted sources and exact five
+semantic modules as the failed generation, with one new symbolic owner per
+path. The actual public engine supplies states; the replay adapter checks legal
+choices, exact symbolic relation images, save/restore at every prefix and full
+engine replay for each path. Final scenes, status, revisions, hashes, receipts
+and observation choice IDs match the preserved independently checked catalog.
+
+All 231 paths pass: 29 scene paths, 166 choice paths and 36 ending paths,
+2,712 actions, 2,943 checkpoints and 72 terminal receipts. Runtime is 21.52
+seconds external / 21.533 seconds including final wrapper checks, maximum RSS
+251,728 KiB. Root checks all 233 ordered events against log/report/sidecar,
+exact target/action totals, unchanged inputs and closed process. The root seal
+accepts current symbolic endpoint replay and explicitly rejects any implied
+certificate or universal-safety acceptance. The original 28-forest generation
+remains failed and still records zero replays; this is a separate run.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `/tmp/af9-current-symbolic-endpoint-replay-manifest-v1.json` | `f1da301d606dbb80ac07c8bbe1eb38d992ab45ff1601318c393878e929cfe1a4` |
+| `/tmp/af9-current-symbolic-endpoint-replay-v1.mjs` | `c77e9c51f275fd6c730eb7f0045b43c34c7fdb932e849c57255db5980d79b3c3` |
+| `/tmp/af9-prepare-current-symbolic-endpoint-replay-v1.py` | `dc4391733d27e1b31fac07699baa6bbf17d886932ff54994b8c7c33424fd4847` |
+| `/tmp/af9-current-symbolic-endpoint-input-preflight-root-v1.json` | `5ac1e2aef7002212319216aad9497739799be6b792b64142ef982af4e55b7188` |
+| `/tmp/af9-current-symbolic-endpoint-replay-eb85c76-v1.json` | `b608fd6db8176c8a457cd2fa0a45cad1b8ac8162bfebbec81311583de4b27b82` |
+| `/tmp/af9-current-symbolic-endpoint-replay-eb85c76-v1.progress.json` | `79690f2deed70b16d4651d636357918ae625e93d10d409b14308f4e5d901a7a7` |
+| `/tmp/af9-current-symbolic-endpoint-replay-eb85c76-v1.log` | `6c3e2c9223361750502f9395b45369473f48c21ecbbfdd2ff464103e0e733c14` |
+| `/tmp/af9-current-symbolic-endpoint-replay-eb85c76-v1.finalization.json` | `faba7aba2a0d6257df056a80e85fe27d47116ff2740ced3eec44c57a3f952022` |
+| `/tmp/af9-current-symbolic-endpoint-replay-root-seal-v1.json` | `b9b69233d20c04ae7da42099b4df00382c62c4c98d231b74fa9e9295d60bb97d` |
 
 ## Required acceptance
 

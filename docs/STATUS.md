@@ -48,7 +48,10 @@ zero-cone and owner-transfer tests. Root and independent review agree with
 its equations; its declared scope remains candidate generation only. A
 separate bounded profile is being prepared for the missing worker-landing
 and failure-union forests. All 30 candidates still need fresh verification
-and the 231 symbolic/public-engine endpoint replays before release adoption.
+before release adoption. The separately bound 231 symbolic/public-engine
+endpoint replays now pass on the exact current source: 2,712 actions and 2,943
+checkpoints in 21.52 seconds. This closes endpoint replay coverage, not the
+universal campaign safety proof.
 
 ## Accepted foundation
 

@@ -754,3 +754,14 @@ sealed and its files retained. Selective completion of the two missing
 candidates is being prepared; all 30 must still pass fresh certificate
 verification and the complete endpoint/replay gates. No partial result is
 accepted as a current proof.
+
+A separate source-bound current replay now closes the endpoint gate. All 231
+authored paths run with fresh symbolic owners against the actual public engine:
+2,712 relation/action checks, 2,943 save/restore checkpoints and 72 terminal
+receipts, plus full-path engine replay and exact endpoint-catalog parity.
+The run takes 21.52 seconds / 251,728 KiB maximum RSS. Root checks all 233
+events, source/evidence bindings and closed process; the seal is
+`/tmp/af9-current-symbolic-endpoint-replay-root-seal-v1.json`, SHA-256
+`b9b69233d20c04ae7da42099b4df00382c62c4c98d231b74fa9e9295d60bb97d`.
+This separate result does not rewrite the failed generation or establish
+universal safety. Fresh full verification of all 30 forests remains pending.
