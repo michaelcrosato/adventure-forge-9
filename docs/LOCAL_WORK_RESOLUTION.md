@@ -232,3 +232,27 @@ Both review-script versions and the execution log are preserved alongside
 the original unchanged archive manifest. Cumulative removals are 58 worktrees
 and 38 topic branches. The fresh current probe was added between batches,
 so 28 worktrees and two branches remain after this removal.
+
+## Nine further diagnostic overlays removed
+
+The two completed packed-current probes, two family crosschecks and five
+earlier backward-property historical probes are archived under
+`worktree-archives/20260906T003947Z-nine-diagnostic-overlays/`. All nine retain
+their exact source entries, modes and detached tips. The bundle and extraction
+checks pass; 208 evidence files are copied and the two system binaries have
+explicit hash/mode/size exclusions. Root independently repeats these checks,
+verifies active runtime manifest dependencies and rechecks each candidate
+immediately before removal. The first review stops before any removal because
+archive schema v3 names its exclusions field `excludedSourceRootPaths`; the
+corrected review and both original logs are preserved.
+
+Manifest SHA-256 is
+`9820a1efe23ceff695985fc78baecf4a20b6579550236eae2fef5294ba6d2338`;
+bundle SHA-256 is
+`0afb2e36d864c49466bc9cc444edf4379af0f37988a8526d0c4f9cb146ba2b4a`;
+root removal report SHA-256 is
+`bcd5e3ddab9cda2fcca51aada7d6917a22c16b0f9f2afbb2bd12b085251223cd`.
+All nine are removed. Cumulative cleanup accounts for 67 worktrees and 38
+topic branches; 19 worktrees and two branches remain. Twelve clean historical
+live/source freezes are undergoing nondestructive archival; the seven current
+source, verifier and reference roots remain protected.

@@ -147,3 +147,9 @@ branches at removal. Fifteen additional historical BDD checkouts were then
 independently checked against their archive and removed. Cumulative cleanup
 now accounts for 58 worktrees and 38 topic branches. With the fresh current
 probe added between batches, 28 worktrees and two branches remain.
+
+Nine further completed packed, family and backward-property diagnostic
+overlays are now archived and independently removed. Cumulative cleanup
+accounts for 67 worktrees and 38 topic branches, leaving 19 worktrees and two
+branches. Twelve clean historical live/source freezes are being archived;
+the current source/verifier/reference roots remain available.
