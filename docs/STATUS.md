@@ -54,11 +54,17 @@ missing, and all 30 must pass fresh verification before release adoption.
 The reviewed external v4 generator now passes nine focused tests, including
 independent finite-state semantics under forced between-choice copying. It
 uses an absolute node watermark and preserves copying after every nonfixed
-round. The final failure-union-only profile is being prepared with unchanged
-proof limits. Its source/model preflight passes and the one bounded run is
-now live in root session 38645, timed child PID 1611551. C fixes in 18 rounds
-and W in 12; failure-union generation is in progress. This launch grants no
-new candidate, certificate or release acceptance.
+round. Its bounded run is now closed with exit 1 at 1,800.78 seconds after
+357 checked events; the failure union remains unfinished in round 9. Root
+seals the unchanged inputs and empty candidate output. A separately reviewed
+v6 iteration updates the closure after each choice in reverse authored order;
+it computes the same least closure and passes all nine focused tests. The v2
+profile passes its actual input/model preflight and starts once in root session
+20888, timed child PID 1618206, with unchanged proof limits. This run remains
+in progress and grants no candidate, certificate or release acceptance.
+The assembly tool also passes an input-only check of the preserved 29 forests,
+current release constructor/core and accepted 231-endpoint replay. The final
+failure forest and fresh full semantic verification remain required.
 The separately bound 231 symbolic/public-engine
 endpoint replays now pass on the exact current source: 2,712 actions and 2,943
 checkpoints in 21.52 seconds. This closes endpoint replay coverage, not the

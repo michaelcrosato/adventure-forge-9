@@ -640,6 +640,84 @@ from full campaign proof and release acceptance.
 | `/tmp/af9-prepare-final-failure-candidate-root-v1.log` | `fbc44d7e0586c27e3beb70e330110b88cb0643c44a130e4c19364c601ce11978` |
 | `/tmp/af9-final-failure-candidate-input-preflight-root-v1.json` | `6ab36a2d5c2cdbd90fcea0bb279a0a44d69a0c3a82f4a4826424281d8cc43367` |
 
+## Closed within-round run and next exact iteration
+
+Root session **38645** closes with exit 1, timed child **1611551** absent.
+The checked time guard rejects generation at 1,800.78 external seconds,
+1,800.813 wrapper seconds and 1,676,468 KiB maximum RSS. C/W finish in 18/12
+rounds, but failure-union round 9 remains unfinished after 290 compactions.
+The last event follows `return-to-blackglass-from-reedway`; no candidate or
+selected certificate is written. Root checks all 357 ordered events, 6,452
+preimage callbacks, source/evidence hashes and process closure. The failure
+seal preserves this rejected result and makes no semantic proof claim.
+
+The next external generator uses an in-place monotone update for each choice,
+visited in reverse authored order. Every sweep visits every choice; fixed
+means no choice changes the set. Starting from the same seed, each update
+stays within the least closed set, and the final common fixed point contains
+that least set. Independent review confirms this equivalence. Comparisons
+occur before owner transfer, so handles from different BDD owners are never
+used to establish equality. Copying retains the live root, extras and anchors;
+every nonfixed sweep still receives a boundary copy. Node/cache/round guards,
+failure seeds and source rules remain unchanged.
+
+The v5 prototype passes nine focused tests. Root preserves it and creates v6
+with corrected comments and version metadata; all nine root tests pass in
+0.265 seconds, including the independent 36-state oracle, forced copying,
+reverse choice visitation and owner/options/zero-cone regressions. Source and
+evidence hashes match before and after. These are focused generator results,
+not a campaign certificate proof.
+
+The reviewed v2 preparer requires the exact root-seal hash of the closed,
+unsuccessful v4 attempt with no candidate before writing new attempt inputs.
+Its manifest binds 218 evidence files. Root calls the actual exported
+`prepareInputs` function: constructor, descriptor and every source/evidence
+binding pass in 0.264 seconds, with all 270 bound files unchanged and no run
+output created. The unchanged generic runner then starts one v6 run in root
+session **20888**, timed child **1618206**, under the same 1,800/1,830-second,
+1,536-MiB heap and 2,000,000/500,000/128 node/cache/round policies. Outputs use
+the separate `/tmp/af9-final-failure-candidate-eb85c76-v2` prefix. Read the
+actual session handle before deciding this run has closed.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `/tmp/af9-final-failure-candidate-root-seal-v1.json` | `d42e5b2ca175ea3c2bc81442133b1fc6c73b08a48b0fd08ff932b4e2b16445aa` |
+| `/tmp/af9-check-final-failure-candidate-root-v1.py` | `f8e6b2d6d0da306b9e66cbf65b8a029baba85f94ef60884679c15599c0e19319` |
+| `/tmp/af9-final-failure-candidate-eb85c76-v1.finalization.json` | `3dbbea2a04254a2d949c2977320dd14c61595fc31ca334c2db49d4e95ca58fb4` |
+| `/tmp/af9-selected-certificate-candidates-v5.mjs` | `7c9e21bbd718ab03f2d1fde39eaa4208d73ae7db79777d218a1c694b23ff65e9` |
+| `/tmp/af9-selected-certificate-candidates-v6.mjs` | `c5210fa7f2c2f541302c60de3aa77327b673c82c4f32e8e541ae6af8aa7aeea7` |
+| `/tmp/af9-selected-certificate-candidates-v6-focused-root-v1.json` | `0fec984ae4ded7908a2a122bc6f48df23df43272c4e5870d73aaa98fd26f978f` |
+| `/tmp/af9-final-failure-candidate-profile-v2.mjs` | `bfaa1e99f6b6953702ba163946560d5d7bea8f36b1f503334535f77fb441a860` |
+| `/tmp/af9-prepare-final-failure-candidate-v2.py` | `92dca8e10ac843ca500bb51dcab02110425a02cbd7b73dcbde9dab9bf228c2e2` |
+| `/tmp/af9-prepare-final-failure-candidate-root-v2.log` | `4481c2508118969d5ca8f1549414691219d703590d9ae934687fdda61801bfaf` |
+| `/tmp/af9-final-failure-candidate-manifest-v2.json` | `b95327325eaf2fd36dd27a381be8c58a65ea736b770cbfb43c1596905b78029a` |
+| `/tmp/af9-final-failure-candidate-input-preflight-root-v2.json` | `082442914755bdca03ca017149f1592e00fa59e1da57678facda24663b3041b5` |
+
+## Candidate assembly input review
+
+The external assembler prepares the exact production manifest schema and
+relative forest paths under `campaign/`; absolute evidence paths belong only
+to a separate provenance file. Root executes its actual input helpers for the
+original 28 forests, the separately preserved worker-landing forest, the
+current trusted release constructor/descriptor and the accepted 231-endpoint
+replay. All pass with unchanged source/evidence hashes. The two preserved
+forest groups contain 20,119,565 and 1,444,556 raw JSON bytes. No final failure
+input is available at this checkpoint; this preflight creates no package and
+performs no new semantic verification or endpoint replay.
+
+Root preserves assembler v1 and prepares v2 with two corrections: each wire
+root must fit the actual forest node count, and release/source/origin bindings
+are rechecked after all package writes. The v2 syntax check passes. Actual
+assembly remains gated on a successfully closed, root-checked final candidate;
+the complete 30-forest package must then pass fresh semantic verification.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `/tmp/af9-assemble-current-certificate-candidates-v1.mjs` | `ea056c21bd2cb509517536a7c54751031b94e27497cf20a8e4e7918f1c19f8b0` |
+| `/tmp/af9-current-certificate-assembly-input-preflight-root-v1.json` | `646307bdec5eb73c7cfa4f593e189cb145433cf729a51b16779eb1898eef4307` |
+| `/tmp/af9-assemble-current-certificate-candidates-v2.mjs` | `7499820cd22d304d45792981759680645658191391e58b5589cd4f98656278be` |
+| `/tmp/af9-current-certificate-candidate-assembly-v2.md` | `50d1cfc59f80ecec50eae9337fa67fb59c407a46e39e8395b6b6aa4e75fa4549` |
+
 ## Required acceptance
 
 1. Complete the remaining failure-union candidate and fresh full certificate
