@@ -1,0 +1,2706 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import {
+  validateScenario,
+  type Choice,
+  type Condition,
+  type Scenario,
+} from "../src/engine/content.js";
+import {
+  SymbolicModel,
+  type SemanticState,
+  type SymbolicChoice,
+  type SymbolicOptions,
+} from "../src/verification/symbolic-model.js";
+import { proveCompletionSafety } from "../src/verification/symbolic-properties.js";
+import {
+  proveCompletionSafetyByObligation,
+  type ObligationProgress,
+} from "../src/verification/symbolic-obligations.js";
+
+type Status = SemanticState["status"];
+type TerminalStatus = Exclude<Status, "playing">;
+type FaultReason = "arithmetic-error" | "bound-exit";
+
+type RawTransition =
+  | { readonly kind: "success"; readonly state: SemanticState }
+  | {
+      readonly kind: "fault";
+      readonly reason: FaultReason;
+      readonly effectIndex: number;
+      readonly resource: string;
+    };
+
+interface RawEdge {
+  readonly from: string;
+  readonly to: string;
+  readonly choiceId: string;
+}
+
+interface RawGraph {
+  readonly scenario: Scenario;
+  readonly bounds: Readonly<Record<string, number>>;
+  readonly resources: readonly string[];
+  readonly flags: readonly string[];
+  readonly endings: readonly (readonly [TerminalStatus, string])[];
+  readonly states: readonly SemanticState[];
+  readonly statesByKey: ReadonlyMap<string, SemanticState>;
+  readonly edges: readonly RawEdge[];
+  readonly reachable: ReadonlySet<string>;
+  readonly completable: ReadonlySet<string>;
+  readonly faults: ReadonlySet<string>;
+  readonly invalidSuccess: ReadonlySet<string>;
+  readonly uncoveredEnabled: ReadonlySet<string>;
+  readonly bad: ReadonlySet<string>;
+  readonly initialKey: string;
+}
+
+const SAFE_CYCLE = {
+  version: 1,
+  initialScene: "start",
+  initialResources: { energy: 1 },
+  initialFacts: [],
+  scenes: [
+    {
+      id: "start",
+      title: "Start",
+      text: [
+        { text: "The safe route begins." },
+        { text: "The armed marker glints.", when: [{ type: "flag", flag: "armed", value: true }] },
+      ],
+    },
+    {
+      id: "loop",
+      title: "Loop",
+      text: [
+        { text: "The loop can be reset before the final step." },
+        { text: "The gate is armed.", when: [{ type: "flag", flag: "armed", value: true }] },
+      ],
+    },
+  ],
+  choices: [
+    {
+      id: "enter-loop",
+      scene: "start",
+      label: "Enter the loop",
+      description: "Take the safe route into the working loop.",
+      effects: [{ type: "goTo", scene: "loop" }],
+    },
+    {
+      id: "depart-start",
+      scene: "start",
+      label: "Depart early",
+      description: "Leave before committing to the route.",
+      effects: [],
+      outcome: { status: "departed", summary: "You departed before finishing the route." },
+    },
+    {
+      id: "arm-loop",
+      scene: "loop",
+      label: "Arm the gate",
+      description: "Arm the gate and remain in the loop.",
+      when: [{ type: "flag", flag: "armed", value: false }],
+      effects: [
+        { type: "setFlag", flag: "armed", value: true },
+        { type: "goTo", scene: "loop" },
+      ],
+    },
+    {
+      id: "reset-loop",
+      scene: "loop",
+      label: "Reset the gate",
+      description: "Restore the spent energy and clear the gate.",
+      when: [
+        { type: "flag", flag: "armed", value: true },
+        { type: "resourceAtMost", resource: "energy", value: 0 },
+      ],
+      effects: [
+        { type: "setResource", resource: "energy", value: 1 },
+        { type: "setFlag", flag: "armed", value: false },
+        { type: "goTo", scene: "loop" },
+      ],
+    },
+    {
+      id: "drain-loop",
+      scene: "loop",
+      label: "Spend the energy",
+      description: "Spend the energy and stay in the loop.",
+      when: [
+        { type: "flag", flag: "armed", value: true },
+        { type: "resourceAtLeast", resource: "energy", value: 1 },
+      ],
+      effects: [
+        { type: "adjustResource", resource: "energy", delta: -1 },
+        { type: "goTo", scene: "loop" },
+      ],
+    },
+    {
+      id: "finish-loop",
+      scene: "loop",
+      label: "Finish the route",
+      description: "Finish once the gate is armed.",
+      when: [{ type: "flag", flag: "armed", value: true }],
+      effects: [],
+      outcome: { status: "completed", summary: "The safe route is complete." },
+    },
+    {
+      id: "dead-loop",
+      scene: "loop",
+      label: "Take the fatal shortcut",
+      description: "Choose the unarmed shortcut.",
+      when: [{ type: "flag", flag: "armed", value: false }],
+      effects: [],
+      outcome: { status: "dead", summary: "The unarmed shortcut failed." },
+    },
+  ],
+} as const;
+
+const REACHABLE_TRAP = {
+  version: 1,
+  initialScene: "start",
+  initialResources: { water: 0 },
+  initialFacts: [],
+  scenes: [
+    { id: "start", title: "Start", text: [{ text: "Two paths leave the start." }] },
+    { id: "safe", title: "Safe", text: [{ text: "The safe landing is open." }] },
+    { id: "trap", title: "Trap", text: [{ text: "The dry trap has no open exit." }] },
+  ],
+  choices: [
+    {
+      id: "enter-safe",
+      scene: "start",
+      label: "Take the safe path",
+      description: "Walk to the safe landing.",
+      effects: [{ type: "goTo", scene: "safe" }],
+    },
+    {
+      id: "enter-trap",
+      scene: "start",
+      label: "Enter the trap",
+      description: "Take the path into the dry trap.",
+      effects: [{ type: "goTo", scene: "trap" }],
+    },
+    {
+      id: "finish-start",
+      scene: "start",
+      label: "Finish at the start",
+      description: "Close the route before walking farther.",
+      effects: [],
+      outcome: { status: "completed", summary: "The starting route is complete." },
+    },
+    {
+      id: "finish-safe",
+      scene: "safe",
+      label: "Finish safely",
+      description: "Complete the safe landing.",
+      effects: [],
+      outcome: { status: "completed", summary: "The safe landing is complete." },
+    },
+    {
+      id: "blocked-escape",
+      scene: "trap",
+      label: "Use the water exit",
+      description: "Leave the trap when water is available.",
+      when: [{ type: "resourceAtLeast", resource: "water", value: 1 }],
+      effects: [{ type: "goTo", scene: "safe" }],
+    },
+  ],
+} as const;
+
+const UNREACHABLE_BAD = {
+  version: 1,
+  initialScene: "start",
+  initialResources: { stock: 1 },
+  initialFacts: [],
+  scenes: [
+    { id: "start", title: "Start", text: [{ text: "The sealed route is safe." }] },
+    { id: "hidden", title: "Hidden", text: [{ text: "A hidden route contains a fault." }] },
+  ],
+  choices: [
+    {
+      id: "finish-start",
+      scene: "start",
+      label: "Finish the sealed route",
+      description: "Finish without entering the hidden route.",
+      effects: [],
+      outcome: { status: "completed", summary: "The sealed route is complete." },
+    },
+    {
+      id: "hidden-boom",
+      scene: "hidden",
+      label: "Overfill the hidden tank",
+      description: "Push the hidden tank beyond the modeled bound.",
+      effects: [
+        { type: "adjustResource", resource: "stock", delta: 1 },
+        { type: "goTo", scene: "hidden" },
+      ],
+    },
+    {
+      id: "finish-hidden",
+      scene: "hidden",
+      label: "Finish the hidden route",
+      description: "Close the hidden route safely.",
+      effects: [],
+      outcome: { status: "completed", summary: "The hidden route is complete." },
+    },
+  ],
+} as const;
+
+const REACHABLE_FAULTS = {
+  version: 1,
+  initialScene: "start",
+  initialResources: { stock: 1 },
+  initialFacts: [],
+  scenes: [
+    { id: "start", title: "Start", text: [{ text: "The work route begins." }] },
+    { id: "work", title: "Work", text: [{ text: "The tank can be reset or overfilled." }] },
+  ],
+  choices: [
+    {
+      id: "enter-work",
+      scene: "start",
+      label: "Enter the work yard",
+      description: "Walk into the work yard.",
+      effects: [{ type: "goTo", scene: "work" }],
+    },
+    {
+      id: "finish-start",
+      scene: "start",
+      label: "Finish at the gate",
+      description: "Finish before entering the yard.",
+      effects: [],
+      outcome: { status: "completed", summary: "The starting work is complete." },
+    },
+    {
+      id: "reset-stock",
+      scene: "work",
+      label: "Reset the tank",
+      description: "Reset the full tank to zero and remain in the yard.",
+      when: [{ type: "resourceAtLeast", resource: "stock", value: 1 }],
+      effects: [
+        { type: "setResource", resource: "stock", value: 0 },
+        { type: "goTo", scene: "work" },
+      ],
+    },
+    {
+      id: "restore-stock",
+      scene: "work",
+      label: "Restore the tank",
+      description: "Restore a zero tank to one unit and remain in the yard.",
+      when: [{ type: "resourceAtMost", resource: "stock", value: 0 }],
+      effects: [
+        { type: "setResource", resource: "stock", value: 1 },
+        { type: "goTo", scene: "work" },
+      ],
+    },
+    {
+      id: "overflow-stock",
+      scene: "work",
+      label: "Overfill the tank",
+      description: "Add one unit to the full tank.",
+      when: [{ type: "resourceAtLeast", resource: "stock", value: 1 }],
+      effects: [
+        { type: "adjustResource", resource: "stock", delta: 1 },
+        { type: "goTo", scene: "work" },
+      ],
+    },
+    {
+      id: "arithmetic-overflow",
+      scene: "work",
+      label: "Force an integer overflow",
+      description: "Apply the largest safe integer to the full tank.",
+      when: [{ type: "resourceAtLeast", resource: "stock", value: 1 }],
+      effects: [
+        { type: "adjustResource", resource: "stock", delta: Number.MAX_SAFE_INTEGER },
+        { type: "goTo", scene: "work" },
+      ],
+    },
+    {
+      id: "finish-work",
+      scene: "work",
+      label: "Finish the yard",
+      description: "Finish from either safe tank level.",
+      effects: [],
+      outcome: { status: "completed", summary: "The work yard is complete." },
+    },
+  ],
+} as const;
+
+const ARITHMETIC_ONLY = {
+  ...REACHABLE_FAULTS,
+  choices: REACHABLE_FAULTS.choices.filter(choice => choice.id !== "overflow-stock"),
+};
+
+const INTERMEDIATE_BOUND = {
+  ...REACHABLE_FAULTS,
+  choices: REACHABLE_FAULTS.choices.filter(choice => choice.id !== "arithmetic-overflow")
+    .map(choice => choice.id === "overflow-stock" ? {
+      ...choice,
+      effects: [
+        { type: "adjustResource", resource: "stock", delta: 1 },
+        { type: "setResource", resource: "stock", value: 0 },
+        { type: "goTo", scene: "work" },
+      ],
+    } : choice),
+};
+
+const OBLIGATION_DEPTH = {
+  version: 1,
+  initialScene: "start",
+  initialResources: { stock: 1 },
+  initialFacts: [],
+  scenes: [
+    { id: "start", title: "Start", text: [{ text: "The route begins." }] },
+    { id: "middle", title: "Middle", text: [{ text: "The middle road is open." }] },
+    { id: "work", title: "Work", text: [{ text: "The work yard is ahead." }] },
+  ],
+  choices: [
+    {
+      id: "enter-middle",
+      scene: "start",
+      label: "Enter the middle road",
+      description: "Walk from the start to the middle road.",
+      effects: [{ type: "goTo", scene: "middle" }],
+    },
+    {
+      id: "finish-start",
+      scene: "start",
+      label: "Finish at the start",
+      description: "Finish the route from the start.",
+      effects: [],
+      outcome: { status: "completed", summary: "The route is complete." },
+    },
+    {
+      id: "enter-work",
+      scene: "middle",
+      label: "Enter the work yard",
+      description: "Walk from the middle road to the work yard.",
+      effects: [{ type: "goTo", scene: "work" }],
+    },
+    {
+      id: "finish-middle",
+      scene: "middle",
+      label: "Finish in the middle",
+      description: "Finish the route from the middle road.",
+      effects: [],
+      outcome: { status: "completed", summary: "The route is complete." },
+    },
+    {
+      id: "arithmetic-work-fault",
+      scene: "work",
+      label: "Force the work fault",
+      description: "Push the full tank beyond safe integer arithmetic.",
+      when: [{ type: "resourceAtLeast", resource: "stock", value: 1 }],
+      effects: [
+        { type: "adjustResource", resource: "stock", delta: Number.MAX_SAFE_INTEGER },
+        { type: "goTo", scene: "work" },
+      ],
+    },
+    {
+      id: "finish-work",
+      scene: "work",
+      label: "Finish the work yard",
+      description: "Finish the route from the work yard.",
+      effects: [],
+      outcome: { status: "completed", summary: "The route is complete." },
+    },
+  ],
+} as const;
+
+const FAULT_ONLY_CONTINUATION = {
+  version: 1,
+  initialScene: "start",
+  initialResources: { stock: 1 },
+  initialFacts: [],
+  scenes: [
+    { id: "start", title: "Start", text: [{ text: "The only road leaves the start." }] },
+    { id: "middle", title: "Middle", text: [{ text: "The only road continues." }] },
+    { id: "work", title: "Work", text: [{ text: "The only remaining action can fail." }] },
+    { id: "safe", title: "Safe", text: [{ text: "This unreachable branch can finish." }] },
+  ],
+  choices: [
+    {
+      id: "enter-middle-only",
+      scene: "start",
+      label: "Take the only road",
+      description: "Walk from the start to the middle road.",
+      effects: [{ type: "goTo", scene: "middle" }],
+    },
+    {
+      id: "enter-work-only",
+      scene: "middle",
+      label: "Continue to the yard",
+      description: "Walk from the middle road to the work yard.",
+      effects: [{ type: "goTo", scene: "work" }],
+    },
+    {
+      id: "arithmetic-work-only-fault",
+      scene: "work",
+      label: "Force the only failure",
+      description: "Push the full tank beyond safe integer arithmetic.",
+      when: [{ type: "resourceAtLeast", resource: "stock", value: 1 }],
+      effects: [
+        { type: "adjustResource", resource: "stock", delta: Number.MAX_SAFE_INTEGER },
+        { type: "goTo", scene: "work" },
+      ],
+    },
+    {
+      id: "finish-safe-only",
+      scene: "safe",
+      label: "Finish the unreachable branch",
+      description: "Finish the route from the unreachable safe branch.",
+      effects: [],
+      outcome: { status: "completed", summary: "The unreachable branch is complete." },
+    },
+  ],
+} as const;
+
+const TERMINAL_ONLY = {
+  version: 1,
+  initialScene: "start",
+  initialResources: { token: 0 },
+  initialFacts: [],
+  scenes: [{ id: "start", title: "Start", text: [{ text: "Only terminal exits remain." }] }],
+  choices: [
+    {
+      id: "depart-only",
+      scene: "start",
+      label: "Depart",
+      description: "Leave the route.",
+      effects: [],
+      outcome: { status: "departed", summary: "You departed without completing the route." },
+    },
+    {
+      id: "die-only",
+      scene: "start",
+      label: "Take the fatal exit",
+      description: "Take the fatal exit.",
+      effects: [],
+      outcome: { status: "dead", summary: "The fatal exit ended the route." },
+    },
+  ],
+} as const;
+
+function sortedKeys(record: Readonly<Record<string, unknown>>): readonly string[] {
+  return Object.keys(record).sort();
+}
+
+function flagNames(scenario: Scenario): readonly string[] {
+  const names = new Set<string>();
+  const read = (conditions: readonly Condition[] | undefined): void => {
+    for (const condition of conditions ?? []) if (condition.type === "flag") names.add(condition.flag);
+  };
+  for (const scene of scenario.scenes) for (const line of scene.text) read(line.when);
+  for (const choice of scenario.choices) {
+    read(choice.when);
+    for (const effect of choice.effects) if (effect.type === "setFlag") names.add(effect.flag);
+  }
+  return [...names].sort();
+}
+
+function endingPairs(scenario: Scenario): readonly (readonly [TerminalStatus, string])[] {
+  const pairs: [TerminalStatus, string][] = [];
+  for (const choice of scenario.choices) {
+    if (choice.outcome === undefined) continue;
+    const pair: [TerminalStatus, string] = [choice.outcome.status, choice.outcome.summary];
+    if (!pairs.some(([status, summary]) => status === pair[0] && summary === pair[1])) pairs.push(pair);
+  }
+  return pairs;
+}
+
+function tuples<T>(sets: readonly (readonly T[])[]): T[][] {
+  let result: T[][] = [[]];
+  for (const set of sets) result = result.flatMap(prefix => set.map(value => [...prefix, value]));
+  return result;
+}
+
+function stateKey(state: SemanticState, resources: readonly string[], flags: readonly string[]): string {
+  return JSON.stringify([
+    state.scene,
+    state.status,
+    state.ending,
+    resources.map(resource => state.resources[resource]),
+    flags.map(flag => state.flags[flag] === true),
+  ]);
+}
+
+function initialState(scenario: Scenario, resources: readonly string[], flags: readonly string[]): SemanticState {
+  return {
+    scene: scenario.initialScene,
+    status: "playing",
+    ending: 0,
+    resources: Object.fromEntries(resources.map(resource => [resource, scenario.initialResources[resource]!])),
+    flags: Object.fromEntries(flags.map(flag => [flag, false])),
+  };
+}
+
+function allStates(
+  scenario: Scenario,
+  bounds: Readonly<Record<string, number>>,
+  resources: readonly string[],
+  flags: readonly string[],
+  endings: readonly (readonly [TerminalStatus, string])[],
+): readonly SemanticState[] {
+  const resourceTuples = tuples(resources.map(resource => Array.from({ length: bounds[resource]! + 1 }, (_, value) => value)));
+  const flagTuples = tuples(flags.map(() => [false, true]));
+  const states: SemanticState[] = [];
+  for (const scene of scenario.scenes) {
+    for (const resourceTuple of resourceTuples) {
+      const resourceValues = Object.fromEntries(resources.map((resource, index) => [resource, resourceTuple[index]!])) as Record<string, number>;
+      for (const flagTuple of flagTuples) {
+        const flagValues = Object.fromEntries(flags.map((flag, index) => [flag, flagTuple[index]!])) as Record<string, boolean>;
+        states.push({ scene: scene.id, status: "playing", ending: 0, resources: resourceValues, flags: flagValues });
+        for (const [index, [status]] of endings.entries()) {
+          states.push({ scene: scene.id, status, ending: index + 1, resources: resourceValues, flags: flagValues });
+        }
+      }
+    }
+  }
+  return states;
+}
+
+function conditionMatches(condition: Condition, state: SemanticState): boolean {
+  if (condition.type === "flag") return state.flags[condition.flag] === condition.value;
+  if (condition.type === "resourceAtLeast") return state.resources[condition.resource]! >= condition.value;
+  return state.resources[condition.resource]! <= condition.value;
+}
+
+function choiceEnabled(choice: Choice, state: SemanticState): boolean {
+  return state.status === "playing"
+    && choice.scene === state.scene
+    && (choice.when ?? []).every(condition => conditionMatches(condition, state));
+}
+
+function resourceFailure(
+  resource: string,
+  value: number,
+  effectIndex: number,
+  bounds: Readonly<Record<string, number>>,
+): RawTransition | undefined {
+  if (!Number.isSafeInteger(value) || value < 0) {
+    return { kind: "fault", reason: "arithmetic-error", effectIndex, resource };
+  }
+  if (value > bounds[resource]!) {
+    return { kind: "fault", reason: "bound-exit", effectIndex, resource };
+  }
+  return undefined;
+}
+
+function rawTransition(
+  scenario: Scenario,
+  state: SemanticState,
+  choice: Choice,
+  bounds: Readonly<Record<string, number>>,
+  endings: readonly (readonly [TerminalStatus, string])[],
+): RawTransition {
+  assert.equal(choiceEnabled(choice, state), true, `raw transition requires enabled choice ${choice.id}`);
+  const resources: Record<string, number> = { ...state.resources };
+  const flags: Record<string, boolean> = { ...state.flags };
+  let scene = state.scene;
+  for (const [effectIndex, effect] of choice.effects.entries()) {
+    let failure: RawTransition | undefined;
+    switch (effect.type) {
+      case "setFlag":
+        flags[effect.flag] = effect.value;
+        break;
+      case "setResource":
+        resources[effect.resource] = effect.value;
+        failure = resourceFailure(effect.resource, effect.value, effectIndex, bounds);
+        break;
+      case "adjustResource": {
+        const value = resources[effect.resource]! + effect.delta;
+        resources[effect.resource] = value;
+        failure = resourceFailure(effect.resource, value, effectIndex, bounds);
+        break;
+      }
+      case "advanceClock": {
+        const clock = scenario.clocks?.find(candidate => candidate.id === effect.clock);
+        assert.ok(clock, `raw clock ${effect.clock} exists`);
+        const current = resources[clock!.resource]!;
+        const value = effect.delta >= clock!.max - current ? clock!.max : current + effect.delta;
+        resources[clock!.resource] = value;
+        failure = resourceFailure(clock!.resource, value, effectIndex, bounds);
+        break;
+      }
+      case "goTo":
+        scene = effect.scene;
+        break;
+      case "addFact":
+        break;
+      default:
+        return assertNever(effect);
+    }
+    if (failure !== undefined) return failure;
+  }
+  if (choice.outcome === undefined) {
+    return { kind: "success", state: { scene, status: "playing", ending: 0, resources, flags } };
+  }
+  const ending = endings.findIndex(([status, summary]) => status === choice.outcome!.status && summary === choice.outcome!.summary) + 1;
+  assert.ok(ending > 0, `raw ending ${choice.id} exists`);
+  return { kind: "success", state: { scene, status: choice.outcome.status, ending, resources, flags } };
+}
+
+function assertNever(value: never): never {
+  throw new Error(`raw oracle encountered unknown vocabulary ${JSON.stringify(value)}`);
+}
+
+function buildRawGraph(raw: unknown, bounds: Readonly<Record<string, number>>): RawGraph {
+  const scenario = validateScenario(raw);
+  const resources = sortedKeys(scenario.initialResources);
+  const flags = flagNames(scenario);
+  const endings = endingPairs(scenario);
+  const states = allStates(scenario, bounds, resources, flags, endings);
+  const statesByKey = new Map<string, SemanticState>();
+  for (const state of states) {
+    const key = stateKey(state, resources, flags);
+    assert.equal(statesByKey.has(key), false, `raw domain duplicate ${key}`);
+    statesByKey.set(key, state);
+  }
+
+  const edges: RawEdge[] = [];
+  const faults = new Set<string>();
+  const invalidSuccess = new Set<string>();
+  const uncoveredEnabled = new Set<string>();
+  for (const state of states) {
+    const from = stateKey(state, resources, flags);
+    for (const choice of scenario.choices) {
+      if (!choiceEnabled(choice, state)) continue;
+      const transition = rawTransition(scenario, state, choice, bounds, endings);
+      if (transition.kind === "fault") {
+        faults.add(from);
+        continue;
+      }
+      const to = stateKey(transition.state, resources, flags);
+      if (!statesByKey.has(to)) {
+        invalidSuccess.add(from);
+        continue;
+      }
+      edges.push({ from, to, choiceId: choice.id });
+    }
+  }
+
+  const start = initialState(scenario, resources, flags);
+  const initialKey = stateKey(start, resources, flags);
+  assert.ok(statesByKey.has(initialKey), "raw initial state belongs to domain");
+  const outgoing = new Map<string, RawEdge[]>();
+  for (const edge of edges) {
+    const prior = outgoing.get(edge.from);
+    if (prior === undefined) outgoing.set(edge.from, [edge]);
+    else prior.push(edge);
+  }
+  const reachable = new Set<string>([initialKey]);
+  const pending = [initialKey];
+  for (let index = 0; index < pending.length; index++) {
+    for (const edge of outgoing.get(pending[index]!) ?? []) {
+      if (reachable.has(edge.to)) continue;
+      reachable.add(edge.to);
+      pending.push(edge.to);
+    }
+  }
+
+  const completable = new Set<string>(states
+    .filter(state => state.status === "completed")
+    .map(state => stateKey(state, resources, flags)));
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const edge of edges) {
+      if (!completable.has(edge.to) || completable.has(edge.from)) continue;
+      const source = statesByKey.get(edge.from);
+      assert.ok(source !== undefined);
+      if (source!.status !== "playing") continue;
+      completable.add(edge.from);
+      changed = true;
+    }
+  }
+
+  const bad = new Set<string>(states
+    .filter(state => state.status === "playing" && !completable.has(stateKey(state, resources, flags)))
+    .map(state => stateKey(state, resources, flags)));
+  for (const key of faults) bad.add(key);
+  for (const key of invalidSuccess) bad.add(key);
+  for (const key of uncoveredEnabled) bad.add(key);
+  changed = true;
+  while (changed) {
+    changed = false;
+    for (const edge of edges) {
+      if (!bad.has(edge.to) || bad.has(edge.from)) continue;
+      bad.add(edge.from);
+      changed = true;
+    }
+  }
+
+  return {
+    scenario,
+    bounds,
+    resources,
+    flags,
+    endings,
+    states,
+    statesByKey,
+    edges,
+    reachable,
+    completable,
+    faults,
+    invalidSuccess,
+    uncoveredEnabled,
+    bad,
+    initialKey,
+  };
+}
+
+function formulaForKeys(model: SymbolicModel, graph: RawGraph, keys: ReadonlySet<string>): number {
+  let result = 0;
+  for (const key of keys) {
+    const state = graph.statesByKey.get(key);
+    assert.ok(state !== undefined, `raw state ${key} exists`);
+    result = model.bdd.or(result, model.encode(state!));
+  }
+  return result;
+}
+
+function reversedFieldOrder(scenario: Scenario): readonly string[] {
+  return [
+    "scene",
+    "status",
+    "ending",
+    ...sortedKeys(scenario.initialResources).map(resource => `resource:${resource}`),
+    ...flagNames(scenario).map(flag => `flag:${flag}`),
+  ].reverse();
+}
+
+function assertCurrentOnly(model: SymbolicModel, root: number, label: string): void {
+  assert.equal(model.bdd.exists(root, model.nextVariables), root, `${label} is current-only`);
+}
+
+function assertProofMatches(model: SymbolicModel, graph: RawGraph, result: ReturnType<typeof proveCompletionSafety>, label: string): void {
+  assert.equal(result.complete, true, `${label} completes both fixed points`);
+  assert.strictEqual(result.model, model, `${label} keeps the caller's owner`);
+  assert.ok(Object.isFrozen(result), `${label} result is immutable`);
+  const roots = [
+    ["completable", result.completable, graph.completable],
+    ["bad", result.bad, graph.bad],
+    ["faults", result.faults, graph.faults],
+    ["invalidSuccess", result.invalidSuccess, graph.invalidSuccess],
+    ["uncoveredEnabled", result.uncoveredEnabled, graph.uncoveredEnabled],
+  ] as const;
+  for (const [name, actual, expected] of roots) {
+    const formula = formulaForKeys(model, graph, expected);
+    assert.equal(actual, formula, `${label} ${name} matches the independent finite oracle`);
+    assertCurrentOnly(model, actual, `${label} ${name}`);
+  }
+  assert.equal(result.initialInBad, graph.bad.has(graph.initialKey), `${label} initial bad membership`);
+  assert.ok(result.completionRounds >= 1 && result.completionRounds <= 64, `${label} completion rounds are bounded`);
+  assert.ok(result.badRounds >= 1 && result.badRounds <= 64, `${label} bad rounds are bounded`);
+
+  for (const key of graph.reachable) {
+    const state = graph.statesByKey.get(key)!;
+    if (state.status !== "playing") continue;
+    assert.ok(graph.completable.has(key) || graph.bad.has(key), `${label} reachable playing state is classified`);
+    if (!graph.bad.has(graph.initialKey)) {
+      assert.equal(graph.completable.has(key), true, `${label} safe reachable state has a completion path`);
+      assert.equal(graph.faults.has(key), false, `${label} safe reachable state has no fault`);
+      assert.equal(graph.invalidSuccess.has(key), false, `${label} safe reachable state has no invalid success`);
+      assert.equal(graph.uncoveredEnabled.has(key), false, `${label} safe reachable state has no uncovered action`);
+    }
+  }
+}
+
+type ObligationKind =
+  | "non-completion"
+  | "arithmetic-error"
+  | "bound-exit"
+  | "invalid-success"
+  | "uncovered-enabled"
+  | "failure-union";
+
+type FailureKind = Exclude<ObligationKind, "non-completion" | "failure-union">;
+type NonCompletionMode = "direct" | "failure-absorbed";
+type NonCompletionPartition = "global" | "scene";
+type FailurePartition = "choice" | "combined";
+
+interface ExpectedFailureSeed {
+  readonly id: string;
+  readonly kind: FailureKind;
+  readonly choiceId: string;
+  readonly seed: ReadonlySet<string>;
+  readonly seedZero: boolean;
+}
+
+interface ExpectedObligation {
+  readonly key: string;
+  readonly kind: ObligationKind;
+  readonly choiceId?: string;
+  readonly sceneId?: string;
+  readonly seed: ReadonlySet<string>;
+  readonly bad: ReadonlySet<string>;
+}
+
+function obligationKey(kind: ObligationKind, choiceId?: string, sceneId?: string): string {
+  if (kind === "non-completion" && sceneId !== undefined) return `non-completion:scene:${sceneId}`;
+  return kind + ":" + (choiceId ?? "");
+}
+
+function predecessorClosure(graph: RawGraph, seed: ReadonlySet<string>): ReadonlySet<string> {
+  const result = new Set(seed);
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const edge of graph.edges) {
+      if (!result.has(edge.to) || result.has(edge.from)) continue;
+      result.add(edge.from);
+      changed = true;
+    }
+  }
+  return result;
+}
+
+/** Build each seed independently from the raw transition interpreter. */
+function expectedObligations(
+  graph: RawGraph,
+  nonCompletionMode: NonCompletionMode = "direct",
+  nonCompletionPartition: NonCompletionPartition = "global",
+  failurePartition: FailurePartition = "choice",
+): readonly ExpectedObligation[] {
+  const expected: ExpectedObligation[] = [];
+  const completedStates = new Set(graph.states
+    .filter(state => state.status === "completed")
+    .map(state => stateKey(state, graph.resources, graph.flags)));
+  const failureSeed = new Set<string>([
+    ...graph.faults,
+    ...graph.invalidSuccess,
+    ...graph.uncoveredEnabled,
+  ]);
+  const completionOrFailure = predecessorClosure(graph, new Set([
+    ...completedStates,
+    ...failureSeed,
+  ]));
+  const completionSet = nonCompletionMode === "failure-absorbed" ? completionOrFailure : graph.completable;
+  const sceneIds = nonCompletionPartition === "scene"
+    ? graph.scenario.scenes.map(scene => scene.id)
+    : [undefined];
+  for (const sceneId of sceneIds) {
+    const nonCompletionSeed = new Set(graph.states
+      .filter(state => state.status === "playing"
+        && (sceneId === undefined || state.scene === sceneId)
+        && !completionSet.has(stateKey(state, graph.resources, graph.flags)))
+      .map(state => stateKey(state, graph.resources, graph.flags)));
+    expected.push({
+      key: obligationKey("non-completion", undefined, sceneId),
+      kind: "non-completion",
+      ...(sceneId === undefined ? {} : { sceneId }),
+      seed: nonCompletionSeed,
+      bad: predecessorClosure(graph, nonCompletionSeed),
+    });
+  }
+
+  const failureObligations: ExpectedObligation[] = [];
+  for (const choice of graph.scenario.choices) {
+    const seeds: Record<"arithmetic-error" | "bound-exit" | "invalid-success" | "uncovered-enabled", Set<string>> = {
+      "arithmetic-error": new Set(),
+      "bound-exit": new Set(),
+      "invalid-success": new Set(),
+      "uncovered-enabled": new Set(),
+    };
+    for (const state of graph.states) {
+      if (!choiceEnabled(choice, state)) continue;
+      const from = stateKey(state, graph.resources, graph.flags);
+      const transition = rawTransition(graph.scenario, state, choice, graph.bounds, graph.endings);
+      if (transition.kind === "fault") {
+        seeds[transition.reason].add(from);
+        continue;
+      }
+      if (!graph.statesByKey.has(stateKey(transition.state, graph.resources, graph.flags))) {
+        seeds["invalid-success"].add(from);
+      }
+    }
+    for (const kind of ["arithmetic-error", "bound-exit", "invalid-success", "uncovered-enabled"] as const) {
+      failureObligations.push({
+        key: obligationKey(kind, choice.id),
+        kind,
+        choiceId: choice.id,
+        seed: seeds[kind],
+        bad: predecessorClosure(graph, seeds[kind]),
+      });
+    }
+  }
+  if (failurePartition === "choice") {
+    expected.push(...failureObligations);
+  } else {
+    const union = new Set<string>();
+    for (const obligation of failureObligations) {
+      for (const key of obligation.seed) union.add(key);
+    }
+    expected.push({
+      key: obligationKey("failure-union"),
+      kind: "failure-union",
+      seed: union,
+      bad: predecessorClosure(graph, union),
+    });
+  }
+  return expected;
+}
+
+function expectedFailureSeeds(graph: RawGraph): readonly ExpectedFailureSeed[] {
+  return expectedObligations(graph, "direct", "global", "choice")
+    .filter((obligation): obligation is ExpectedObligation & { readonly kind: FailureKind; readonly choiceId: string } =>
+      obligation.kind !== "non-completion" && obligation.kind !== "failure-union")
+    .map(obligation => ({
+      id: obligation.key,
+      kind: obligation.kind,
+      choiceId: obligation.choiceId,
+      seed: obligation.seed,
+      seedZero: obligation.seed.size === 0,
+    }));
+}
+
+function modelFor(
+  scenario: Scenario,
+  bounds: Readonly<Record<string, number>>,
+  order: "interleaved" | "blocked",
+  transitionMode: "relational" | "partitioned",
+  reorder: boolean,
+): SymbolicModel {
+  return new SymbolicModel(scenario, bounds, {
+    order,
+    transitionMode,
+    fieldOrder: reorder ? reversedFieldOrder(scenario) : undefined,
+    nodeLimit: 100_000,
+    cacheLimit: 20_000,
+  });
+}
+
+function checkScenario(
+  raw: unknown,
+  bounds: Readonly<Record<string, number>>,
+  label: string,
+  allLayouts = false,
+): void {
+  const graph = buildRawGraph(raw, bounds);
+  const orders = allLayouts ? (["interleaved", "blocked"] as const) : (["interleaved"] as const);
+  const modes = ["relational", "partitioned"] as const;
+  const reorders = allLayouts ? [false, true] : [false];
+  for (const order of orders) for (const transitionMode of modes) for (const reorder of reorders) {
+    const model = modelFor(graph.scenario, bounds, order, transitionMode, reorder);
+    const result = proveCompletionSafety(model, { roundLimit: 64 });
+    assertProofMatches(model, graph, result, `${label}/${order}/${transitionMode}/${reorder ? "reversed" : "default"}`);
+  }
+}
+
+function checkObligationScenario(
+  raw: unknown,
+  bounds: Readonly<Record<string, number>>,
+  label: string,
+  allLayouts = false,
+  nonCompletionMode: NonCompletionMode = "direct",
+  nonCompletionPartition: NonCompletionPartition = "global",
+  obligationCompactEvery = 0,
+  failurePartition?: FailurePartition,
+): void {
+  const graph = buildRawGraph(raw, bounds);
+  const selectedFailurePartition = failurePartition ?? "choice";
+  const expected = expectedObligations(graph, nonCompletionMode, nonCompletionPartition, selectedFailurePartition);
+  const expectedChoiceFailureSeeds = expectedFailureSeeds(graph);
+  const expectedByKey = new Map(expected.map(obligation => [obligation.key, obligation]));
+  const orders = allLayouts ? (["interleaved", "blocked"] as const) : (["interleaved"] as const);
+  const modes = ["relational", "partitioned"] as const;
+  const reorders = allLayouts ? [false, true] : [false];
+  for (const order of orders) for (const transitionMode of modes) for (const reorder of reorders) {
+    const model = modelFor(graph.scenario, bounds, order, transitionMode, reorder);
+    const combined = proveCompletionSafety(model, { roundLimit: 64 });
+    assert.equal(
+      combined.completable,
+      formulaForKeys(model, graph, graph.completable),
+      label + "/" + order + "/" + transitionMode + "/" + (reorder ? "reversed" : "default") + " source completion root",
+    );
+    assert.equal(
+      combined.bad,
+      formulaForKeys(model, graph, graph.bad),
+      label + "/" + order + "/" + transitionMode + "/" + (reorder ? "reversed" : "default") + " old combined bad root",
+    );
+
+    const callbackIds = new Set<string>();
+    const nonzeroOwners = new Set<SymbolicModel>();
+    let copiedBad = 0;
+    const progress: ObligationProgress[] = [];
+    const compactionProgress: typeof progress = [];
+    const split = proveCompletionSafetyByObligation(model, {
+      roundLimit: 64,
+      nonCompletionMode,
+      nonCompletionPartition,
+      ...(failurePartition === undefined ? {} : { failurePartition }),
+      ...(obligationCompactEvery === 0 ? {} : { obligationCompactEvery }),
+      onProgress: event => {
+        progress.push(event);
+        assert.ok(event.phase === "completion"
+          || event.phase === "completion-or-failure"
+          || event.phase === "obligation"
+          || event.phase === "obligation-compact");
+        assert.ok(Number.isSafeInteger(event.round) && event.round >= 1);
+        assert.ok(Number.isSafeInteger(event.nodes) && event.nodes >= 2);
+        if (event.phase === "obligation") assert.equal(typeof event.id, "string");
+        if (event.phase === "obligation-compact") {
+          assert.equal(typeof event.id, "string");
+          assert.equal(event.fixed, false, label + " compaction is emitted only for a nonfixed round");
+          assert.ok(Number.isSafeInteger(event.previousNodes) && event.previousNodes! >= 2,
+            label + " compaction reports the previous owner node count");
+          assert.ok(event.id !== undefined && expectedByKey.get(event.id) !== undefined,
+            label + " compaction identifies an authored obligation");
+          assert.ok(expectedByKey.get(event.id!)!.seed.size > 0,
+            label + " zero-seed obligations are never compacted");
+          compactionProgress.push(event);
+        }
+      },
+      onObligation: payload => {
+        const summary = payload.summary;
+        const key = obligationKey(summary.kind, summary.choiceId, summary.sceneId);
+        const fixture = expectedByKey.get(key);
+        assert.ok(fixture !== undefined, label + " has an expected obligation for " + key);
+        assert.equal(summary.id, fixture!.key, label + " callback obligation ID matches the oracle key");
+        assert.equal(callbackIds.has(summary.id), false, label + " obligation IDs are unique");
+        callbackIds.add(summary.id);
+        assert.ok(Object.isFrozen(summary), label + " " + key + " summary is frozen");
+        assert.equal(Object.hasOwn(summary, "seed"), false, label + " " + key + " summary hides seed root");
+        assert.equal(Object.hasOwn(summary, "bad"), false, label + " " + key + " summary hides bad root");
+        assert.equal(Object.hasOwn(summary, "model"), false, label + " " + key + " summary hides owner");
+        assert.equal(summary.sceneId, fixture!.sceneId, label + " " + key + " scene metadata");
+        if (summary.kind === "non-completion") {
+          assert.equal(nonCompletionPartition === "scene", summary.sceneId !== undefined,
+            label + " " + key + " scene partition metadata");
+        } else if (summary.kind === "failure-union") {
+          assert.equal(summary.choiceId, undefined,
+            label + " " + key + " combined failure summary has no choice metadata");
+        } else {
+          assert.equal(summary.sceneId, undefined, label + " " + key + " failure summary has no scene metadata");
+        }
+        assert.ok(Number.isSafeInteger(summary.rounds) && summary.rounds >= 0);
+        assert.ok(Number.isSafeInteger(summary.nodes) && summary.nodes >= 2);
+        assert.equal(summary.seedZero, fixture!.seed.size === 0, label + " " + key + " seed emptiness");
+        assert.equal(summary.initialInBad, fixture!.bad.has(graph.initialKey), label + " " + key + " initial membership");
+        if (obligationCompactEvery > 0) {
+          assert.ok(Object.hasOwn(summary, "compactions"), label + " " + key + " reports compactions when enabled");
+          assert.ok(Number.isSafeInteger(summary.compactions) && summary.compactions! >= 0,
+            label + " " + key + " reports a bounded compaction count");
+        } else {
+          assert.equal(Object.hasOwn(summary, "compactions"), false,
+            label + " " + key + " keeps the default summary shape");
+        }
+        assert.ok(payload.model instanceof SymbolicModel);
+        assert.equal(
+          payload.model.bdd.exists(payload.seed, payload.model.nextVariables),
+          payload.seed,
+          label + " " + key + " seed is current-only",
+        );
+        assert.equal(
+          payload.model.bdd.exists(payload.bad, payload.model.nextVariables),
+          payload.bad,
+          label + " " + key + " closure is current-only",
+        );
+        assert.equal(payload.seed === 0, summary.seedZero, label + " " + key + " seed/root agreement");
+        if (summary.seedZero) {
+          assert.strictEqual(payload.model, model, label + " " + key + " zero seed may use original owner");
+        } else {
+          assert.notStrictEqual(payload.model, model, label + " " + key + " uses a fresh owner");
+          assert.notStrictEqual(payload.model.bdd, model.bdd, label + " " + key + " uses a fresh BDD owner");
+          assert.equal(nonzeroOwners.has(payload.model), false, label + " " + key + " gets its own fresh owner");
+          nonzeroOwners.add(payload.model);
+        }
+        assert.deepEqual(payload.model.fieldOrder, model.fieldOrder, label + " " + key + " field order is preserved");
+        assert.deepEqual(payload.model.currentVariables, model.currentVariables, label + " " + key + " current layout is preserved");
+        assert.deepEqual(payload.model.nextVariables, model.nextVariables, label + " " + key + " next layout is preserved");
+        assert.equal(payload.model.transitionMode, model.transitionMode, label + " " + key + " transition mode is preserved");
+
+        const sourceRoots = payload.model === model
+          ? [payload.seed, payload.bad] as const
+          : payload.model.bdd.copyForestTo(model.bdd, [payload.seed, payload.bad]);
+        const sourceSeed = sourceRoots[0]!;
+        const sourceBad = sourceRoots[1]!;
+        assert.equal(
+          sourceSeed,
+          formulaForKeys(model, graph, fixture!.seed),
+          label + " " + key + " seed matches the independent oracle",
+        );
+        assert.equal(
+          sourceBad,
+          formulaForKeys(model, graph, fixture!.bad),
+          label + " " + key + " backward closure matches the independent oracle",
+        );
+        copiedBad = model.bdd.or(copiedBad, sourceBad);
+      },
+    });
+    assert.equal(split.complete, true, label + " split proof completes");
+    assert.strictEqual(split.model, model, label + " split result keeps the original owner");
+    assert.equal(split.completable, combined.completable, label + " split completion root matches combined proof");
+    assert.equal(split.completionRounds, combined.completionRounds, label + " completion rounds match");
+    assert.equal(split.initialInBad, combined.initialInBad, label + " split initial result matches combined proof");
+    assert.ok(progress.some(event => event.phase === "completion"), label + " reports completion progress");
+    if (nonCompletionMode === "failure-absorbed") {
+      const completionOrFailureSeed = new Set([
+        ...graph.states.filter(state => state.status === "completed")
+          .map(state => stateKey(state, graph.resources, graph.flags)),
+        ...graph.faults,
+        ...graph.invalidSuccess,
+        ...graph.uncoveredEnabled,
+      ]);
+      assert.equal(
+        split.completionOrFailure,
+        formulaForKeys(model, graph, predecessorClosure(graph, completionOrFailureSeed)),
+        label + " completion-or-failure root matches the independent oracle",
+      );
+      const completionOrFailureRounds = split.completionOrFailureRounds;
+      assert.ok(completionOrFailureRounds !== undefined && Number.isSafeInteger(completionOrFailureRounds)
+        && completionOrFailureRounds >= 1, label + " completion-or-failure rounds are bounded");
+      assert.ok(progress.some(event => event.phase === "completion-or-failure"), label + " reports completion-or-failure progress");
+    } else {
+      assert.equal(split.completionOrFailure, undefined, label + " direct mode omits completion-or-failure root");
+      assert.equal(split.completionOrFailureRounds, undefined, label + " direct mode omits completion-or-failure rounds");
+    }
+    if (expected.some(obligation => obligation.seed.size > 0)) {
+      assert.ok(progress.some(event => event.phase === "obligation"), label + " reports obligation progress");
+    }
+    if (obligationCompactEvery > 0) {
+      assert.ok(compactionProgress.length > 0, label + " performs a real obligation-owner compaction");
+      const summaryCompactions = split.obligations.reduce(
+        (count, summary) => count + (summary.compactions ?? 0),
+        0,
+      );
+      assert.equal(summaryCompactions, compactionProgress.length,
+        label + " progress and final summary agree on owner changes");
+    }
+
+    const nonCompletionCount = nonCompletionPartition === "scene" ? graph.scenario.scenes.length : 1;
+    const failureObligationCount = selectedFailurePartition === "choice" ? 4 * model.choices.length : 1;
+    assert.equal(split.obligations.length, nonCompletionCount + failureObligationCount, label + " retains every obligation");
+    assert.equal(new Set(split.obligations.map(summary => summary.id)).size, split.obligations.length, label + " summary IDs are unique");
+    assert.equal(callbackIds.size, split.obligations.length, label + " reports every obligation to the callback");
+    for (const summary of split.obligations) {
+      const key = obligationKey(summary.kind, summary.choiceId, summary.sceneId);
+      const fixture = expectedByKey.get(key);
+      assert.ok(fixture !== undefined, label + " returned an expected obligation for " + key);
+      assert.equal(summary.id, fixture!.key, label + " returned obligation ID matches the oracle key");
+      assert.ok(Object.isFrozen(summary), label + " returned " + key + " summary is frozen");
+      assert.equal(Object.hasOwn(summary, "seed"), false, label + " returned " + key + " hides seed root");
+      assert.equal(Object.hasOwn(summary, "bad"), false, label + " returned " + key + " hides bad root");
+      assert.equal(summary.sceneId, fixture!.sceneId, label + " returned " + key + " scene metadata");
+      assert.equal(summary.seedZero, fixture!.seed.size === 0, label + " returned " + key + " seed emptiness");
+      assert.equal(summary.initialInBad, fixture!.bad.has(graph.initialKey), label + " returned " + key + " initial membership");
+      if (obligationCompactEvery > 0) {
+        assert.ok(Object.hasOwn(summary, "compactions"), label + " returned " + key + " reports compactions");
+        assert.ok(Number.isSafeInteger(summary.compactions) && summary.compactions! >= 0,
+          label + " returned " + key + " compaction count is bounded");
+      } else {
+        assert.equal(Object.hasOwn(summary, "compactions"), false,
+          label + " returned " + key + " keeps the default summary shape");
+      }
+    }
+    assert.equal(copiedBad, combined.bad, label + " split bad closures equal the old combined root");
+    assert.equal(copiedBad, formulaForKeys(model, graph, graph.bad), label + " split bad closures match the oracle");
+
+    if (selectedFailurePartition === "combined") {
+      assert.equal(Object.hasOwn(split, "failureSeeds"), true, label + " combined mode exposes failure metadata");
+      const metadata = split.failureSeeds!;
+      assert.ok(Array.isArray(metadata), label + " combined failure metadata is an array");
+      assert.ok(Object.isFrozen(metadata), label + " combined failure metadata is frozen");
+      assert.equal(metadata.length, 4 * model.choices.length, label + " retains all original failure seed metadata");
+      assert.deepEqual(
+        metadata.map(seed => ({ id: seed.id, kind: seed.kind, choiceId: seed.choiceId, seedZero: seed.seedZero })),
+        expectedChoiceFailureSeeds.map(seed => ({ id: seed.id, kind: seed.kind, choiceId: seed.choiceId, seedZero: seed.seedZero })),
+        label + " combined failure metadata matches the independent oracle",
+      );
+      for (const seed of metadata) {
+        assert.ok(Object.isFrozen(seed), label + " failure seed metadata is frozen");
+        assert.deepEqual(Object.keys(seed).sort(), ["choiceId", "id", "kind", "seedZero"],
+          label + " failure seed metadata contains no owned roots");
+      }
+      assert.equal(
+        metadata.some(seed => (seed.kind as string) === "failure-union"),
+        false,
+        label + " original failure metadata never invents a union kind",
+      );
+      assert.equal(Object.hasOwn(split, "failureUnion"), false, label + " has no duplicate global failure-union record");
+      assert.equal(Object.hasOwn(split, "failureSeed"), false, label + " has no duplicate global failure-seed record");
+    } else {
+      assert.equal(Object.hasOwn(split, "failureSeeds"), false, label + " default choice mode keeps its original result shape");
+    }
+  }
+}
+
+test("symbolic completion and safety properties match an independent finite oracle", () => {
+  checkScenario(SAFE_CYCLE, { energy: 1 }, "safe-cycle", true);
+  checkScenario(REACHABLE_TRAP, { water: 1 }, "reachable-trap", false);
+  checkScenario(UNREACHABLE_BAD, { stock: 1 }, "unreachable-bad", false);
+  checkScenario(REACHABLE_FAULTS, { stock: 1 }, "reachable-faults", false);
+  checkScenario(TERMINAL_ONLY, { token: 0 }, "terminal-only", false);
+
+  const safe = buildRawGraph(SAFE_CYCLE, { energy: 1 });
+  assert.equal(safe.bad.has(safe.initialKey), false, "departed/dead alternatives are allowed when completion exists");
+  const terminalOnly = buildRawGraph(TERMINAL_ONLY, { token: 0 });
+  assert.equal(terminalOnly.bad.has(terminalOnly.initialKey), true, "only departed/dead routes fail completion safety");
+
+  const faultGraph = buildRawGraph(REACHABLE_FAULTS, { stock: 1 });
+  const workFull = [...faultGraph.statesByKey.entries()].find(([, state]) => state.scene === "work"
+    && state.status === "playing" && state.resources.stock === 1)![0];
+  assert.ok(faultGraph.faults.has(workFull), "reachable bound and safe-integer faults share their source state");
+  assert.ok(faultGraph.edges.some(edge => edge.choiceId === "reset-stock"), "safe reset remains in the finite oracle");
+
+  const unreachableGraph = buildRawGraph(UNREACHABLE_BAD, { stock: 1 });
+  assert.ok(unreachableGraph.bad.size > 0, "unreachable bad states remain represented globally");
+  assert.equal(unreachableGraph.bad.has(unreachableGraph.initialKey), false, "unreachable bad states do not poison the initial state");
+});
+
+test("completion safety reports progress and rejects invalid round limits", () => {
+  const scenario = validateScenario(SAFE_CYCLE);
+  const model = modelFor(scenario, { energy: 1 }, "interleaved", "partitioned", false);
+  const events: { readonly phase: "completion" | "bad"; readonly round: number; readonly nodes: number; readonly fixed: boolean }[] = [];
+  const result = proveCompletionSafety(model, {
+    roundLimit: 64,
+    onProgress: progress => events.push(progress),
+  });
+  assert.ok(events.some(event => event.phase === "completion"));
+  assert.ok(events.some(event => event.phase === "bad"));
+  for (const event of events) {
+    assert.ok(Object.isFrozen(event));
+    assert.ok(Number.isSafeInteger(event.nodes));
+  }
+  for (const phase of ["completion", "bad"] as const) {
+    const phaseEvents = events.filter(event => event.phase === phase);
+    assert.equal(phaseEvents.at(-1)?.fixed, true, `${phase} reports its fixed point`);
+  }
+
+  for (const roundLimit of [null, 0, -1, 1.5, Number.NaN, "64"] as const) {
+    assert.throws(
+      () => proveCompletionSafety(model, { roundLimit: roundLimit as never }),
+      /roundLimit|round limit|fixed point|incomplete/i,
+      `rejects roundLimit=${String(roundLimit)}`,
+    );
+  }
+  assert.throws(() => proveCompletionSafety(model, null as never), /options/i);
+  assert.throws(() => proveCompletionSafety(model, { onProgress: null as never }), /onProgress|function/i);
+  assert.throws(() => proveCompletionSafety({} as never), /model|SymbolicModel/i);
+
+  assert.throws(
+    () => proveCompletionSafety(model, { roundLimit: 1 }),
+    /fixed point|round limit|incomplete/i,
+    "a cap below the safe cycle depth fails closed",
+  );
+});
+
+class SyntheticInvalidSuccessModel extends SymbolicModel {
+  private readonly invalidTarget: number;
+  private readonly injectedChoice: SymbolicChoice;
+
+  constructor(scenario: Scenario, bounds: Readonly<Record<string, number>>) {
+    super(scenario, bounds, { order: "interleaved", transitionMode: "relational", nodeLimit: 100_000, cacheLimit: 20_000 });
+    this.invalidTarget = this.bdd.not(this.validDomain);
+    this.injectedChoice = this.choices[0]!;
+  }
+
+  override preimage(target: number, choice?: SymbolicChoice): number {
+    if (target === this.invalidTarget && choice === this.injectedChoice) return this.initial;
+    return super.preimage(target, choice);
+  }
+}
+
+class SyntheticUncoveredModel extends SymbolicModel {
+  private readonly validTarget: number;
+  private readonly injectedChoice: SymbolicChoice;
+
+  constructor(scenario: Scenario, bounds: Readonly<Record<string, number>>) {
+    super(scenario, bounds, { order: "blocked", transitionMode: "partitioned", nodeLimit: 100_000, cacheLimit: 20_000 });
+    this.validTarget = this.validDomain;
+    this.injectedChoice = this.choices[0]!;
+  }
+
+  override preimage(target: number, choice?: SymbolicChoice): number {
+    if (target === this.validTarget && choice === this.injectedChoice) return 0;
+    return super.preimage(target, choice);
+  }
+}
+
+class MixedAbsorbedModel extends SyntheticInvalidSuccessModel {
+  override preimage(target: number, choice?: SymbolicChoice): number {
+    if (choice === undefined && target !== this.completed) {
+      return this.bdd.variable(this.nextVariables[0]!);
+    }
+    return super.preimage(target, choice);
+  }
+}
+
+class MixedScenePredicateModel extends SymbolicModel {
+  override atScene(id: string): number {
+    if (id === "trap") return this.bdd.variable(this.nextVariables[0]!);
+    return super.atScene(id);
+  }
+}
+
+class MissingScenePredicateModel extends SymbolicModel {
+  override atScene(id: string): number {
+    if (id === "trap") return 0;
+    return super.atScene(id);
+  }
+}
+
+class OverlappingScenePredicateModel extends SymbolicModel {
+  override atScene(id: string): number {
+    if (id === "start") return super.atScene("trap");
+    return super.atScene(id);
+  }
+}
+
+test("property wrapper propagates synthetic invalid-success and uncovered-action failures", () => {
+  const scenario = validateScenario(SAFE_CYCLE);
+  const invalidModel = new SyntheticInvalidSuccessModel(scenario, { energy: 1 });
+  const invalid = proveCompletionSafety(invalidModel, { roundLimit: 64 });
+  assert.notEqual(invalid.invalidSuccess, 0);
+  assert.equal(invalid.initialInBad, true);
+  assertCurrentOnly(invalidModel, invalid.invalidSuccess, "synthetic invalid-success root");
+
+  const uncoveredModel = new SyntheticUncoveredModel(scenario, { energy: 1 });
+  const uncovered = proveCompletionSafety(uncoveredModel, { roundLimit: 64 });
+  assert.notEqual(uncovered.uncoveredEnabled, 0);
+  assert.equal(uncovered.initialInBad, true);
+  assertCurrentOnly(uncoveredModel, uncovered.uncoveredEnabled, "synthetic uncovered-action root");
+});
+
+test("failure absorption retains synthetic invalid-success and uncovered-enabled cones", () => {
+  const scenario = validateScenario(TERMINAL_ONLY);
+  for (const [model, kind] of [
+    [new SyntheticInvalidSuccessModel(scenario, { token: 0 }), "invalid-success"],
+    [new SyntheticUncoveredModel(scenario, { token: 0 }), "uncovered-enabled"],
+  ] as const) {
+    const direct = proveCompletionSafety(model, { roundLimit: 64 });
+    let directBad = 0;
+    const directSplit = proveCompletionSafetyByObligation(model, {
+      roundLimit: 64,
+      onObligation: payload => {
+        const copied = payload.model === model
+          ? payload.bad
+          : payload.model.bdd.copyForestTo(model.bdd, [payload.bad])[0]!;
+        directBad = model.bdd.or(directBad, copied);
+      },
+    });
+    let absorbedBad = 0;
+    const absorbed = proveCompletionSafetyByObligation(model, {
+      roundLimit: 64,
+      nonCompletionMode: "failure-absorbed",
+      onObligation: payload => {
+        const copied = payload.model === model
+          ? payload.bad
+          : payload.model.bdd.copyForestTo(model.bdd, [payload.bad])[0]!;
+        absorbedBad = model.bdd.or(absorbedBad, copied);
+      },
+    });
+    const directSummary = directSplit.obligations.find(candidate => candidate.kind === kind
+      && candidate.choiceId === model.choices[0]!.id);
+    const summary = absorbed.obligations.find(candidate => candidate.kind === kind
+      && candidate.choiceId === model.choices[0]!.id);
+    const directNonCompletion = directSplit.obligations.find(candidate => candidate.kind === "non-completion")!;
+    const absorbedNonCompletion = absorbed.obligations.find(candidate => candidate.kind === "non-completion")!;
+    assert.equal(direct.initialInBad, true, "synthetic direct failure reaches the initial state");
+    assert.equal(directSplit.initialInBad, true, "synthetic direct split reaches the initial state");
+    assert.equal(directBad, direct.bad, "synthetic direct split equals the old aggregate");
+    assert.equal(absorbedBad, direct.bad, "synthetic absorbed split equals the old aggregate");
+    assert.equal(absorbed.completable, direct.completable, "synthetic absorption preserves the completion root");
+    assert.ok(directSummary !== undefined, "synthetic direct failure obligation is retained");
+    assert.equal(directNonCompletion.seedZero, false, "synthetic initial state is directly non-completable");
+    assert.equal(absorbedNonCompletion.seedZero, true, "synthetic failure absorption removes that residual seed");
+    assert.ok(summary !== undefined, "synthetic failure obligation is retained");
+    assert.equal(summary!.seedZero, false, "synthetic failure seed is nonzero");
+    assert.equal(summary!.initialInBad, true, "synthetic failure reaches the initial state");
+    assert.equal(absorbed.initialInBad, true, "synthetic failure poisons the aggregate property");
+    assert.equal(model.bdd.and(model.initial, absorbed.completionOrFailure!), model.initial, "failure-or-completion closure includes the injected initial state");
+    assert.notEqual(absorbed.completionOrFailure, undefined, "absorbed mode returns its closure root");
+    const completionOrFailureRounds = absorbed.completionOrFailureRounds;
+    assert.ok(completionOrFailureRounds !== undefined && Number.isSafeInteger(completionOrFailureRounds)
+      && completionOrFailureRounds >= 1);
+  }
+});
+
+test("failure-absorbed mode fails closed at its own fixed point and snapshots options", () => {
+  const depthModel = modelFor(validateScenario(FAULT_ONLY_CONTINUATION), { stock: 1 }, "interleaved", "relational", false);
+  const depthProgress: ObligationProgress[] = [];
+  assert.throws(
+    () => proveCompletionSafetyByObligation(depthModel, {
+      roundLimit: 2,
+      nonCompletionMode: "failure-absorbed",
+      onProgress: event => depthProgress.push(event),
+    }),
+    /completion-or-failure.*round limit/i,
+    "the absorbed closure has its own bounded fixed point",
+  );
+  assert.ok(depthProgress.some(event => event.phase === "completion" && event.fixed), "completion converges before W");
+  assert.ok(depthProgress.some(event => event.phase === "completion-or-failure"
+    && event.round === 2
+    && !event.fixed), "W consumes the bounded rounds after completion");
+
+  const observerModel = new SyntheticInvalidSuccessModel(validateScenario(TERMINAL_ONLY), { token: 0 });
+  const observerError = new Error("intentional completion-or-failure interruption");
+  assert.throws(
+    () => proveCompletionSafetyByObligation(observerModel, {
+      nonCompletionMode: "failure-absorbed",
+      onProgress: event => {
+        if (event.phase === "completion-or-failure") throw observerError;
+      },
+    }),
+    error => error === observerError,
+    "the absorbed fixed-point observer propagates its interruption",
+  );
+
+  const mixed = new MixedAbsorbedModel(validateScenario(TERMINAL_ONLY), { token: 0 });
+  assert.throws(
+    () => proveCompletionSafetyByObligation(mixed, { nonCompletionMode: "failure-absorbed" }),
+    /completion-or-failure predecessor.*current-only/i,
+    "the absorbed predecessor rejects mixed current/next support",
+  );
+
+  const getterModel = modelFor(validateScenario(REACHABLE_TRAP), { water: 1 }, "interleaved", "relational", false);
+  let modeReads = 0;
+  let roundReads = 0;
+  let partitionReads = 0;
+  let failurePartitionReads = 0;
+  let compactReads = 0;
+  const options = {
+    get nonCompletionMode(): "failure-absorbed" {
+      modeReads++;
+      return "failure-absorbed";
+    },
+    get roundLimit(): number {
+      roundReads++;
+      return 64;
+    },
+    get nonCompletionPartition(): "scene" {
+      partitionReads++;
+      return "scene";
+    },
+    get failurePartition(): "combined" {
+      failurePartitionReads++;
+      return "combined";
+    },
+    get obligationCompactEvery(): number {
+      compactReads++;
+      return 2;
+    },
+  };
+  proveCompletionSafetyByObligation(getterModel, options);
+  assert.equal(modeReads, 1, "absorbed mode option is read once");
+  assert.equal(roundReads, 1, "absorbed round limit is read once");
+  assert.equal(partitionReads, 1, "absorbed partition option is read once");
+  assert.equal(failurePartitionReads, 1, "failure partition option is read once");
+  assert.equal(compactReads, 1, "obligation compaction interval is read once");
+});
+
+test("property proof distinguishes isolated arithmetic faults and intermediate bound exits", () => {
+  checkScenario(ARITHMETIC_ONLY, { stock: 1 }, "isolated-arithmetic", true);
+  checkScenario(INTERMEDIATE_BOUND, { stock: 1 }, "intermediate-bound-before-reset", true);
+  for (const [raw, id, reason] of [
+    [ARITHMETIC_ONLY, "arithmetic-overflow", "arithmetic-error"],
+    [INTERMEDIATE_BOUND, "overflow-stock", "bound-exit"],
+  ] as const) {
+    const graph = buildRawGraph(raw, { stock: 1 });
+    const source = graph.states.find(state => state.scene === "work" && state.status === "playing" && state.resources.stock === 1)!;
+    const choice = graph.scenario.choices.find(choice => choice.id === id)!;
+    const transition = rawTransition(graph.scenario, source, choice, { stock: 1 }, graph.endings);
+    assert.equal(transition.kind, "fault");
+    if (transition.kind === "fault") assert.equal(transition.reason, reason);
+    assert.equal(graph.bad.has(graph.initialKey), true);
+  }
+});
+
+test("property proof rejects mixed-phase predecessors and propagates observer interruptions", () => {
+  class MixedPhaseModel extends SymbolicModel {
+    override preimage(target: number, choice?: SymbolicChoice): number {
+      if (target === this.validDomain && choice === this.choices[0]) return this.bdd.variable(this.nextVariables[0]!);
+      return super.preimage(target, choice);
+    }
+  }
+  for (const transitionMode of ["relational", "partitioned"] as const) {
+    const mixed = new MixedPhaseModel(SAFE_CYCLE, { energy: 1 }, { transitionMode });
+    assert.throws(() => proveCompletionSafety(mixed), /current-only/);
+    const model = new SymbolicModel(SAFE_CYCLE, { energy: 1 }, { transitionMode });
+    const interruption = new Error("intentional bounded observer interruption");
+    assert.throws(() => proveCompletionSafety(model, { onProgress: () => { throw interruption; } }), error => error === interruption);
+  }
+});
+
+test("split safety obligations match the finite oracle and preserve owner boundaries", () => {
+  checkObligationScenario(SAFE_CYCLE, { energy: 1 }, "split-safe-cycle", true);
+  checkObligationScenario(REACHABLE_TRAP, { water: 1 }, "split-reachable-trap");
+  checkObligationScenario(UNREACHABLE_BAD, { stock: 1 }, "split-unreachable-bad");
+  checkObligationScenario(REACHABLE_FAULTS, { stock: 1 }, "split-reachable-faults");
+  checkObligationScenario(TERMINAL_ONLY, { token: 0 }, "split-terminal-only");
+  checkObligationScenario(ARITHMETIC_ONLY, { stock: 1 }, "split-isolated-arithmetic", true);
+  checkObligationScenario(INTERMEDIATE_BOUND, { stock: 1 }, "split-intermediate-bound", true);
+});
+
+test("failure-absorbed non-completion seeds preserve the exact aggregate bad set", () => {
+  checkObligationScenario(SAFE_CYCLE, { energy: 1 }, "absorbed-safe-cycle", true, "failure-absorbed");
+  checkObligationScenario(REACHABLE_TRAP, { water: 1 }, "absorbed-nofault-trap", false, "failure-absorbed");
+  checkObligationScenario(REACHABLE_FAULTS, { stock: 1 }, "absorbed-reachable-faults", true, "failure-absorbed");
+  checkObligationScenario(UNREACHABLE_BAD, { stock: 1 }, "absorbed-unreachable-fault", false, "failure-absorbed");
+  checkObligationScenario(TERMINAL_ONLY, { token: 0 }, "absorbed-terminal-only", false, "failure-absorbed");
+  checkObligationScenario(OBLIGATION_DEPTH, { stock: 1 }, "absorbed-completion-plus-fault", false, "failure-absorbed");
+  checkObligationScenario(FAULT_ONLY_CONTINUATION, { stock: 1 }, "absorbed-only-fault-continuation", false, "failure-absorbed");
+  checkObligationScenario(ARITHMETIC_ONLY, { stock: 1 }, "absorbed-isolated-arithmetic", true, "failure-absorbed");
+  checkObligationScenario(INTERMEDIATE_BOUND, { stock: 1 }, "absorbed-intermediate-bound", true, "failure-absorbed");
+});
+
+test("failure absorption removes only-fault non-completion states without changing the aggregate result", () => {
+  const graph = buildRawGraph(FAULT_ONLY_CONTINUATION, { stock: 1 });
+  const directNonCompletion = expectedObligations(graph, "direct").find(obligation => obligation.kind === "non-completion")!;
+  const absorbedNonCompletion = expectedObligations(graph, "failure-absorbed").find(obligation => obligation.kind === "non-completion")!;
+  assert.ok(directNonCompletion.seed.size > 0, "the only-fault route has non-completable states");
+  assert.ok(absorbedNonCompletion.seed.size < directNonCompletion.seed.size, "failure absorption removes a nonempty residual");
+  const failureCone = predecessorClosure(graph, new Set([
+    ...graph.faults,
+    ...graph.invalidSuccess,
+    ...graph.uncoveredEnabled,
+  ]));
+  const onlyFaultStates = [...directNonCompletion.seed].filter(key => failureCone.has(key));
+  assert.ok(onlyFaultStates.length > 0, "the route has non-completable states whose continuation reaches a fault");
+  assert.equal(onlyFaultStates.some(key => absorbedNonCompletion.seed.has(key)), false, "failure absorption removes every only-fault seed");
+  assert.equal(absorbedNonCompletion.seed.has(graph.initialKey), false, "failure absorption removes the initial only-fault seed");
+  assert.ok(absorbedNonCompletion.seed.size > 0, "unrelated out-of-route parameter states remain as non-completion seeds");
+
+  const model = modelFor(graph.scenario, { stock: 1 }, "interleaved", "relational", false);
+  const direct = proveCompletionSafety(model, { roundLimit: 64 });
+  let absorbedBad = 0;
+  const absorbed = proveCompletionSafetyByObligation(model, {
+    roundLimit: 64,
+    nonCompletionMode: "failure-absorbed",
+    onObligation: payload => {
+      const copied = payload.model === model
+        ? payload.bad
+        : payload.model.bdd.copyForestTo(model.bdd, [payload.bad])[0]!;
+      absorbedBad = model.bdd.or(absorbedBad, copied);
+    },
+  });
+  assert.equal(absorbedBad, direct.bad, "absorbed failure cones equal the direct aggregate bad root");
+  assert.equal(absorbedBad, formulaForKeys(model, graph, graph.bad), "absorbed result matches the raw oracle");
+  assert.equal(absorbed.completable, direct.completable, "absorption leaves the completion root unchanged");
+  assert.equal(absorbed.initialInBad, direct.initialInBad, "absorption leaves initial safety unchanged");
+  assert.equal(model.bdd.and(model.initial, absorbed.completionOrFailure!), model.initial, "failure-or-completion closure contains the initial state");
+  const summary = absorbed.obligations.find(obligation => obligation.kind === "non-completion")!;
+  assert.equal(summary.seedZero, absorbedNonCompletion.seed.size === 0, "the absorbed residual seed matches the independent oracle");
+  assert.equal(summary.initialInBad, absorbedNonCompletion.bad.has(graph.initialKey), "the absorbed residual membership matches the independent oracle");
+});
+
+test("scene-partitioned non-completion cones preserve cross-scene reachability and zero seeds", () => {
+  const trapGraph = buildRawGraph(REACHABLE_TRAP, { water: 1 });
+  const trapExpected = expectedObligations(trapGraph, "direct", "scene");
+  const trapSeed = trapExpected.find(obligation => obligation.sceneId === "trap")!;
+  const startSeed = trapExpected.find(obligation => obligation.sceneId === "start")!;
+  const safeSeed = trapExpected.find(obligation => obligation.sceneId === "safe")!;
+  assert.ok(trapSeed.seed.size > 0, "the trap scene contributes a non-completion seed");
+  assert.equal(trapSeed.bad.has(trapGraph.initialKey), true, "the trap cone reaches an initial state in another scene");
+  assert.equal(startSeed.seed.size, 0, "the start scene has a zero seed");
+  assert.equal(safeSeed.seed.size, 0, "the safe scene has a zero seed");
+
+  for (const nonCompletionMode of ["direct", "failure-absorbed"] as const) {
+    const model = modelFor(trapGraph.scenario, { water: 1 }, "interleaved", "partitioned", false);
+    const result = proveCompletionSafetyByObligation(model, {
+      roundLimit: 64,
+      nonCompletionMode,
+      nonCompletionPartition: "scene",
+    });
+    const summaries = result.obligations.filter(obligation => obligation.kind === "non-completion");
+    assert.deepEqual(
+      summaries.map(obligation => obligation.sceneId),
+      trapGraph.scenario.scenes.map(scene => scene.id),
+      `${nonCompletionMode} returns one scene obligation for every authored scene`,
+    );
+    assert.equal(
+      summaries.find(obligation => obligation.sceneId === "trap")!.initialInBad,
+      true,
+      `${nonCompletionMode} preserves the cross-scene trap cone`,
+    );
+    assert.equal(
+      summaries.filter(obligation => obligation.seedZero).length,
+      2,
+      `${nonCompletionMode} reports both zero scene seeds`,
+    );
+  }
+
+  checkObligationScenario(SAFE_CYCLE, { energy: 1 }, "partitioned-safe-zero-seeds", true, "direct", "scene");
+  checkObligationScenario(REACHABLE_TRAP, { water: 1 }, "partitioned-cross-scene-trap", true, "direct", "scene");
+  checkObligationScenario(REACHABLE_FAULTS, { stock: 1 }, "partitioned-fault-zero-seeds", true, "failure-absorbed", "scene");
+  checkObligationScenario(FAULT_ONLY_CONTINUATION, { stock: 1 }, "partitioned-fault-route", false, "failure-absorbed", "scene");
+
+  const mixed = new MixedScenePredicateModel(trapGraph.scenario, { water: 1 });
+  assert.throws(
+    () => proveCompletionSafetyByObligation(mixed, { nonCompletionPartition: "scene" }),
+    /scene trap predicate.*current-only/i,
+    "scene partition rejects a mixed-phase scene predicate",
+  );
+  const missing = new MissingScenePredicateModel(trapGraph.scenario, { water: 1 });
+  assert.throws(
+    () => proveCompletionSafetyByObligation(missing, { nonCompletionPartition: "scene" }),
+    /scene-partitioned non-completion seed.*equal the global seed/i,
+    "scene partition rejects incomplete scene coverage",
+  );
+  const overlapping = new OverlappingScenePredicateModel(trapGraph.scenario, { water: 1 });
+  assert.throws(
+    () => proveCompletionSafetyByObligation(overlapping, { nonCompletionPartition: "scene" }),
+    /scene-partitioned non-completion seeds overlap/i,
+    "scene partition rejects overlapping scene predicates",
+  );
+});
+
+test("obligation-local compaction preserves exact cones and reports owner handoffs", () => {
+  for (const interval of [1, 2] as const) {
+    // The only-fault route has a three-step predecessor cone, so both
+    // intervals exercise a copy after a genuinely nonfixed round. The direct
+    // global run checks the ordinary obligation shape; the absorbed scene run
+    // checks the decomposed W/non-completion shape with zero seeds alongside
+    // the nonzero fault cone.
+    checkObligationScenario(
+      FAULT_ONLY_CONTINUATION,
+      { stock: 1 },
+      "compact-direct-global-" + interval,
+      false,
+      "direct",
+      "global",
+      interval,
+    );
+    checkObligationScenario(
+      FAULT_ONLY_CONTINUATION,
+      { stock: 1 },
+      "compact-absorbed-scene-" + interval,
+      false,
+      "failure-absorbed",
+      "scene",
+      interval,
+    );
+    checkObligationScenario(
+      FAULT_ONLY_CONTINUATION,
+      { stock: 1 },
+      "compact-combined-direct-global-" + interval,
+      false,
+      "direct",
+      "global",
+      interval,
+      "combined",
+    );
+    checkObligationScenario(
+      FAULT_ONLY_CONTINUATION,
+      { stock: 1 },
+      "compact-combined-absorbed-scene-" + interval,
+      false,
+      "failure-absorbed",
+      "scene",
+      interval,
+      "combined",
+    );
+  }
+});
+
+test("combined failure partition matches choice cones, exact raw unions, and zero-seed shape", () => {
+  const overlapGraph = buildRawGraph(REACHABLE_FAULTS, { stock: 1 });
+  const overlapSeeds = expectedFailureSeeds(overlapGraph);
+  assert.ok(overlapSeeds.some((left, leftIndex) => overlapSeeds.some((right, rightIndex) =>
+    leftIndex < rightIndex && [...left.seed].some(key => right.seed.has(key))),
+  ), "the raw fixture has overlapping arithmetic and bound failure sources");
+
+  for (const failurePartition of ["choice", "combined"] as const) {
+    // All layouts exercise both transition compilers while keeping the
+    // direct/global partition independent from the absorbed/scene one.
+    checkObligationScenario(
+      REACHABLE_FAULTS,
+      { stock: 1 },
+      "failure-partition-direct-global-" + failurePartition,
+      true,
+      "direct",
+      "global",
+      0,
+      failurePartition,
+    );
+    checkObligationScenario(
+      FAULT_ONLY_CONTINUATION,
+      { stock: 1 },
+      "failure-partition-absorbed-scene-" + failurePartition,
+      true,
+      "failure-absorbed",
+      "scene",
+      0,
+      failurePartition,
+    );
+    checkObligationScenario(
+      INTERMEDIATE_BOUND,
+      { stock: 1 },
+      "failure-partition-intermediate-bound-" + failurePartition,
+      true,
+      "direct",
+      "global",
+      0,
+      failurePartition,
+    );
+  }
+
+  const zeroGraph = buildRawGraph(SAFE_CYCLE, { energy: 1 });
+  assert.equal(expectedFailureSeeds(zeroGraph).every(seed => seed.seedZero), true,
+    "the safe fixture has no raw failure sources");
+  checkObligationScenario(
+    SAFE_CYCLE,
+    { energy: 1 },
+    "failure-partition-all-zero-combined",
+    false,
+    "direct",
+    "global",
+    0,
+    "combined",
+  );
+});
+
+test("combined failure union retains synthetic invalid and uncovered seeds outside completion", () => {
+  const scenario = validateScenario(TERMINAL_ONLY);
+  for (const [Model, kind] of [
+    [SyntheticInvalidSuccessModel, "invalid-success"],
+    [SyntheticUncoveredModel, "uncovered-enabled"],
+  ] as const) {
+    for (const nonCompletionMode of ["direct", "failure-absorbed"] as const) {
+      const model = new Model(scenario, { token: 0 });
+      const direct = proveCompletionSafety(model, { roundLimit: 64 });
+      assert.equal(model.bdd.and(model.initial, direct.completable), 0,
+        kind + " synthetic initial state is outside strong completion");
+      let unionBad = 0;
+      let unionSeed = 0;
+      const result = proveCompletionSafetyByObligation(model, {
+        roundLimit: 64,
+        nonCompletionMode,
+        failurePartition: "combined",
+        onObligation: payload => {
+          if (payload.summary.kind !== "failure-union") return;
+          unionSeed = payload.model === model
+            ? payload.seed
+            : payload.model.bdd.copyForestTo(model.bdd, [payload.seed])[0]!;
+          const bad = payload.model === model
+            ? payload.bad
+            : payload.model.bdd.copyForestTo(model.bdd, [payload.bad])[0]!;
+          unionBad = model.bdd.or(unionBad, bad);
+        },
+      });
+      const unionSummary = result.obligations.find(obligation => obligation.kind === "failure-union");
+      assert.ok(unionSummary !== undefined, kind + " has one combined failure obligation");
+      assert.equal(unionSummary!.choiceId, undefined, kind + " combined failure obligation has no choice ID");
+      assert.equal(unionSummary!.seedZero, false, kind + " synthetic failure seed is nonzero");
+      assert.equal(unionSummary!.initialInBad, true, kind + " synthetic failure reaches the initial state");
+      assert.notEqual(unionSeed, 0, kind + " failure-union callback retains the injected seed");
+      assert.equal(model.bdd.and(model.initial, unionBad), model.initial,
+        kind + " combined failure cone retains the injected initial state");
+      assert.equal(unionBad, direct.bad, kind + " combined failure cone equals the original aggregate bad root");
+      assert.equal(result.initialInBad, true, kind + " combined mode reports the initial failure");
+      assert.equal(result.completable, direct.completable, kind + " combined mode preserves strong completion");
+      if (nonCompletionMode === "failure-absorbed") {
+        assert.equal(result.completionOrFailure, model.bdd.or(direct.completable, unionBad),
+          kind + " absorbed W includes the full synthetic failure cone outside C");
+      } else {
+        assert.equal(Object.hasOwn(result, "completionOrFailure"), false,
+          kind + " direct mode preserves the result shape without W");
+      }
+
+      const metadata = result.failureSeeds!;
+      assert.ok(Object.isFrozen(metadata), kind + " combined metadata is frozen");
+      assert.equal(metadata.filter(seed => !seed.seedZero).length, 1,
+        kind + " has exactly one injected nonzero seed");
+      const injected = metadata.find(seed => seed.kind === kind && seed.choiceId === model.choices[0]!.id);
+      assert.ok(injected !== undefined, kind + " metadata retains the injected seed identity");
+      assert.equal(injected!.seedZero, false, kind + " metadata marks the injected seed nonzero");
+      assert.deepEqual(Object.keys(injected!).sort(), ["choiceId", "id", "kind", "seedZero"],
+        kind + " metadata exposes no owned roots");
+      assert.equal(result.obligations.filter(obligation => obligation.kind === "failure-union").length, 1,
+        kind + " has one failure-union obligation rather than a global duplicate record");
+    }
+  }
+});
+
+class SameOwnerFreshModel extends SymbolicModel {
+  override fresh(): SymbolicModel {
+    return this;
+  }
+}
+
+class WrongBoundFreshModel extends SymbolicModel {
+  freshCalls = 0;
+
+  override fresh(): SymbolicModel {
+    this.freshCalls++;
+    return new SymbolicModel(this.scenario, { water: 2 }, {
+      order: "interleaved",
+      transitionMode: this.transitionMode,
+      fieldOrder: this.fieldOrder,
+      nodeLimit: 100_000,
+      cacheLimit: 20_000,
+    });
+  }
+}
+
+type SecondFreshFailure = "alias" | "bounds" | "valid";
+
+interface FreshCallTrace {
+  calls: number;
+}
+
+/**
+ * Keep the first obligation owner valid, then make the first compaction
+ * handoff invalid. This proves compaction validates every owner boundary,
+ * rather than only the initial seed copy.
+ */
+class SecondFreshFailureModel extends SymbolicModel {
+  readonly trace: FreshCallTrace;
+  private readonly boundsSnapshot: Readonly<Record<string, number>>;
+  private readonly optionsSnapshot: SymbolicOptions;
+  private readonly failure: SecondFreshFailure;
+
+  constructor(
+    input: unknown,
+    bounds: Readonly<Record<string, number>>,
+    options: SymbolicOptions = {},
+    trace: FreshCallTrace = { calls: 0 },
+    failure: SecondFreshFailure = "alias",
+  ) {
+    super(input, bounds, options);
+    this.trace = trace;
+    this.boundsSnapshot = Object.freeze({ ...bounds });
+    this.optionsSnapshot = Object.freeze({
+      order: options.order,
+      transitionMode: options.transitionMode,
+      fieldOrder: options.fieldOrder === undefined ? undefined : Object.freeze([...options.fieldOrder]),
+      nodeLimit: options.nodeLimit,
+      cacheLimit: options.cacheLimit,
+      maxDomain: options.maxDomain,
+    });
+    this.failure = failure;
+  }
+
+  override fresh(): SymbolicModel {
+    this.trace.calls++;
+    if (this.trace.calls >= 2 && this.failure === "alias") return this;
+    if (this.trace.calls >= 2 && this.failure === "bounds") {
+      const resource = Object.keys(this.boundsSnapshot)[0]!;
+      const current = this.boundsSnapshot[resource]!;
+      return new SecondFreshFailureModel(
+        this.scenario,
+        { ...this.boundsSnapshot, [resource]: Math.max(0, current - 1) },
+        this.optionsSnapshot,
+        this.trace,
+        this.failure,
+      );
+    }
+    return new SecondFreshFailureModel(
+      this.scenario,
+      this.boundsSnapshot,
+      this.optionsSnapshot,
+      this.trace,
+      this.failure,
+    );
+  }
+}
+
+test("split safety obligations fail closed for invalid fresh owners and layouts", () => {
+  const scenario = validateScenario(REACHABLE_TRAP);
+  for (const nonCompletionMode of ["direct", "failure-absorbed"] as const) {
+    const sameOwner = new SameOwnerFreshModel(scenario, { water: 1 }, {
+      order: "interleaved",
+      transitionMode: "relational",
+      nodeLimit: 100_000,
+      cacheLimit: 20_000,
+    });
+    assert.throws(
+      () => proveCompletionSafetyByObligation(sameOwner, { roundLimit: 64, nonCompletionMode }),
+      /fresh|owner|distinct/i,
+      "a fresh obligation manager cannot alias the source owner",
+    );
+
+    const wrongBounds = new WrongBoundFreshModel(scenario, { water: 3 });
+    assert.throws(
+      () => proveCompletionSafetyByObligation(wrongBounds, { roundLimit: 64, nonCompletionMode }),
+      /domain|layout|bound|equiv|owner|fresh/i,
+      "same-width but different bounds cannot cross-copy symbolic roots",
+    );
+    assert.ok(wrongBounds.freshCalls > 0, "the trap fixture exercises a nonzero fresh obligation");
+  }
+});
+
+test("split safety obligations reject invalid caps and propagate observer failures", () => {
+  const model = modelFor(validateScenario(REACHABLE_TRAP), { water: 1 }, "interleaved", "partitioned", false);
+  for (const roundLimit of [null, 0, -1, 1.5, Number.NaN, "64"] as const) {
+    assert.throws(
+      () => proveCompletionSafetyByObligation(model, { roundLimit: roundLimit as never }),
+      /roundLimit|round limit|fixed point|incomplete|options/i,
+      "rejects split roundLimit=" + String(roundLimit),
+    );
+  }
+  for (const obligationCompactEvery of [null, -1, 1.5, Number.NaN, "2"] as const) {
+    assert.throws(
+      () => proveCompletionSafetyByObligation(model, { obligationCompactEvery: obligationCompactEvery as never }),
+      /obligationCompactEvery|compaction/i,
+      "rejects obligationCompactEvery=" + String(obligationCompactEvery),
+    );
+  }
+  assert.throws(() => proveCompletionSafetyByObligation(model, null as never), /options/i);
+  assert.throws(
+    () => proveCompletionSafetyByObligation(model, { onProgress: null as never }),
+    /onProgress|function/i,
+  );
+  assert.throws(
+    () => proveCompletionSafetyByObligation(model, { onObligation: null as never }),
+    /onObligation|function/i,
+  );
+  assert.throws(
+    () => proveCompletionSafetyByObligation(model, { nonCompletionMode: null as never }),
+    /nonCompletionMode|mode/i,
+  );
+  assert.throws(
+    () => proveCompletionSafetyByObligation(model, { nonCompletionMode: "unsupported" as never }),
+    /nonCompletionMode|mode/i,
+  );
+  assert.throws(
+    () => proveCompletionSafetyByObligation(model, { nonCompletionPartition: null as never }),
+    /nonCompletionPartition|partition/i,
+  );
+  assert.throws(
+    () => proveCompletionSafetyByObligation(model, { nonCompletionPartition: "unsupported" as never }),
+    /nonCompletionPartition|partition/i,
+  );
+  assert.throws(
+    () => proveCompletionSafetyByObligation(model, { failurePartition: null as never }),
+    /failurePartition|partition/i,
+  );
+  assert.throws(
+    () => proveCompletionSafetyByObligation(model, { failurePartition: "unsupported" as never }),
+    /failurePartition|partition/i,
+  );
+  assert.throws(
+    () => proveCompletionSafetyByObligation(model, { roundLimit: 1 }),
+    /fixed point|round limit|incomplete/i,
+    "a split cap below the safe cycle depth fails closed",
+  );
+
+  const obligationDepth = modelFor(validateScenario(OBLIGATION_DEPTH), { stock: 1 }, "interleaved", "relational", false);
+  const depthProgress: ObligationProgress[] = [];
+  assert.throws(
+    () => proveCompletionSafetyByObligation(obligationDepth, {
+      roundLimit: 2,
+      onProgress: event => depthProgress.push(event),
+    }),
+    /obligation arithmetic-error:arithmetic-work-fault.*round limit/i,
+    "the per-obligation cap fails after completion itself converges",
+  );
+  assert.ok(depthProgress.some(event => event.phase === "completion" && event.fixed), "completion fixed point was reached before the cap");
+  assert.ok(depthProgress.some(event => event.phase === "obligation"
+    && event.id === "arithmetic-error:arithmetic-work-fault"
+    && event.round === 2
+    && !event.fixed), "the arithmetic obligation consumed the bounded rounds");
+
+  const progressError = new Error("intentional split progress interruption");
+  assert.throws(
+    () => proveCompletionSafetyByObligation(model, {
+      onProgress: () => { throw progressError; },
+    }),
+    error => error === progressError,
+  );
+  const obligationError = new Error("intentional split obligation interruption");
+  assert.throws(
+    () => proveCompletionSafetyByObligation(model, {
+      onObligation: () => { throw obligationError; },
+    }),
+    error => error === obligationError,
+  );
+});
+
+test("obligation compaction fails closed at its boundary and propagates compaction observers", () => {
+  const scenario = validateScenario(FAULT_ONLY_CONTINUATION);
+  const ownerOptions: SymbolicOptions = {
+    order: "interleaved",
+    transitionMode: "relational",
+    nodeLimit: 100_000,
+    cacheLimit: 20_000,
+  };
+  for (const failure of ["alias", "bounds"] as const) {
+    const model = new SecondFreshFailureModel(scenario, { stock: 3 }, ownerOptions, { calls: 0 }, failure);
+    assert.throws(
+      () => proveCompletionSafetyByObligation(model, {
+        roundLimit: 64,
+        obligationCompactEvery: 1,
+      }),
+      /fresh|owner|distinct|domain|layout|bound|static/i,
+      "the second fresh owner must be validated for " + failure,
+    );
+    assert.ok(model.trace.calls >= 2, "" + failure + " reaches a second fresh-owner boundary");
+  }
+
+  const tracked = new SecondFreshFailureModel(scenario, { stock: 1 }, ownerOptions, { calls: 0 }, "valid");
+  const finalOwners = new Set<SymbolicModel>();
+  const trackedResult = proveCompletionSafetyByObligation(tracked, {
+    roundLimit: 64,
+    obligationCompactEvery: 1,
+    onObligation: payload => {
+      if (!payload.summary.seedZero) finalOwners.add(payload.model);
+    },
+  });
+  const nonzeroCount = trackedResult.obligations.filter(summary => !summary.seedZero).length;
+  const compactionCount = trackedResult.obligations.reduce(
+    (count, summary) => count + (summary.compactions ?? 0),
+    0,
+  );
+  assert.ok(compactionCount > 0, "the owner trace includes at least one compaction");
+  assert.equal(tracked.trace.calls, nonzeroCount + compactionCount,
+    "each nonzero cone copy and compaction creates exactly one fresh owner");
+  assert.equal(finalOwners.size, nonzeroCount,
+    "each nonzero final callback owns its own latest compacted manager");
+
+  const capped = modelFor(scenario, { stock: 1 }, "interleaved", "relational", false);
+  const capProgress: ObligationProgress[] = [];
+  assert.throws(
+    () => proveCompletionSafetyByObligation(capped, {
+      roundLimit: 2,
+      obligationCompactEvery: 1,
+      onProgress: event => capProgress.push(event),
+    }),
+    /obligation arithmetic-error:arithmetic-work-only-fault.*round limit/i,
+    "a cap reached after compaction still fails closed",
+  );
+  assert.ok(capProgress.some(event => event.phase === "obligation-compact"),
+    "the cap test reaches a real compaction before failing");
+
+  const observed = modelFor(scenario, { stock: 1 }, "interleaved", "relational", false);
+  const compactionError = new Error("intentional obligation compaction interruption");
+  assert.throws(
+    () => proveCompletionSafetyByObligation(observed, {
+      roundLimit: 64,
+      obligationCompactEvery: 1,
+      onProgress: event => {
+        if (event.phase === "obligation-compact") throw compactionError;
+      },
+    }),
+    error => error === compactionError,
+    "compaction observer failures are propagated without a partial result",
+  );
+});
+
+/**
+ * A small graph whose completion and absorbed-failure cones both need several
+ * predecessor rounds.  The good route is start -> middle -> finish.  A second
+ * route reaches a fault through bad-a -> bad-b -> bad-c -> bad-d.  This keeps the fixed-point
+ * compaction test independent of the campaign's large authored graph while
+ * exercising C, W, and the original per-choice failure metadata.
+ */
+const FIXED_POINT_DEPTH = {
+  version: 1,
+  initialScene: "start",
+  initialResources: { stock: 1 },
+  initialFacts: [],
+  scenes: [
+    { id: "start", title: "Start", text: [{ text: "The route begins." }] },
+    { id: "middle", title: "Middle", text: [{ text: "The safe route continues." }] },
+    { id: "finish", title: "Finish", text: [{ text: "The final gate is ready." }] },
+    { id: "bad-a", title: "Lower path", text: [{ text: "The lower path descends." }] },
+    { id: "bad-b", title: "Broken yard", text: [{ text: "The broken yard leads onward." }] },
+    { id: "bad-c", title: "Flooded cut", text: [{ text: "The flooded cut narrows." }] },
+    { id: "bad-d", title: "Broken tank", text: [{ text: "The broken tank can fail." }] },
+  ],
+  choices: [
+    {
+      id: "take-safe-route",
+      scene: "start",
+      label: "Take the safe route",
+      description: "Walk to the middle road.",
+      effects: [{ type: "goTo", scene: "middle" }],
+    },
+    {
+      id: "take-lower-route",
+      scene: "start",
+      label: "Take the lower route",
+      description: "Follow the lower path toward the broken yard.",
+      effects: [{ type: "goTo", scene: "bad-a" }],
+    },
+    {
+      id: "continue-safe-route",
+      scene: "middle",
+      label: "Continue to the gate",
+      description: "Walk from the middle road to the final gate.",
+      effects: [{ type: "goTo", scene: "finish" }],
+    },
+    {
+      id: "complete-safe-route",
+      scene: "finish",
+      label: "Complete the route",
+      description: "Close the route at the final gate.",
+      effects: [],
+      outcome: { status: "completed", summary: "The route is complete." },
+    },
+    {
+      id: "continue-lower-route",
+      scene: "bad-a",
+      label: "Descend to the yard",
+      description: "Descend from the lower path into the broken yard.",
+      effects: [{ type: "goTo", scene: "bad-b" }],
+    },
+    {
+      id: "continue-lower-route-2",
+      scene: "bad-b",
+      label: "Cross the flooded cut",
+      description: "Cross the broken yard toward the flooded cut.",
+      effects: [{ type: "goTo", scene: "bad-c" }],
+    },
+    {
+      id: "continue-lower-route-3",
+      scene: "bad-c",
+      label: "Reach the broken tank",
+      description: "Continue from the flooded cut to the broken tank.",
+      effects: [{ type: "goTo", scene: "bad-d" }],
+    },
+    {
+      id: "break-full-tank",
+      scene: "bad-d",
+      label: "Force the broken tank",
+      description: "Push the full tank beyond the safe integer bound.",
+      when: [{ type: "resourceAtLeast", resource: "stock", value: 1 }],
+      effects: [
+        { type: "adjustResource", resource: "stock", delta: Number.MAX_SAFE_INTEGER },
+        { type: "goTo", scene: "bad-b" },
+      ],
+    },
+  ],
+} as const;
+
+type FixedPointConfig = {
+  readonly nonCompletionMode: NonCompletionMode;
+  readonly nonCompletionPartition: NonCompletionPartition;
+  readonly failurePartition: FailurePartition;
+};
+
+interface FixedPointCapture {
+  readonly model: SymbolicModel;
+  readonly graph: RawGraph;
+  readonly result: ReturnType<typeof proveCompletionSafetyByObligation>;
+  readonly progress: readonly {
+    readonly phase: "completion" | "completion-or-failure" | "obligation" | "obligation-compact"
+      | "completion-compact" | "completion-or-failure-compact";
+    readonly round?: number;
+    readonly nodes?: number;
+    readonly previousNodes?: number;
+    readonly fixed?: boolean;
+    readonly id?: string;
+  }[];
+  readonly callbackRoots: ReadonlyMap<string, {
+    readonly owner: SymbolicModel;
+    readonly seed: number;
+    readonly bad: number;
+    readonly summary: ReturnType<typeof proveCompletionSafetyByObligation>["obligations"][number];
+  }>;
+}
+
+function captureFixedPointRun(
+  raw: unknown,
+  bounds: Readonly<Record<string, number>>,
+  config: FixedPointConfig,
+  fixedPointCompactEvery: number,
+  order: "interleaved" | "blocked",
+  transitionMode: "relational" | "partitioned",
+  reorder: boolean,
+): FixedPointCapture {
+  const graph = buildRawGraph(raw, bounds);
+  const model = modelFor(graph.scenario, bounds, order, transitionMode, reorder);
+  const progress: FixedPointCapture["progress"] extends readonly (infer T)[] ? T[] : never = [];
+  const callbackRoots = new Map<string, {
+    readonly owner: SymbolicModel;
+    readonly seed: number;
+    readonly bad: number;
+    readonly summary: ReturnType<typeof proveCompletionSafetyByObligation>["obligations"][number];
+  }>();
+  const result = proveCompletionSafetyByObligation(model, {
+    roundLimit: 64,
+    nonCompletionMode: config.nonCompletionMode,
+    nonCompletionPartition: config.nonCompletionPartition,
+    failurePartition: config.failurePartition,
+    fixedPointCompactEvery,
+    onProgress: event => {
+      progress.push(event);
+      assert.ok(Number.isSafeInteger(event.round) && event.round >= 1, "fixed-point progress round is bounded");
+      assert.ok(Number.isSafeInteger(event.nodes) && event.nodes >= 2, "fixed-point progress node count is bounded");
+      if (event.phase === "completion-compact" || event.phase === "completion-or-failure-compact") {
+        assert.deepEqual(
+          Object.keys(event).sort(),
+          ["fixed", "nodes", "phase", "previousNodes", "round"],
+          "fixed-point compaction has no obligation identity or owner fields",
+        );
+        assert.equal(event.fixed, false, "fixed-point compaction follows a nonfixed round");
+        assert.ok(Number.isSafeInteger(event.previousNodes) && event.previousNodes! >= 2,
+          "fixed-point compaction reports its previous owner node count");
+      }
+    },
+    onObligation: payload => {
+      const summary = payload.summary;
+      assert.equal(callbackRoots.has(summary.id), false, `fixed-point callback ID ${summary.id} is unique`);
+      assertCurrentOnly(payload.model, payload.seed, `${summary.id} seed`);
+      assertCurrentOnly(payload.model, payload.bad, `${summary.id} bad cone`);
+      assert.ok(Object.isFrozen(summary), `${summary.id} summary is frozen`);
+      callbackRoots.set(summary.id, { owner: payload.model, seed: payload.seed, bad: payload.bad, summary });
+    },
+  });
+  return { model, graph, result, progress, callbackRoots };
+}
+
+function copiedRoots(
+  from: SymbolicModel,
+  to: SymbolicModel,
+  roots: readonly number[],
+): readonly number[] {
+  if (from === to) return roots;
+  return from.bdd.copyForestTo(to.bdd, roots);
+}
+
+function semanticObligationSummary(summary: ReturnType<typeof proveCompletionSafetyByObligation>["obligations"][number]): Record<string, unknown> {
+  const { nodes: _nodes, compactions: _compactions, ...semantic } = summary;
+  return semantic;
+}
+
+function assertFixedPointSemantics(
+  baseline: FixedPointCapture,
+  compacted: FixedPointCapture,
+  config: FixedPointConfig,
+): void {
+  const baselineResult = baseline.result;
+  const compactedResult = compacted.result;
+  assert.deepEqual(
+    compactedResult.failureSeeds,
+    baselineResult.failureSeeds,
+    "fixed-point compaction preserves all original failure seed metadata",
+  );
+  assert.deepEqual(
+    compactedResult.obligations.map(semanticObligationSummary),
+    baselineResult.obligations.map(semanticObligationSummary),
+    "fixed-point compaction preserves obligation identities and outcomes",
+  );
+  const baselineRoots = [
+    baselineResult.completable,
+    ...(baselineResult.completionOrFailure === undefined ? [] : [baselineResult.completionOrFailure]),
+  ];
+  const compactedRoots = [
+    compactedResult.completable,
+    ...(compactedResult.completionOrFailure === undefined ? [] : [compactedResult.completionOrFailure]),
+  ];
+  const normalized = copiedRoots(compactedResult.model, baseline.model, compactedRoots);
+  assert.deepEqual(normalized, baselineRoots, "fixed-point compaction preserves C and W roots");
+  assert.equal(
+    baselineResult.completable,
+    formulaForKeys(baseline.model, baseline.graph, baseline.graph.completable),
+    "baseline C root matches the independent finite oracle",
+  );
+  if (baselineResult.completionOrFailure !== undefined) {
+    const completionOrFailureSeed = new Set<string>([
+      ...baseline.graph.states
+        .filter(state => state.status === "completed")
+        .map(state => stateKey(state, baseline.graph.resources, baseline.graph.flags)),
+      ...baseline.graph.faults,
+      ...baseline.graph.invalidSuccess,
+      ...baseline.graph.uncoveredEnabled,
+    ]);
+    const expectedCompletionOrFailure = predecessorClosure(baseline.graph, completionOrFailureSeed);
+    assert.equal(
+      baselineResult.completionOrFailure,
+      formulaForKeys(baseline.model, baseline.graph, expectedCompletionOrFailure),
+      "baseline W root matches the independent finite oracle",
+    );
+  }
+  assert.strictEqual(compactedResult.model.bdd.exists(compactedResult.completable, compactedResult.model.nextVariables), compactedResult.completable,
+    "compacted C belongs to the final current-only owner");
+  if (compactedResult.completionOrFailure !== undefined) {
+    assert.strictEqual(compactedResult.model.bdd.exists(compactedResult.completionOrFailure, compactedResult.model.nextVariables), compactedResult.completionOrFailure,
+      "compacted W belongs to the final current-only owner");
+  }
+
+  const expectedByKey = new Map(expectedObligations(
+    compacted.graph,
+    config.nonCompletionMode,
+    config.nonCompletionPartition,
+    config.failurePartition,
+  ).map(obligation => [obligation.key, obligation]));
+  assert.deepEqual(
+    [...baseline.callbackRoots.keys()],
+    [...compacted.callbackRoots.keys()],
+    "fixed-point compaction preserves callback obligation order",
+  );
+  const compactedNonzeroOwners = new Set<SymbolicModel>();
+  for (const callback of compacted.callbackRoots.values()) {
+    if (callback.summary.seedZero) {
+      assert.strictEqual(callback.owner, compactedResult.model,
+        `${callback.summary.id} zero-seed callback uses the final fixed-point owner`);
+    } else {
+      assert.notStrictEqual(callback.owner, compactedResult.model,
+        `${callback.summary.id} nonzero callback keeps its obligation-local owner`);
+      assert.equal(compactedNonzeroOwners.has(callback.owner), false,
+        `${callback.summary.id} nonzero callback owner is unique`);
+      compactedNonzeroOwners.add(callback.owner);
+    }
+  }
+  for (const callback of baseline.callbackRoots.values()) {
+    if (callback.summary.seedZero) {
+      assert.strictEqual(callback.owner, baseline.model,
+        `${callback.summary.id} default zero-seed callback keeps the input owner`);
+    } else {
+      assert.notStrictEqual(callback.owner, baseline.model,
+        `${callback.summary.id} default nonzero callback uses an obligation-local owner`);
+    }
+  }
+  for (const [key, compactedCallback] of compacted.callbackRoots) {
+    const baselineCallback = baseline.callbackRoots.get(key);
+    assert.ok(baselineCallback !== undefined, `${key} baseline callback exists`);
+    const fixture = expectedByKey.get(key);
+    assert.ok(fixture !== undefined, `${key} has an independent raw obligation`);
+    const compactedCopied = copiedRoots(compactedCallback.owner, baseline.model,
+      [compactedCallback.seed, compactedCallback.bad]);
+    const baselineExpected = [
+      formulaForKeys(baseline.model, baseline.graph, fixture!.seed),
+      formulaForKeys(baseline.model, baseline.graph, fixture!.bad),
+    ];
+    assert.deepEqual(compactedCopied, baselineExpected, `${key} seed and cone preserve raw semantics`);
+    assert.deepEqual(
+      copiedRoots(baselineCallback!.owner, baseline.model, [baselineCallback!.seed, baselineCallback!.bad]),
+      baselineExpected,
+      `${key} baseline seed and cone match the raw oracle`,
+    );
+  }
+}
+
+function assertFixedPointProgress(
+  capture: FixedPointCapture,
+  fixedPointCompactEvery: number,
+  absorbed: boolean,
+): void {
+  const progress = capture.progress;
+  const phases = ["completion", ...(absorbed ? ["completion-or-failure"] : [])] as const;
+  for (const phase of phases) {
+    const fixedPointEvents = progress.filter(event => event.phase === phase);
+    const compactPhase = phase === "completion" ? "completion-compact" : "completion-or-failure-compact";
+    const compactEvents = progress.filter(event => event.phase === compactPhase);
+    assert.ok(fixedPointEvents.length >= 1, `${phase} emits fixed-point rounds`);
+    assert.equal(
+      compactEvents.length,
+      (fixedPointEvents.length - 1) / fixedPointCompactEvery >= 0
+        ? Math.floor((fixedPointEvents.length - 1) / fixedPointCompactEvery)
+        : 0,
+      `${compactPhase} count follows the configured interval`,
+    );
+    for (const event of compactEvents) {
+      const index = progress.indexOf(event);
+      assert.ok(index > 0, `${compactPhase} has a preceding round`);
+      const previous = progress[index - 1]!;
+      assert.equal(previous.phase, phase, `${compactPhase} follows its own fixed-point round`);
+      assert.equal(previous.round, event.round, `${compactPhase} round matches its source round`);
+      assert.equal(previous.fixed, false, `${compactPhase} follows a nonfixed round`);
+      assert.equal(event.previousNodes, previous.nodes, `${compactPhase} preserves previousNodes`);
+      assert.equal(event.round! % fixedPointCompactEvery, 0, `${compactPhase} honors the interval`);
+    }
+  }
+  const completionCompactions = capture.result.completionCompactions;
+  assert.equal(Object.hasOwn(capture.result, "completionCompactions"), true,
+    "enabled fixed-point compaction reports completionCompactions");
+  assert.equal(completionCompactions, progress.filter(event => event.phase === "completion-compact").length,
+    "completionCompactions matches progress");
+  if (absorbed) {
+    assert.equal(Object.hasOwn(capture.result, "completionOrFailureCompactions"), true,
+      "absorbed fixed-point compaction reports W compactions");
+    assert.equal(capture.result.completionOrFailureCompactions,
+      progress.filter(event => event.phase === "completion-or-failure-compact").length,
+      "completionOrFailureCompactions matches progress");
+  } else {
+    assert.equal(Object.hasOwn(capture.result, "completionOrFailureCompactions"), false,
+      "direct mode keeps the W compaction field absent");
+  }
+}
+
+test("fixed-point compaction preserves C, W, all cones, and seeds across layouts", () => {
+  const configurations: readonly FixedPointConfig[] = [
+    { nonCompletionMode: "direct", nonCompletionPartition: "global", failurePartition: "choice" },
+    { nonCompletionMode: "direct", nonCompletionPartition: "scene", failurePartition: "combined" },
+    { nonCompletionMode: "failure-absorbed", nonCompletionPartition: "global", failurePartition: "choice" },
+    { nonCompletionMode: "failure-absorbed", nonCompletionPartition: "scene", failurePartition: "combined" },
+  ];
+  for (const config of configurations) {
+    for (const order of ["interleaved", "blocked"] as const) {
+      for (const transitionMode of ["relational", "partitioned"] as const) {
+        for (const reorder of [false, true]) {
+          const baseline = captureFixedPointRun(
+            FIXED_POINT_DEPTH,
+            { stock: 1 },
+            config,
+            0,
+            order,
+            transitionMode,
+            reorder,
+          );
+          const baselineKeys = baseline.result.obligations.map(summary => summary.id);
+          for (const interval of [1, 2] as const) {
+            const compacted = captureFixedPointRun(
+              FIXED_POINT_DEPTH,
+              { stock: 1 },
+              config,
+              interval,
+              order,
+              transitionMode,
+              reorder,
+            );
+            assert.notStrictEqual(compacted.result.model, compacted.model,
+              "fixed-point compaction rebinds the final result owner");
+            assert.notStrictEqual(compacted.result.model.bdd, compacted.model.bdd,
+              "fixed-point compaction uses a fresh final BDD manager");
+            assert.deepEqual(compacted.result.obligations.map(summary => summary.id), baselineKeys,
+              "fixed-point compaction preserves authored obligation order");
+            assertFixedPointSemantics(baseline, compacted, config);
+            assertFixedPointProgress(compacted, interval, config.nonCompletionMode === "failure-absorbed");
+          }
+        }
+      }
+    }
+  }
+});
+
+test("fixed-point compaction preserves authored flag and resource semantics", () => {
+  const cases: readonly {
+    readonly raw: unknown;
+    readonly bounds: Readonly<Record<string, number>>;
+    readonly config: FixedPointConfig;
+  }[] = [
+    {
+      raw: SAFE_CYCLE,
+      bounds: { energy: 1 },
+      config: { nonCompletionMode: "direct", nonCompletionPartition: "global", failurePartition: "choice" },
+    },
+    {
+      raw: REACHABLE_FAULTS,
+      bounds: { stock: 1 },
+      config: { nonCompletionMode: "failure-absorbed", nonCompletionPartition: "scene", failurePartition: "combined" },
+    },
+  ];
+  for (const candidate of cases) {
+    for (const transitionMode of ["relational", "partitioned"] as const) {
+      for (const interval of [1, 2] as const) {
+        const baseline = captureFixedPointRun(
+          candidate.raw,
+          candidate.bounds,
+          candidate.config,
+          0,
+          "interleaved",
+          transitionMode,
+          false,
+        );
+        const compacted = captureFixedPointRun(
+          candidate.raw,
+          candidate.bounds,
+          candidate.config,
+          interval,
+          "interleaved",
+          transitionMode,
+          false,
+        );
+        assertFixedPointSemantics(baseline, compacted, candidate.config);
+        assertFixedPointProgress(compacted, interval, candidate.config.nonCompletionMode === "failure-absorbed");
+      }
+    }
+  }
+});
+
+test("fixed-point compaction default keeps result shape and caller ownership", () => {
+  const capture = captureFixedPointRun(
+    FIXED_POINT_DEPTH,
+    { stock: 1 },
+    { nonCompletionMode: "failure-absorbed", nonCompletionPartition: "scene", failurePartition: "combined" },
+    0,
+    "interleaved",
+    "relational",
+    false,
+  );
+  assert.strictEqual(capture.result.model, capture.model, "default fixed-point mode keeps the caller owner");
+  assert.equal(Object.hasOwn(capture.result, "completionCompactions"), false,
+    "default result has no completionCompactions field");
+  assert.equal(Object.hasOwn(capture.result, "completionOrFailureCompactions"), false,
+    "default result has no W compaction field");
+  assert.equal(capture.progress.some(event => event.phase === "completion-compact" || event.phase === "completion-or-failure-compact"), false,
+    "default progress has no compaction phases");
+  const expectedKeys = expectedObligations(
+    capture.graph,
+    "failure-absorbed",
+    "scene",
+    "combined",
+  ).map(obligation => obligation.key);
+  assert.deepEqual(
+    capture.result.obligations.map(summary => summary.id),
+    expectedKeys,
+    "default result preserves the authored obligation order",
+  );
+  assert.ok(Object.isFrozen(capture.result), "default result remains immutable");
+});
+
+type FixedPointFreshFailure = "alias" | "bounds" | "layout";
+
+interface FixedPointFreshTrace {
+  calls: number;
+}
+
+class FixedPointFreshFailureModel extends SymbolicModel {
+  readonly trace: FixedPointFreshTrace;
+  private readonly boundsSnapshot: Readonly<Record<string, number>>;
+  private readonly optionsSnapshot: SymbolicOptions;
+  private readonly failure: FixedPointFreshFailure;
+  private readonly failOn: number;
+
+  constructor(
+    input: unknown,
+    bounds: Readonly<Record<string, number>>,
+    options: SymbolicOptions,
+    trace: FixedPointFreshTrace,
+    failure: FixedPointFreshFailure,
+    failOn: number,
+  ) {
+    super(input, bounds, options);
+    this.trace = trace;
+    this.boundsSnapshot = Object.freeze({ ...bounds });
+    this.optionsSnapshot = Object.freeze({
+      order: options.order,
+      transitionMode: options.transitionMode,
+      fieldOrder: options.fieldOrder === undefined ? undefined : Object.freeze([...options.fieldOrder]),
+      nodeLimit: options.nodeLimit,
+      cacheLimit: options.cacheLimit,
+      maxDomain: options.maxDomain,
+    });
+    this.failure = failure;
+    this.failOn = failOn;
+  }
+
+  override fresh(): SymbolicModel {
+    this.trace.calls++;
+    if (this.trace.calls >= this.failOn && this.failure === "alias") return this;
+    if (this.trace.calls >= this.failOn && this.failure === "bounds") {
+      return new FixedPointFreshFailureModel(
+        this.scenario,
+        { ...this.boundsSnapshot, stock: this.boundsSnapshot.stock! + 1 },
+        this.optionsSnapshot,
+        this.trace,
+        this.failure,
+        this.failOn,
+      );
+    }
+    if (this.trace.calls >= this.failOn && this.failure === "layout") {
+      return new FixedPointFreshFailureModel(
+        this.scenario,
+        this.boundsSnapshot,
+        { ...this.optionsSnapshot, fieldOrder: reversedFieldOrder(this.scenario) },
+        this.trace,
+        this.failure,
+        this.failOn,
+      );
+    }
+    return new FixedPointFreshFailureModel(
+      this.scenario,
+      this.boundsSnapshot,
+      this.optionsSnapshot,
+      this.trace,
+      this.failure,
+      this.failOn,
+    );
+  }
+}
+
+test("fixed-point compaction validates first and later fresh owner handoffs", () => {
+  const scenario = validateScenario(FIXED_POINT_DEPTH);
+  const options: SymbolicOptions = {
+    order: "interleaved",
+    transitionMode: "relational",
+    nodeLimit: 100_000,
+    cacheLimit: 20_000,
+  };
+  const wBaseline = captureFixedPointRun(
+    FIXED_POINT_DEPTH,
+    { stock: 2 },
+    { nonCompletionMode: "failure-absorbed", nonCompletionPartition: "scene", failurePartition: "combined" },
+    1,
+    "interleaved",
+    "relational",
+    false,
+  );
+  const completionCompactions = wBaseline.progress.filter(event => event.phase === "completion-compact").length;
+  const wCompactions = wBaseline.progress.filter(event => event.phase === "completion-or-failure-compact").length;
+  assert.ok(completionCompactions >= 1, "the handoff fixture reaches completion compaction");
+  assert.ok(wCompactions >= 2, "the handoff fixture reaches at least two W compactions");
+  const handoffs = [
+    { label: "initial", failOn: 1 },
+    { label: "completion", failOn: 2 },
+    { label: "W-first", failOn: completionCompactions + 2 },
+    { label: "W-later", failOn: completionCompactions + 3 },
+  ] as const;
+  for (const failure of ["alias", "bounds", "layout"] as const) {
+    for (const handoff of handoffs) {
+      const trace: FixedPointFreshTrace = { calls: 0 };
+      // Bounds 2 and 3 have the same encoded width and initial stock 1 is
+      // valid in both. The rejection must therefore come from the copied
+      // static-domain anchors, rather than an invalid constructor input.
+      const model = new FixedPointFreshFailureModel(scenario, { stock: 2 }, options, trace, failure, handoff.failOn);
+      assert.throws(
+        () => proveCompletionSafetyByObligation(model, {
+          roundLimit: 64,
+          nonCompletionMode: "failure-absorbed",
+          nonCompletionPartition: "scene",
+          failurePartition: "combined",
+          fixedPointCompactEvery: 1,
+        }),
+        /fresh|owner|distinct|domain|layout|bound|static/i,
+        `fixed-point ${failure} ${handoff.label} handoff fails closed at call ${handoff.failOn}`,
+      );
+      assert.ok(trace.calls >= handoff.failOn, `fixed-point ${failure} reaches ${handoff.label} handoff`);
+    }
+  }
+});
+
+test("fixed-point compaction validates limits, accessors, and progress observers", () => {
+  const scenario = validateScenario(FIXED_POINT_DEPTH);
+  const model = modelFor(scenario, { stock: 1 }, "interleaved", "relational", false);
+  for (const value of [null, -1, 1.5, Number.NaN, Number.POSITIVE_INFINITY, "2"] as const) {
+    assert.throws(
+      () => proveCompletionSafetyByObligation(model, { fixedPointCompactEvery: value as never }),
+      /fixedPointCompactEvery|compaction/i,
+      "rejects fixedPointCompactEvery=" + String(value),
+    );
+  }
+  let reads = 0;
+  const accessorOptions = {
+    get fixedPointCompactEvery(): number {
+      reads++;
+      return 2;
+    },
+    nonCompletionMode: "failure-absorbed" as const,
+    nonCompletionPartition: "scene" as const,
+    failurePartition: "combined" as const,
+  };
+  const accessorResult = proveCompletionSafetyByObligation(model, accessorOptions);
+  assert.equal(reads, 1, "fixedPointCompactEvery is snapshotted with one getter read");
+  assert.equal(Object.hasOwn(accessorResult, "completionCompactions"), true,
+    "accessor-enabled run exposes completion compactions");
+
+  const capModel = modelFor(scenario, { stock: 1 }, "interleaved", "relational", false);
+  const capProgress: string[] = [];
+  assert.throws(
+    () => proveCompletionSafetyByObligation(capModel, {
+      roundLimit: 1,
+      fixedPointCompactEvery: 1,
+      onProgress: event => capProgress.push(event.phase),
+    }),
+    /completion fixed point|round limit/i,
+    "fixed-point round cap fails closed before a result is returned",
+  );
+  assert.ok(capProgress.includes("completion"), "fixed-point cap reports completion progress");
+
+  const observedModel = modelFor(scenario, { stock: 1 }, "interleaved", "relational", false);
+  const interruption = new Error("intentional fixed-point compaction interruption");
+  assert.throws(
+    () => proveCompletionSafetyByObligation(observedModel, {
+      roundLimit: 64,
+      fixedPointCompactEvery: 1,
+      onProgress: event => {
+        if (event.phase === "completion-compact") throw interruption;
+      },
+    }),
+    error => error === interruption,
+    "fixed-point compaction observer failures propagate exactly",
+  );
+});
