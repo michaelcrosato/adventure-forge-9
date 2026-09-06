@@ -551,6 +551,35 @@ current certificate proof passes.
 | `/tmp/af9-detached-worker-integration-root-tests-v1.json` | `9fd521fb4116b739d05777cb906f980aa30274f05a356007556896c9220fc1a9` |
 | `/tmp/af9-detached-worker-integration-root-tests-v1.log` | `6c946d3b7d0fbee8713046eada001a5a5a4219791c0d9ff90e472bd6e1643071` |
 
+## Within-round generator draft and evidence-path correction
+
+The external v2 generator carries a fixed round base and its accumulated
+choice predecessors through fresh owners. Its nine small tests pass, including
+the finite raw-state oracle with forced copying and prior zero/owner checks.
+Root review finds two draft issues before any campaign use: within-round
+compaction events use string round labels, and the proposed node threshold is
+applied as growth since the last copy instead of an absolute node watermark.
+A corrected v3 is being prepared with a separate per-choice diagnostic callback.
+No large run uses v2.
+
+The worker also reused the already-consumed `v2.test.mjs` path for its new
+tests. After the failed selected run had closed, root preserves the new bytes
+at `/tmp/af9-selected-certificate-candidates-v2-within-round.test.mjs` and
+restores the original three-test file exactly. Replacing only the generator
+import in the worker's prior-test copy reproduces the original full SHA-256
+`9a321ffc044a1d2d6350183fc63d760fab90bc4eb9ef9fabc7e19767f833e5f2`.
+The worker's new report/logs remain unchanged; its historical test path is
+resolved through the separate restoration record. Root rechecks all 204
+selected-run evidence bindings plus script/runner hashes successfully.
+No prior verdict is rewritten or promoted.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `/tmp/af9-selected-certificate-candidates-v2.mjs` | `10be10d208d86f4552c940529fe1f667da6dc1e5f9cfd150ab4e8d3bda998f00` |
+| `/tmp/af9-selected-certificate-candidates-v2-within-round.test.mjs` | `c79a16d7ffa3588c0c032959b05bb855c6871b66e013737490159076465a6ed1` |
+| `/tmp/af9-selected-generator-test-path-restoration-root-v1.json` | `32dc5343717071a3644aed686e6ac7f932a260cedabb4f166fa06aa9337ac0fe` |
+| `/tmp/af9-selected-generator-restored-inputs-root-v1.json` | `e72a10e6961ed9e9eb3f6b476d346d0903989fdb234e60208c6daa65b15fa1e0` |
+
 ## Required acceptance
 
 1. Complete the remaining failure-union candidate and fresh full certificate

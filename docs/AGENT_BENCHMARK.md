@@ -670,3 +670,13 @@ as a fifth regression. Root reviews and integrates only the helper/tests at
 `4a78944`; clean-source build plus five tests pass in 4.02 seconds overall.
 The actual campaign invocation is still untouched. No player/provider run or
 experience acceptance is introduced.
+
+The within-round generator draft passes nine small tests, but root finds
+string-valued compaction rounds and a threshold interpreted as retained nodes
+plus growth. Both require correction before a campaign run. The worker also
+collides with the consumed `v2.test.mjs` path. Root preserves the new test bytes
+under a distinct name, reconstructs the original file to its exact earlier
+SHA-256, and rechecks all 204 selected-run evidence bindings. The original
+new-worker report/logs and a separate path-restoration record preserve both
+histories. This correction occurs after the selected process was closed;
+no failed result is rewritten or accepted as a full proof.
