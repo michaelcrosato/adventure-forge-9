@@ -61,7 +61,7 @@ export interface SymbolicCertificate {
 export type SymbolicForestLoader = (forestId: string) => unknown;
 
 export interface SymbolicCertificateOptions {
-  /** Maximum number of predecessor rounds for C and each inductive check. */
+  /** Maximum number of predecessor rounds for the exact completion fixed point. */
   readonly roundLimit?: number;
   /** Copy C and its anchors to a fresh owner after this many nonfixed rounds. */
   readonly completionCompactEvery?: number;

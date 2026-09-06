@@ -328,3 +328,58 @@ test("descriptor is stable across a fresh owner and records the full strategy", 
   assert.deepEqual(descriptor.nextVariables, fresh.nextVariables);
   assert.equal(Object.isFrozen(descriptor.anchors), true);
 });
+
+test("certificate C survives both compilers, bit layouts, and compaction intervals", () => {
+  for (const order of ["interleaved", "blocked"] as const) {
+    for (const transitionMode of ["relational", "partitioned"] as const) {
+      const model = new SymbolicModel(FAILURE_CHAIN, { stock: 1 }, {
+        order, transitionMode, nodeLimit: 25_000, cacheLimit: 5_000,
+      });
+      const generated = captureFailureForests(model);
+      const prepared = certificateFor(model, generated.closure, { start: 0, hidden: 0, middle: 0 });
+      let expectedCompletion: BddForest | undefined;
+      for (const completionCompactEvery of [0, 1, 2]) {
+        const result = verifySymbolicCertificate(model, prepared.certificate, withLoader(prepared.forests), {
+          roundLimit: 64, completionCompactEvery,
+        });
+        const current = result.model.bdd.exportForest([result.completable]);
+        if (expectedCompletion === undefined) expectedCompletion = current;
+        else assert.deepEqual(current, expectedCompletion, "copying preserves the complete Boolean C");
+        assert.equal(result.descriptor.order, order);
+        assert.equal(result.descriptor.transitionMode, transitionMode);
+      }
+    }
+  }
+});
+
+test("round limits and observer failures cannot return an accepted certificate", () => {
+  const model = modelFor(FAILURE_CHAIN, { stock: 1 });
+  const generated = captureFailureForests(model);
+  const prepared = certificateFor(model, generated.closure, { start: 0, hidden: 0, middle: 0 });
+  let loads = 0;
+  const load = (id: string): unknown => { loads++; return prepared.forests.get(id); };
+  assert.throws(() => verifySymbolicCertificate(model, prepared.certificate, load, { roundLimit: 1 }), /round limit/);
+  assert.equal(loads, 0, "incomplete C cannot reach certificate loading");
+  const interrupted = new Error("test observer interruption");
+  assert.throws(() => verifySymbolicCertificate(model, prepared.certificate, load, {
+    onProgress: () => { throw interrupted; },
+  }), error => error === interrupted);
+  assert.equal(loads, 0);
+  for (const value of [0, -1, 1.5, Number.NaN]) {
+    assert.throws(() => verifySymbolicCertificate(model, prepared.certificate, load, { roundLimit: value }), /roundLimit/);
+  }
+});
+
+test("fresh owners reject aliasing and a changed bound with the same bit width", () => {
+  for (const wrong of ["alias", "bounds"] as const) {
+    const model = modelFor(FAILURE_CHAIN, { stock: 2 });
+    const generated = captureFailureForests(model);
+    const prepared = certificateFor(model, generated.closure, { start: 0, hidden: 0, middle: 0 });
+    model.fresh = () => wrong === "alias" ? model : modelFor(FAILURE_CHAIN, { stock: 3 });
+    let loads = 0;
+    assert.throws(() => verifySymbolicCertificate(model, prepared.certificate, id => {
+      loads++; return prepared.forests.get(id);
+    }), /distinct BDD owner|descriptor differs/);
+    assert.equal(loads, 0, "a mismatched owner cannot consume certificate data");
+  }
+});
