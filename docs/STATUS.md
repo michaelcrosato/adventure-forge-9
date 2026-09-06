@@ -10,13 +10,14 @@ missed the regional exposure gate at 1/3; Stage 8 has no fresh live acceptance.
 Production remains the accepted Blackglass source `139e48a`, public on Vercel
 and connected to GitHub main automatic deployment.
 
-The release audit remains open. Exact scene-partitioned obligations at
-`2a994f3` pass 55 BDD/symbolic checks. The first historical run finishes 14
-parts before its time limit; a longer run finishes all 25 scene parts and
-426/549 total obligations, then hits two million nodes in one resource-bound
-failure cone. No full symbolic historical or current campaign proof is
-accepted. Periodic exact manager copies are being implemented to discard
-unused intermediate nodes within each obligation. The separate current
+The release audit remains open. Exact scene partitions, combined failure
+seeds and copying after each nonfixed round pass 59 BDD/symbolic checks at
+`b8f1b3c`. The historical property proof is now independently accepted: all
+26 obligations are disjoint from the initial state, and comparison covers
+all 169,922 reference states. It finishes in 616.66 seconds / 1,490,792 KiB
+maximum RSS under a 720-second checked limit. Earlier node/time failures
+remain preserved. The current campaign proof is being prepared and has no
+result yet. The separate current
 231-endpoint catalog now has a repository regression test; it proves authored
 path and metadata coverage, not universal safety. See
 [BACKWARD_PROPERTY_AUDIT.md](BACKWARD_PROPERTY_AUDIT.md) for scope and evidence.
@@ -54,15 +55,16 @@ also completes historical comparison/replay, then hits the current two-million
 class guard. See [PACKED_PHASE_AUDIT.md](PACKED_PHASE_AUDIT.md) and
 [SYMBOLIC_REACHABILITY_EXPERIMENT.md](SYMBOLIC_REACHABILITY_EXPERIMENT.md).
 
-The backward property proof completes historical completion and every scene
-non-completion cone, but an individual resource-bound failure cone still
-reaches the node cap. Periodically copying each current cone and its seed
-into an exact fresh manager passes all 57 focused checks at clean `301c5e8`.
-The historical run performs 159 compactions and stays below the node cap,
-but reaches the time guard after the same 426/549 completed obligations.
-The next implementation combines all original failure sources into one exact
-cone to reduce repeated work. Focused checks and a complete bounded historical
-comparison must pass before a current campaign run or adoption.
+The backward property proof now passes the historical gate. Copying after
+every nonfixed round keeps the combined failure cone below the node cap;
+the first run reaches its fixed point just beyond the 600-second check and
+is correctly rejected before final validation. A separately bound run changes
+only checked/external time limits to 720/750 seconds. It completes all 26
+obligations, 524 original failure-seed records and the full static comparison.
+Root verifies the entire earlier logical progress prefix, exact catalogs,
+source/artifact bindings and closed process. The current profile has passed
+real catalog/source/schema preflight after correcting draft field assumptions;
+this is input validation only. Its first current campaign run remains pending.
 The complete current endpoint catalog has separate main-engine replay evidence
 in [BACKWARD_PROPERTY_AUDIT.md](BACKWARD_PROPERTY_AUDIT.md). Its committed
 231-path regression and all 116 selected regular checks pass on clean
@@ -127,3 +129,10 @@ status and patch checks. Archive `worktree-archives/20260905T181140Z/` records
 `audit-symbolic-manager` remain as local branches, alongside 30 detached
 historical source/diagnostic checkouts. The active proof and release gates
 remain unfinished; this cleanup is not final campaign acceptance.
+
+Four completed copy/packed diagnostic checkouts were subsequently archived
+and removed after independent source, mode, bundle, evidence and process
+checks. Archive `worktree-archives/20260905T235558Z/` records 43 cumulative
+worktree removals and 38 topic-branch removals, leaving 42 worktrees and two
+branches at removal. Fifteen additional historical BDD checkouts have a
+verified nondestructive archive; root removal review is still pending.

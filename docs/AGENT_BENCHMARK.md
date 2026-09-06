@@ -434,3 +434,39 @@ every source/artifact binding and compaction record. The reviewed next change
 groups all failure sources into one exact closure to reduce repeated work;
 its runtime cost is unproven. These are verification measurements, with no
 live-player or model-speed claim.
+
+Failure grouping is split between source and independent-oracle workers.
+Root clarifies that metadata retains formula identity/emptiness, not roots,
+and adds a synthetic absorbed-`W` check. Clean `b8f1b3c` passes all 59 checks
+in 20.96 seconds overall (test command 19.10 seconds / 1,033,852 KiB).
+Its grouped historical failure cone reaches the node cap between copies at
+240.35 seconds / 1,378,340 KiB, after all 25 scene cones pass. Root verifies
+the unchanged scene logical prefix and launches one source-identical diagnostic
+with a copy each round under unchanged limits.
+
+Current-campaign profile drafts are syntax-checked only. Root catches draft
+assertions against nonexistent independent-report fields and a strong set
+retaining every completed BDD owner. The corrected draft uses actual bound
+report counters and weak owner tracking, with complete partial-result metadata.
+Further review requires fresh replay owners and one validated post-run source
+snapshot. No current campaign execution or acceptance is attributed to these
+drafts.
+### Historical grouped proof acceptance and current preparation
+
+The manager's every-round run reaches the final failure fixed point at
+613.12 seconds, but the 600-second observer correctly rejects it before
+validation. A separately bound 720/750-second time-only extension completes
+in 616.66 seconds / 1,490,792 KiB maximum RSS. Root accepts all 26 obligations,
+524 original seed records and full 169,922-state historical comparison after
+checking every source/evidence binding and the complete prior progress
+prefix. The clean experimental source remains `b8f1b3c` with 59 passing
+focused checks. No current-campaign acceptance is inferred.
+
+Independent workers prepared and reviewed current input/replay checks.
+Root corrected actual artifact-schema assumptions and retained the failed
+v3 preflight; v4 passes real source/catalog/report validation without running
+a campaign model. Current bounds have separate endpoint sample checks only.
+The manager is preparing a fresh current probe and independent result checker.
+Workers also archived four completed diagnostic sources and fifteen older
+BDD probes. Root independently reviewed and removed the four; the fifteen
+remain until removal review. No provider cost figure is available.

@@ -184,3 +184,38 @@ run closes at the elapsed guard with separate artifacts and preserves all
 previous failures. Main's
 committed endpoint fixture and 116 selected regular checks pass at `71fec09`;
 the unchanged full-family audit remains outside that passing selection.
+
+The grouped-failure diagnostic adds detached
+`/tmp/af9-symbolic-grouped-failures-historical-139e48`, with its own locked
+dependencies and three modules from clean tested `b8f1b3c`. Its interval-four
+node-limit failure is preserved; the interval-one diagnostic uses the same
+unchanged probe and fresh artifacts. The preservation inventory is 46 worktrees
+and two branches before the next archival batch; no removal is claimed yet.
+## Four archived diagnostic worktrees removed
+
+The copy experiment and three completed packed historical probes were archived
+under `/home/micha/.local/share/adventure-forge-9/worktree-archives/20260905T235558Z/`.
+Root independently checked exact source content and modes, archive extraction,
+bundle heads, all 76 referenced artifacts, clean/stable tracked and untracked
+status, process holders and active proof dependencies. The first review script
+stopped before removal because it compared collapsed untracked-directory output
+with full untracked paths; its failure is preserved. The corrected review uses
+the same full status representation and rechecks before each removal.
+
+Removed paths are `/tmp/af9-bdd-copy`, `/tmp/af9-packed-static-historical-139e48`,
+`/tmp/af9-packed-historical-139e48` and `/tmp/af9-packed-hex-historical-139e48`.
+Their outside reports remain available. The active historical phase reference,
+trusted source and grouped proof checkouts are retained. Manifest SHA-256 is
+`08ea7a200b1ecd24d71598737871ce6fb95c05f8abc37e5b4afee0cdfbfdf61a`;
+bundle SHA-256 is
+`34b1479ff66f30a478972323732b704b41b8c3f6e7ea79567d4f79ce97f35d9c`;
+`root-removal-v2.json` SHA-256 is
+`575eb3bd38ac71fa65b379c0be1c8c56c9d57ce76590c332f6a241952554577a`.
+This brings cumulative removals to 43 worktrees and 38 topic branches, with
+42 worktrees and two local branches remaining at removal.
+
+Fifteen additional completed historical BDD probes are nondestructively
+archived under `worktree-archives/20260906T001532Z-fifteen-historical-bdd/`.
+Manifest SHA-256 is
+`b0320f51815b755caacb801bd1ba8083851e8d97d953a5070fbde7b13ba8c29d`.
+They remain present pending root removal review; no further cleanup is claimed.

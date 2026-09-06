@@ -391,6 +391,113 @@ than 549. Default per-choice behavior remains available for attribution. The
 union may itself be larger, so focused checks and a fresh bounded historical
 run must establish its cost. No memory or time allowance is increased.
 
+## Combined failure cone
+
+Clean `b8f1b3cfd61baa1190932bad0ee258125d01b41a` adds optional
+`failurePartition: "choice" | "combined"`. The default preserves prior
+shape, order and callbacks. Combined mode constructs the same four seeds
+for every authored choice, then solves their exact union under the explicit
+`failure-union:` ID and kind. Its frozen `failureSeeds` metadata retains each
+original ID, kind, choice ID and emptiness, with no owned roots or individual
+closure claim. It preserves strong completion, `W`, scene partitions,
+compaction, limits and original effect-order fault classification.
+
+Independent checks exercise both failure modes, both transition compilers,
+both layouts and field orders, direct/global and absorbed/scene modes,
+overlapping and zero seeds, intermediate bound failure, compaction intervals
+one and two, recursive metadata freezing and synthetic compiler failures
+outside strong completion. Root adds an explicit synthetic `W = C ∪ Pre*(F)`
+check. Independent review finds no blocker. Clean build and all 59 focused
+checks pass in 20.96 seconds overall; the test command takes 19.10 seconds /
+1,033,852 KiB maximum RSS.
+
+The fresh grouped historical probe retains its own locked dependencies and
+the three exact tested modules; source hash is
+`4a8b22f4ef41f97d60d34890a9ff10f6561b3396fa7c3fd3ac7b6c47b118a667`.
+With compaction every four nonfixed rounds, all 25 scene cones complete.
+The combined failure cone reaches two million nodes during round 15.
+Round 12 copies 1,885,160 allocated nodes down to 217,722; round 14 reaches
+1,887,297 nodes before the next scheduled copy. External runtime is 240.35
+seconds / 1,378,340 KiB maximum RSS. Root checks the complete original C/W/
+scene logical progress prefix, all bindings and closed/absent PID 1344920.
+The combined cone, full proof and static comparison remain incomplete.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `/tmp/af9-symbolic-grouped-failures-focused-tests-v1.json` | `ef12562207dde3e18e9b8008171766b68f6d2a5b9b12fc65fccebd97619773b8` |
+| `/tmp/af9-symbolic-grouped-failures-focused-tests-v1.log` | `0bae424db677e7fe13aec61aebb5c5be8fed63d611b1ebfdae45d0faefa88cab` |
+| `/tmp/af9-symbolic-grouped-failures-historical-manifest-v1.json` | `e540507fe839bf1058277fa713b1512a7bc83c86cee7d91927043fe204c2dadd` |
+| `/tmp/af9-symbolic-grouped-failures-historical-139e48.json` | `6587a29e42ebc04f6c73381f9555739268d53637ac7d4df9060f4c548b8f914c` |
+| `/tmp/af9-symbolic-grouped-failures-historical-139e48.finalization.json` | `6192e6d6b9b077dd1cfc50d0492253c9217967492f3edd089f4bf0a5eab3ae5f` |
+| `/tmp/af9-symbolic-grouped-failures-historical-root-check-v1.json` | `fa1a5c210588c6af563ebab3213a4dbcee0228560ea4287b475dfc031135066f` |
+
+Measured allocation growth between copies motivates one diagnostic with
+compaction after every nonfixed round. Source, node/cache/round/heap/time
+limits, order, seeds and semantics are unchanged. Interval one already passes
+the focused exact-oracle checks. The new manifest is
+`/tmp/af9-symbolic-grouped-failures-historical-every-round-manifest-v1.json`
+(SHA-256 `dcd62f3fa5a22452e580d4328296366033b78816717c3ebc086cb4cf5e7726e1`).
+It reuses the unchanged probe, with fresh output paths and bound prior failure
+evidence. Its final result and the subsequent time-only extension follow.
+
+### Every-round result and accepted historical proof
+
+The 600-second run completes all 25 scene cones and 224 compactions. The
+combined failure cone reaches its fixed point at round 32, 950,901 allocated
+nodes and 613,119 ms. The elapsed-time observer throws before the initial
+intersection, final cone summary and reference comparison, so this run is
+not accepted. External runtime is 613.35 seconds / 1,496,764 KiB maximum RSS.
+Root preserves and validates this failed result and the closed process.
+
+That measured final fixed point just beyond the time check supports one
+separate time-only extension: 720 seconds checked and 750 seconds external.
+The user imposed no 600-second limit. Source, bounds, node/cache/round/heap
+limits, ordering, failure seeds and every-round copying remain identical.
+The fresh output binds all earlier failure evidence. It exits successfully
+in 616.66 seconds / 1,490,792 KiB maximum RSS. Strong completion converges in
+18 rounds; completion-or-failure adds ten rounds. All 26 obligations finish,
+including 17 nonzero seeds, with 224 compactions and at most 1,857,073 nodes
+in a progress event. Every initial intersection is empty. All 524 original
+failure-seed records remain present; all 262 invalid-success and uncovered
+seeds are globally empty. Individual failure closures are not claimed.
+
+Comparison covers all 169,922 static reference states for domain, strong
+completion, completion-or-failure and fault classification. The reference
+has 332,402 transitions and complete 25/131/34 authored endpoint coverage.
+The 190 accepted historical actual-engine witnesses are explicitly reused
+under unchanged engine bytes, not rerun. Global BDD assignment totals are
+not reachable-state counts; there is no aggregate bad root or per-state
+bad-root comparison. Root independently verifies exact catalogs, compaction
+accounting, all source/test/artifact bindings, the entire 529-event earlier
+logical progress prefix, and closed/absent PID 1348377. The historical
+property proof is accepted; no current proof or production adoption follows
+automatically.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `/tmp/af9-symbolic-grouped-failures-historical-139e48-every-round.json` | `6c9e71ac34882e4c1f77db627c9e024a3f3ab6037247718625d76db84a3c3677` |
+| `/tmp/af9-symbolic-grouped-failures-historical-every-round-root-check-v1.json` | `2e259b9da24e55beecce56525544dc1aa19303f1151a7c7f9725d17960f8f73a` |
+| `/tmp/af9-symbolic-grouped-failures-historical-every-round-720s-manifest-v1.json` | `cf5e93b4f8f77a1646b790f0b52eda65df431f07ab25358b8090be11ded24a24` |
+| `/tmp/af9-symbolic-grouped-failures-historical-139e48-every-round-720s.json` | `d14a087d40664f21e13e3c0569f2755deedc0707a7765c1cca04d4e9ce8d87ca` |
+| `/tmp/af9-symbolic-grouped-failures-historical-139e48-every-round-720s.finalization.json` | `90162fe95289ebd28d9829a5926b4950d78eab7a8f80a2392fc3c642dc6dd5f3` |
+| `/tmp/af9-symbolic-grouped-failures-historical-every-round-720s-root-check-v1.json` | `701c00047ef6e2e67e7208af6b52bf6a87b6e5e7fbb91c046ff29e183f180317` |
+
+The current-profile drafts received independent review and real artifact
+preflight. Earlier assumptions about report fields and catalog coverage
+counts were incorrect: the catalog stores coverage ID arrays, while the
+independent report stores counts. Corrected v4 validates the actual catalog,
+independent report and unchanged source maps; its preflight executes no
+symbolic model, proof or witness replay. Report
+`/tmp/af9-current-profile-artifact-preflight-v2.json` has SHA-256
+`f22ee3841b2a604c237f9eb389004f9a32d2e23e1c5764f76b7cc7b3b8944e79`.
+The preparation script requires this preflight, accepted historical proof,
+clean main and the clean 59-test experimental freeze before creating a
+separate current probe with its own locked dependencies. The intended current
+run retains all 30 closure obligations, 664 original failure-seed records and
+all 231 authored witnesses, using a fresh model per replay path. Candidate
+resource bounds remain obligations to prove; endpoint samples do not establish
+universal bounds.
+
 ## Repository endpoint regression
 
 The accepted current path maps are materialized in
