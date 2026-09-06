@@ -534,6 +534,48 @@ change. Bounds and memory/round/time guards are not increased.
 | `/tmp/af9-symbolic-grouped-failures-current-97b04d5.finalization.json` | `a6e802122696c09c5c447b3ef8209a867c38d16dd265eefbd08c94c5ce96627d` |
 | `/tmp/af9-symbolic-grouped-failures-current-failure-root-seal-v1.json` | `9adee126cafac90803eeab55e597690ed6603fe41e8796e0d52bebffb0336eb9` |
 
+### Exact copying of completion fixed points
+
+Clean `a065fd5e8d79181a5e54666cd3dfd465716a46fc` adds optional
+`fixedPointCompactEvery`. Zero retains the original owner, operation order
+and result shape. Enabled mode first hands construction roots to a validated
+fresh owner, then copies after every configured nonfixed C/W round. The
+initial handoff is excluded from the separate C/W compaction counters.
+Every copy retains C, current W, the failure union, every original choice
+seed and four static anchors as applicable. It verifies current-only roots,
+layout/scenario/mode equivalence and copied-versus-regenerated anchors before
+publishing the owner. All returned numeric roots belong to `result.model`.
+Later obligations retain their existing local ownership and exact semantics.
+
+Independent tests cover multiple C/W rounds, both transition compilers,
+layouts and field orders, intervals one/two, all proof/failure partition modes,
+flag/resource fixtures, exact raw-oracle cones and seed metadata. Negative
+checks target initial, C, first-W and later-W alias/layout/bound failures;
+the bound case preserves bit width and a valid initial value to exercise
+anchor validation. Limits, observer failures and one-read options are checked.
+Root requested the W-boundary and flag/resource coverage after reviewing the
+first focused test draft. Independent source and historical-profile reviews
+find no material blocker. Clean build and all 64 BDD/symbolic checks pass in
+21.29 seconds overall; tests take 19.42 seconds / 1,111,232 KiB maximum RSS.
+
+The fresh historical probe retains its own locked dependencies and passing
+build, with source hash
+`275f22102012cba416528be0abf042ed681175d51f497efc6d09fe66a2134025`.
+It adds only `fixedPointCompactEvery: 1` to the prior accepted configuration;
+node/cache/round/heap/time bounds remain unchanged. Its profile uses the actual
+returned owner, checks C/W and later-cone metadata, and compares all 169,922
+reference states. The independent checker compares prior semantic phase/
+round/fixed-point progress, all completed obligation classifications, complete
+C/W assignment totals and original seeds. Allocated node histories may differ
+under copying. Root launched PID 1365898; the run is in progress. Historical
+acceptance and a subsequent current run remain required before adoption.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `/tmp/af9-symbolic-fixed-point-compact-focused-tests-v1.json` | `c7a6ca08397fc061ebf8b61a444d1d851811f62f70f0d9d322cd6f7ea23fb312` |
+| `/tmp/af9-symbolic-fixed-point-compact-focused-tests-v1.log` | `2bf7467bc452b4a7d6b5b2dc4294f11e9c94092fa8a5fad447a13e7bf08bd339` |
+| `/tmp/af9-symbolic-fixed-point-compact-historical-manifest-v1.json` | `bfb30458ff09eb1df8600bc6c42e78c4ea0be467e3662eb91cc3532b49b03bf4` |
+
 ## Repository endpoint regression
 
 The accepted current path maps are materialized in

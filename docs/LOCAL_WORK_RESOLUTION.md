@@ -256,3 +256,31 @@ All nine are removed. Cumulative cleanup accounts for 67 worktrees and 38
 topic branches; 19 worktrees and two branches remain. Twelve clean historical
 live/source freezes are undergoing nondestructive archival; the seven current
 source, verifier and reference roots remain protected.
+
+## Twelve historical live/source freezes removed
+
+The twelve clean detached freezes listed in archive
+`worktree-archives/20260906T005009Z-twelve-live-freezes/manifest.json` retain
+their exact source entries, file modes and bundled commits. Root independently
+verifies every source tar and extraction, all twelve bundle heads, 87 copied
+direct evidence files, 314 bound durable evidence files, 34 sealed-run file
+sets and 34 export payload/sidecar pairs. No evidence file lies inside a
+removed worktree; original sealed runs and exports remain in their durable
+locations. No active runtime manifest depends on these roots. Root rechecks
+each clean candidate immediately before ordinary `git worktree remove`.
+
+Manifest SHA-256 is
+`5fc9892de35c2ca3c37216e3f069105bcebd632fcec1187954f05fcb6b0b8651`;
+bundle SHA-256 is
+`05c0a55ae8297de01c514d0a9f9f8dcc55253d70038f22cfffd9d378f82aa58c`;
+root removal report SHA-256 is
+`de9c1be343445a5cea969f898a14a03a6e3143a2cd050fc5300cc67ffac1933d`.
+The review script, imported helper and execution log are also preserved in
+that archive. Source can be restored from the tar or exact bundled commit;
+historical absolute checkout paths in old evidence are provenance, not live
+runtime dependencies. This verifies preservation, not new gameplay or replay.
+
+All twelve are removed. Cumulative cleanup is 79 worktrees and 38 topic
+branches. The new historical fixed-point-compaction probe was added before
+removal, leaving eight worktrees and two branches for current source,
+experimental verification and its accepted/failed reference evidence.

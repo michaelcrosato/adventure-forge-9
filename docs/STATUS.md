@@ -44,7 +44,7 @@ The engine performance correction is integrated: privately constructed frozen st
 
 The user's hosting request is fulfilled: https://adventure-forge-9.vercel.app is public and connected to GitHub main. The accepted Blackglass expansion was pushed as `91a25b4` and automatically reached Ready production deployment `dpl_DGkTkSVkNpUfz72duD22TLEq7LkJ`; its exact GitHub source SHA and production alias were independently verified. GitHub's independent verification also passed. Automatic browser checkpoints survive stateless function requests; game-content updates can still require a new journey. See HOSTING.md.
 
-All live batches, including the three continuation-candidate runs, are closed and exported. Historical source checkouts remain separate: Cycle 3 at `34af626` in `/tmp/af9-cycle3-verified`; first Archive batch at `59afce4` in `/tmp/af9-stage5-verified`; repaired Archive batch at `dbabc94` in `/tmp/af9-stage5-hearing-verified`; first Blackglass batch at `08156a1` in `/tmp/af9-stage6-verified`; corrected Blackglass batch at `af5e340` in `/tmp/af9-stage6-brace-verified`. All six Blackglass-era exports passed integrity/replay and checksum verification. No final world-scale or interaction-depth acceptance is claimed.
+All live batches, including the three continuation-candidate runs, are closed and exported. Their historical source freezes are now preserved as exact source archives and bundled commits under `worktree-archives/20260906T005009Z-twelve-live-freezes/` in the durable local evidence root. This includes Cycle 3 `34af626`, Archive `59afce4`/`dbabc94`, Blackglass `08156a1`/`af5e340`, and both Stage 7 freezes. Root verified source/mode parity, 34 sealed-run file sets and 34 export/sidecar hashes before removing the twelve clean worktrees. The original runs and exports remain in place. All six Blackglass-era exports had separately passed integrity/replay verification; cleanup does not claim new play or replay. See `LOCAL_WORK_RESOLUTION.md` for reconstruction. No final world-scale or interaction-depth acceptance is claimed.
 
 ## Required next work
 
@@ -153,3 +153,11 @@ overlays are now archived and independently removed. Cumulative cleanup
 accounts for 67 worktrees and 38 topic branches, leaving 19 worktrees and two
 branches. Twelve clean historical live/source freezes are being archived;
 the current source/verifier/reference roots remain available.
+
+The twelve historical source freezes have now been independently archived
+and removed, bringing cumulative cleanup to 79 worktrees and 38 topic
+branches. A fresh historical compaction probe was added before this batch,
+leaving eight worktrees and two branches. Clean experimental `a065fd5` passes
+all 64 focused checks and extends exact copying to C/W with explicit final
+ownership. Its historical comparison is running; no new current proof or
+production adoption is accepted yet.

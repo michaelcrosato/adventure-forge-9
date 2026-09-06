@@ -479,3 +479,19 @@ run and is reviewing exact compaction for C/W with the source worker. Output
 checking remains independent; no current acceptance or production adoption is
 claimed. The fifteen older BDD worktrees also pass root archive/removal review
 and are removed, leaving 28 worktrees and two branches including the fresh probe.
+
+The fixed-point source worker and independent test worker extend exact copying
+to C/W. Root requests one opt-in interval, explicit final ownership and full
+live-seed copying. Review adds same-bitwidth valid bound defects at C/W
+boundaries and flag/resource oracle fixtures to the first test draft. The
+final 22 property checks pass, then root commits `a065fd5` and runs the clean
+build plus all 64 BDD/symbolic checks: 21.29 seconds overall, 19.42 seconds /
+1,111,232 KiB for tests. Independent source/profile review reports no material
+blocker. A fresh historical comparison is running under unchanged limits.
+
+The archival worker also prepares nine completed diagnostic overlays and
+twelve historical live/source freezes. Root separately verifies and removes
+both batches, including source/mode parity and hashes for 34 sealed runs and
+exports. Eight worktrees and two branches remain after the new historical
+probe is added. Historical source-path references remain reconstructible from
+verified archives; no new gameplay or replay is claimed by cleanup.
