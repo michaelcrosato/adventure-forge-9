@@ -26,6 +26,14 @@ export interface BddStats {
   readonly operationCacheEntries: number;
 }
 
+/** A versioned, manager-independent dense representation of a BDD forest. */
+export interface BddForest {
+  readonly schema: "af9-bdd-forest-v1";
+  readonly variableCount: number;
+  readonly roots: readonly number[];
+  readonly nodes: readonly (readonly [variable: number, low: number, high: number])[];
+}
+
 /** Thrown when an exact operation cannot stay within its configured budget. */
 export class BddLimitError extends Error {
   public readonly code = "BDD_LIMIT";
@@ -56,6 +64,7 @@ const FALSE: Handle = 0;
 const TRUE: Handle = 1;
 const TERMINAL_VARIABLE = -1;
 const INFINITE_LEVEL = Number.POSITIVE_INFINITY;
+const BDD_FOREST_SCHEMA = "af9-bdd-forest-v1" as const;
 
 /**
  * Exact ROBDD operations under one immutable variable order.
@@ -228,6 +237,124 @@ export class Bdd {
       uniqueEntries: this.unique.size,
       operationCacheEntries: this.operationCache.size,
     });
+  }
+
+  /**
+   * Export the reachable shared DAG for the supplied roots.
+   *
+   * Wire handles are dense and manager-independent: 0 and 1 are terminals,
+   * while node i is represented by wire handle 2 + i.  Nodes are emitted in
+   * postorder, so both children always have smaller wire handles.  Exporting
+   * only reads immutable BDD nodes and does not warm or clear any cache.
+   */
+  public exportForest(roots: readonly number[]): BddForest {
+    const rawRoots = this.snapshotForestArray(roots, "roots");
+    const snapshot = rawRoots.map((root, index) => this.readForestSafeInteger(root, `roots[${index}]`));
+    for (const root of snapshot) this.assertHandle(root);
+
+    const wireByHandle = new Map<Handle, number>([
+      [FALSE, FALSE],
+      [TRUE, TRUE],
+    ]);
+    const nodes: Array<readonly [number, number, number]> = [];
+    const visit = (root: Handle): number => {
+      const existing = wireByHandle.get(root);
+      if (existing !== undefined) return existing;
+      const node = this.nodeAt(root);
+      const low = visit(node.low);
+      const high = visit(node.high);
+      const wire = nodes.length + 2;
+      nodes.push(Object.freeze([node.variable, low, high] as const));
+      wireByHandle.set(root, wire);
+      return wire;
+    };
+
+    const wireRoots = Object.freeze(snapshot.map(root => visit(root)));
+    const wireNodes = Object.freeze(nodes);
+    return Object.freeze({
+      schema: BDD_FOREST_SCHEMA,
+      variableCount: this.variableCount,
+      roots: wireRoots,
+      nodes: wireNodes,
+    });
+  }
+
+  /**
+   * Import a validated manager-independent forest into this BDD.
+   *
+   * The complete input is snapshotted and validated before makeNode is called.
+   * A target node limit can therefore leave an already-partially-canonicalized
+   * target when it fails; callers needing all-or-nothing ownership should use
+   * a disposable target.  Invalid input never mutates this manager.
+   */
+  public importForest(input: unknown): readonly number[] {
+    const record = this.snapshotForestRecord(input);
+    const schema = this.readForestData(record, "schema");
+    if (schema !== BDD_FOREST_SCHEMA) throw new TypeError("forest schema is unsupported");
+    const variableCount = this.readForestSafeInteger(this.readForestData(record, "variableCount"), "forest.variableCount");
+    if (variableCount !== this.variableCount) throw new RangeError("forest variable count does not match this BDD");
+
+    const rawRoots = this.snapshotForestArray(this.readForestData(record, "roots"), "forest.roots");
+    const rawNodes = this.snapshotForestArray(this.readForestData(record, "nodes"), "forest.nodes");
+
+    const nodes: Array<readonly [number, number, number]> = [];
+    const triples = new Set<string>();
+    for (let index = 0; index < rawNodes.length; index += 1) {
+      const tuple = this.snapshotForestArray(rawNodes[index], `forest.nodes[${index}]`);
+      if (tuple.length !== 3) throw new TypeError(`forest.nodes[${index}] must contain exactly three integers`);
+      const variable = this.readForestSafeInteger(tuple[0], `forest.nodes[${index}][0]`);
+      if (variable < 0 || variable >= this.variableCount) throw new RangeError(`forest.nodes[${index}] variable is outside the BDD universe`);
+      const self = index + 2;
+      const low = this.readForestSafeInteger(tuple[1], `forest.nodes[${index}][1]`);
+      const high = this.readForestSafeInteger(tuple[2], `forest.nodes[${index}][2]`);
+      if (low < 0 || low >= self || high < 0 || high >= self) {
+        throw new RangeError(`forest.nodes[${index}] child must refer to a smaller wire handle`);
+      }
+      if (low === high) throw new RangeError(`forest.nodes[${index}] is not reduced`);
+      const triple = `${variable}:${low}:${high}`;
+      if (triples.has(triple)) throw new RangeError(`forest.nodes[${index}] duplicates a node triple`);
+      triples.add(triple);
+      if (low >= 2 && nodes[low - 2]![0] <= variable) {
+        throw new RangeError(`forest.nodes[${index}] violates variable ordering on its low child`);
+      }
+      if (high >= 2 && nodes[high - 2]![0] <= variable) {
+        throw new RangeError(`forest.nodes[${index}] violates variable ordering on its high child`);
+      }
+      nodes.push(Object.freeze([variable, low, high] as const));
+    }
+
+    const roots: number[] = [];
+    for (let index = 0; index < rawRoots.length; index += 1) {
+      const root = this.readForestSafeInteger(rawRoots[index], `forest.roots[${index}]`);
+      if (root < 0 || root >= rawNodes.length + 2) {
+        throw new RangeError(`forest.roots[${index}] is not a valid wire handle`);
+      }
+      roots.push(root);
+    }
+
+    const reachable = new Set<number>();
+    const pending = roots.slice();
+    while (pending.length > 0) {
+      const wire = pending.pop()!;
+      if (wire < 2 || reachable.has(wire)) continue;
+      reachable.add(wire);
+      const node = nodes[wire - 2];
+      // Child bounds were validated above, so this lookup is total.
+      pending.push(node![1], node![2]);
+    }
+    if (reachable.size !== nodes.length) throw new RangeError("forest contains unreachable nodes");
+    if (nodes.length > this.nodeLimit) {
+      throw new BddLimitError(`BDD forest contains ${nodes.length} nodes but the target limit is ${this.nodeLimit}`);
+    }
+
+    const imported = new Array<Handle>(nodes.length);
+    for (let index = 0; index < nodes.length; index += 1) {
+      const [variable, lowWire, highWire] = nodes[index]!;
+      const low = lowWire < 2 ? lowWire : imported[lowWire - 2]!;
+      const high = highWire < 2 ? highWire : imported[highWire - 2]!;
+      imported[index] = this.makeNode(variable, low, high);
+    }
+    return Object.freeze(roots.map(root => root < 2 ? root : imported[root - 2]!));
   }
 
   /**
@@ -552,6 +679,48 @@ export class Bdd {
     if (this.newestCacheEntry === undefined) this.oldestCacheEntry = entry;
     else this.newestCacheEntry.newer = entry;
     this.newestCacheEntry = entry;
+  }
+
+  private snapshotForestRecord(input: unknown): Record<string, unknown> {
+    if (input === null || typeof input !== "object" || Array.isArray(input)) {
+      throw new TypeError("forest must be an object");
+    }
+    const record: Record<string, unknown> = {};
+    for (const key of ["schema", "variableCount", "roots", "nodes"] as const) {
+      const descriptor = Object.getOwnPropertyDescriptor(input, key);
+      if (descriptor === undefined || !("value" in descriptor)) {
+        throw new TypeError(`forest.${key} must be an own data property`);
+      }
+      record[key] = descriptor.value;
+    }
+    return record;
+  }
+
+  private readForestData(record: Readonly<Record<string, unknown>>, key: string): unknown {
+    return record[key];
+  }
+
+  private snapshotForestArray(value: unknown, label: string): unknown[] {
+    if (!Array.isArray(value)) throw new TypeError(`${label} must be an array`);
+    const lengthDescriptor = Object.getOwnPropertyDescriptor(value, "length");
+    if (lengthDescriptor === undefined || !("value" in lengthDescriptor)
+      || !Number.isSafeInteger(lengthDescriptor.value) || lengthDescriptor.value < 0) {
+      throw new TypeError(`${label} must have a safe integer length`);
+    }
+    const result: unknown[] = [];
+    for (let index = 0; index < lengthDescriptor.value; index += 1) {
+      const descriptor = Object.getOwnPropertyDescriptor(value, String(index));
+      if (descriptor === undefined || !("value" in descriptor)) {
+        throw new TypeError(`${label}[${index}] must be an own data property`);
+      }
+      result.push(descriptor.value);
+    }
+    return result;
+  }
+
+  private readForestSafeInteger(value: unknown, label: string): number {
+    if (!Number.isSafeInteger(value)) throw new TypeError(`${label} must be a safe integer`);
+    return value as number;
   }
 
   private assertHandle(root: Handle): void {
