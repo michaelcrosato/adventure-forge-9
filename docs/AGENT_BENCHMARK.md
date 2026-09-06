@@ -487,7 +487,12 @@ boundaries and flag/resource oracle fixtures to the first test draft. The
 final 22 property checks pass, then root commits `a065fd5` and runs the clean
 build plus all 64 BDD/symbolic checks: 21.29 seconds overall, 19.42 seconds /
 1,111,232 KiB for tests. Independent source/profile review reports no material
-blocker. A fresh historical comparison is running under unchanged limits.
+blocker. A fresh historical comparison passes under unchanged limits after
+639.25 seconds / 1,555,724 KiB maximum RSS. Root independently accepts all
+26 obligations, full 169,922-state classification comparison and exact
+semantic progress/seed metadata against the earlier accepted proof. It makes
+17 C and nine W copies. Current proof preparation remains pending; no new
+live-player or production-adoption claim follows from the historical result.
 
 The archival worker also prepares nine completed diagnostic overlays and
 twelve historical live/source freezes. Root separately verifies and removes

@@ -567,14 +567,27 @@ returned owner, checks C/W and later-cone metadata, and compares all 169,922
 reference states. The independent checker compares prior semantic phase/
 round/fixed-point progress, all completed obligation classifications, complete
 C/W assignment totals and original seeds. Allocated node histories may differ
-under copying. Root launched PID 1365898; the run is in progress. Historical
-acceptance and a subsequent current run remain required before adoption.
+under copying. PID 1365898 closes with exit zero after 639.25 seconds /
+1,555,724 KiB maximum RSS. Root polls the closed process and independently
+accepts its source/artifact bindings, complete semantic progress comparison
+and all 26 obligation classifications. C fixes at round 18 after 17 copies;
+W fixes at round 10 after nine copies. The 224 later-obligation copies,
+32-round failure closure, 524 seed records and global C/W assignment totals
+match the prior accepted proof. All 169,922 reference states pass completion,
+completion-or-failure, domain and fault checks, with 332,402 reference edges
+and the complete 25/131/34 endpoint sets. The 190 historical actual-engine
+witnesses are reused as unchanged accepted evidence, not replayed anew.
+This accepts the historical correction only; a subsequent current proof
+and fresh symbolic/engine endpoint replay remain required before adoption.
 
 | Artifact | SHA-256 |
 | --- | --- |
 | `/tmp/af9-symbolic-fixed-point-compact-focused-tests-v1.json` | `c7a6ca08397fc061ebf8b61a444d1d851811f62f70f0d9d322cd6f7ea23fb312` |
 | `/tmp/af9-symbolic-fixed-point-compact-focused-tests-v1.log` | `2bf7467bc452b4a7d6b5b2dc4294f11e9c94092fa8a5fad447a13e7bf08bd339` |
 | `/tmp/af9-symbolic-fixed-point-compact-historical-manifest-v1.json` | `bfb30458ff09eb1df8600bc6c42e78c4ea0be467e3662eb91cc3532b49b03bf4` |
+| `/tmp/af9-symbolic-fixed-point-compact-historical-139e48.json` | `0d1dd1026fff01761bd44bbce90458717c0416eb34e663f58697ebb76545130e` |
+| `/tmp/af9-symbolic-fixed-point-compact-historical-139e48.finalization.json` | `5f7b7610c9f87c7df36e96bf3808e8a399ccae30ef49ba264605c9c94b440aeb` |
+| `/tmp/af9-symbolic-fixed-point-compact-historical-root-check-v1.json` | `bf9376d805d76f29d6647c1f3096e73cfe32925a9da4b3eff10c5af5b9dae315` |
 
 ## Repository endpoint regression
 
