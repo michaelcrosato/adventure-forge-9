@@ -321,3 +321,14 @@ to test helpers. Clean combined build and 223 regular checks pass, excluding
 only the unchanged campaign audit. This active integration work remains;
 inventory is now 14 worktrees and five branches, with cumulative removals
 still 80 worktrees and 39 topic branches.
+
+Current generation preparation adds clean detached main freeze
+`/tmp/af9-symbolic-certificate-current-generation-main-eb85c76` and its
+matching probe `/tmp/af9-symbolic-certificate-current-generation-probe-eb85c76`.
+The probe has the five tested verification modules as its recorded untracked
+overlay and passes its own locked install/build. Both freeze `eb85c76`; the
+generation manifest and preflight are indexed in `CERTIFICATE_AUDIT_EXPERIMENT.md`.
+The live inventory is now 16 worktrees and five branches. Cumulative removals
+remain 80 worktrees and 39 topic branches. The superseded quantifier/manager
+topic archives are prepared but their source worktrees and branches have not
+been removed while this generation is live.

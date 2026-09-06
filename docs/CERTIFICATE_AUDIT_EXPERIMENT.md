@@ -183,8 +183,8 @@ The original 190 engine witnesses are reused unchanged, not newly replayed.
 
 This verifier does not recompute W or claim minimal bad cones. Its measured
 historical runtime supports a separate verification step; current generation
-and verification remain required. A one-off current generation is being
-prepared with an explicit 1,800/1,830-second checked/external window, following
+and verification remain required. A one-off current generation is now running
+with an explicit 1,800/1,830-second checked/external window, following
 the preserved 720-second 14-of-30 timeout. The node/cache/round/heap guards and
 all proof obligations remain unchanged. This generation allowance does not
 change the prospective 720/750-second release-verification window. No current
@@ -263,12 +263,44 @@ these five additional checks do not constitute a new full combined run.
 | `/tmp/af9-certificate-files-focused-v1.log` | `0a0eec4bbcb0231ffaf827de58cf141548f8f74b6c14028de01b7a8f4f315af1` |
 | `/tmp/af9-certificate-files-historical-read-v1.json` | `1e0d30f9b65aa48c27c0d57de5fb1439583c435525cf46567d51dad2c2c1f8ce` |
 
-Current generation scripts remain unrun during review. Root catches a guessed
+During prelaunch review, root catches a guessed
 historical replay field, the wrong failed-current schema, a 605-bit constructor
 assumption (the current model has 106 state bits / 212 BDD variables), and a
 log-absence assertion incompatible with the shared runner opening that log
-before launch. These preparation defects are being corrected before a current
-worktree or generation run is created. No incomplete current proof is accepted.
+before launch. These preparation defects are corrected before the current
+worktrees and generation run are created. No incomplete current proof is accepted.
+
+## Current generation launched
+
+The executed v2 preparer installs locked dependencies and builds the fresh
+`eb85c76` probe. Its constructor confirms 29 scenes, 166 choices, 75 logical
+fields, 106 state bits, 212 BDD variables and 58,572 nodes. The unused v1
+preparer confused logical fields with state bits and current variables with
+all BDD variables; it is retained without execution. The v2 stdout still
+labels `len(fieldOrder)` as `fieldBits`, while the bound manifest correctly
+records 106 state bits and 212 variables. The root preparation record states
+this display-only correction without rewriting consumed evidence.
+
+The root input preflight executes the actual frozen profile's source, config,
+evidence and catalog assertions before any model/proof/replay work. It passes.
+The root launches exactly one current generation in session 69524 with child
+PID 1425424. The checked/external limits are 1,800/1,830 seconds; the unchanged
+node/cache/round/heap caps are 2,000,000 / 500,000 / 128 / 1,536 MiB.
+The output prefix is
+`/tmp/af9-symbolic-certificate-current-generation-eb85c76`.
+Generation must publish all 30 forests, including zero cones, prove every
+obligation and replay all 231 authored endpoint paths through the symbolic
+relation and actual public engine. Generation acceptance does not substitute
+for separate fresh certificate verification or the repository release gate.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `/tmp/af9-symbolic-certificate-current-generation-manifest-v1.json` | `ebef2cb9cae44434118d0fcb4174e8a5d6c842b2acf1c9f2229d10ca9c3c5635` |
+| `/tmp/af9-symbolic-certificate-current-generation-profile-v1.mjs` | `6a5bb7b0557ec7d25a4b0514a2c717a73e72b8c615b26792aaf9d1b2945d1d0d` |
+| `/tmp/af9-prepare-symbolic-certificate-current-generation-v2.py` | `268722dbee770f566dea28d18c58d6a6fc685a0fbe328334af8496135ef9420b` |
+| `/tmp/af9-prepare-symbolic-certificate-current-generation-v2.log` | `ccfd03be1ae720ebe50be3b90fc2cdd766f41e3a25cf735da33d2f767aed84cd` |
+| `/tmp/af9-symbolic-certificate-current-generation-input-preflight-root-v1.json` | `fd94e6381b7ef702ad09801f3c7b2d795bc128ca07fa34183b1f846f8b3a803c` |
+| `/tmp/af9-current-certificate-preparation-root-v1.json` | `b0894a8a55eb52dfeb022b299d6c52745e084dddf4f732a0e53cd904fc753686` |
 
 ## Remaining gates
 

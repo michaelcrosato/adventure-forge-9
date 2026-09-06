@@ -600,3 +600,13 @@ certificate checks. Root review of current generation drafts catches guessed
 schema/field assertions, incorrect 605-bit sizing and a log-absence check that
 would reject the runner's own log. Corrections precede any current launch.
 No provider run or cost figure is introduced.
+
+Root then corrects the unused preparer's final unit assertions: 75 logical
+fields, 106 state bits and 212 BDD variables. The v2 preparer and actual-profile
+input preflight pass before one current generation is launched. The retained
+stdout label mistake is documented separately from the correct manifest.
+Workers prepare a read-only result checker and nondestructive source archives
+while root reviews repository integration. The bundle review finds retained
+forest objects, shallow-frozen descriptor children and a dropped `__proto__`
+bounds key; these are corrected before accepting the loader. These are local
+implementation/review activities, not new gameplay or experience evidence.

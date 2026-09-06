@@ -31,8 +31,8 @@ Historical generation and separate verification both pass. Generation takes
 592.61 seconds; fresh verification takes 62.46 seconds / 1,470,332 KiB maximum
 RSS, including all 26 forests, 524 failure seeds and the full historical
 169,922-state C comparison. Root accepts the source-bound historical result;
-the supplementary independent output review also passes. Current generation is being
-prepared with a separate 1,800/1,830-second one-off window after the preserved
+the supplementary independent output review also passes. Current generation is running
+with a separate 1,800/1,830-second one-off window after the preserved
 720-second timeout. Production adoption and current proof remain pending;
 prototype review and file-memory measurements are in
 [CERTIFICATE_AUDIT_EXPERIMENT.md](CERTIFICATE_AUDIT_EXPERIMENT.md).
@@ -214,7 +214,16 @@ adding this isolated integration checkout.
 
 The release branch now includes reviewed file I/O at `6ab23f8`: build and five
 focused boundary checks pass, and the reader accepts every historical forest
-byte-for-byte. The catalog/adapter remain unfinished. Current generation
-preparation remains unrun while source/schema/constructor/runner assertions
-are corrected against actual evidence. No current proof or deployment is
-claimed from these checks.
+byte-for-byte. The catalog/adapter remain unfinished. Corrected current
+preparation and its input-only preflight pass. The frozen probe has 75 logical
+fields, 106 state bits, 212 BDD variables and 58,572 constructor nodes; the
+preparer stdout's incorrect `fieldBits: 75` label is preserved and explained
+in the root review. The actual manifest records the correct units.
+
+One current generation is now running under manifest
+`ebef2cb9cae44434118d0fcb4174e8a5d6c842b2acf1c9f2229d10ca9c3c5635`,
+root session 69524, runner child PID 1425424. It must finish all 30 forests
+and 231 complete symbolic/public-engine endpoint replays. Separate fresh
+certificate verification remains required afterward. The two current source
+freezes bring the inventory to 16 worktrees and five branches. No current
+proof or deployment is claimed from preparation or an in-progress run.

@@ -745,3 +745,9 @@ witnesses remain unchanged evidence. The supplementary independent output
 checker also passes. Current generation/verification, the production adapter
 and full release gates remain pending. See `CERTIFICATE_AUDIT_EXPERIMENT.md` for exact artifacts,
 source bindings, file sizes and the separate current generation allowance.
+
+The corrected current preparation and input-only preflight now pass. One
+generation is running from frozen `eb85c76` sources under the declared
+1,800/1,830-second window. It requires all 30 forests and all 231 complete
+symbolic/public-engine endpoint replays; no partial progress is accepted as
+a current proof. The release adapter remains under review.
