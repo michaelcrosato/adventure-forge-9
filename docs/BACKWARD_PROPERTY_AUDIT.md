@@ -700,6 +700,8 @@ or game behavior has changed. The review is preserved at
 `/tmp/af9-backward-certificate-proposal-v1.md`, SHA-256
 `494647ca7cae605b720e4d20876f4393c4d358d47658e3f5789944006ed111ce`.
 Implementation and the source-bound historical/current gates remain pending.
+See [CERTIFICATE_AUDIT_EXPERIMENT.md](CERTIFICATE_AUDIT_EXPERIMENT.md) for
+prototype review, independent fixtures and artifact I/O measurements.
 
 ## Repository endpoint regression
 

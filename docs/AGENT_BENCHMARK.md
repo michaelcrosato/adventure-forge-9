@@ -536,3 +536,17 @@ completion and direct scene coverage through the failure cone. Root assigns
 isolated BDD serialization and certificate-validator prototypes while retaining
 the existing generator and release command. These prototypes have no campaign
 or production acceptance yet. No provider cost measurement is available.
+
+
+The certificate prototype integrates at isolated `bec8263` after root review
+moves BDD node guards ahead of input copying, adds iterative deep export, and
+corrects a draft F-seed/BF-cone substitution in scene coverage. The independent
+oracle's first foreign-handle test still passed a forest at runtime despite a
+TypeScript cast; root requests a real numeric case and exact owned C/raw-state
+comparison. A readonly test cast is fixed before the clean freeze. All 85
+BDD/symbolic checks then pass in 21.63 seconds overall. Separate 2M-entry I/O
+measurement passes; no BDD/campaign capacity claim follows from that table.
+Profile review adds metadata/report caps and post-child elapsed enforcement.
+The original unused preparation is retained before the source-bound historical
+generation starts. Historical certificate and current-campaign acceptance
+remain pending. No provider cost figure is available.

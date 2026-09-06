@@ -23,10 +23,15 @@ performance change at isolated `ccf3dc1` passes all 64 focused checks and the
 historical gate: all 600 allocation/semantic events and the complete proof
 match the prior run. It takes 590.50 seconds / 1,440,880 KiB maximum RSS;
 this one comparison does not establish the larger current campaign's runtime.
-A certificate validator is now being prototyped in isolated worktrees. It
-will recompute exact completion and check supplied bad-state predicates
-against the current transitions, including all failure seeds and scene
-coverage. Production adoption and current proof remain pending.
+The isolated certificate prototype at `bec8263` passes its clean build and
+all 85 BDD/symbolic checks, including independent raw-state certificates. It
+recomputes exact completion and checks supplied bad-state predicates against
+the current transitions, including all failure seeds and scene coverage.
+Historical generation has started on a fresh source-bound checkout; a
+separate full certificate validation remains required. Production adoption
+and current proof remain pending; prototype
+review and file-memory measurements are in
+[CERTIFICATE_AUDIT_EXPERIMENT.md](CERTIFICATE_AUDIT_EXPERIMENT.md).
 The separate current
 231-endpoint catalog now has a repository regression test; it proves authored
 path and metadata coverage, not universal safety. See
