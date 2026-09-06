@@ -765,3 +765,11 @@ events, source/evidence bindings and closed process; the seal is
 `b9b69233d20c04ae7da42099b4df00382c62c4c98d231b74fa9e9295d60bb97d`.
 This separate result does not rewrite the failed generation or establish
 universal safety. Fresh full verification of all 30 forests remains pending.
+
+The separate selected run now supplies the worker-landing candidate, then
+fails at the two-million-node guard during failure-union round 9. Root seals
+all 129 events and the sole new forest's integrity; 29 candidates are preserved
+across the two failed runs, with no current certificate proof. The remaining
+failure union needs a different exact allocation strategy before assembly and
+fresh verification. See `CERTIFICATE_AUDIT_EXPERIMENT.md` for the closed failure
+and the integrated synthetic process-supervision checks.

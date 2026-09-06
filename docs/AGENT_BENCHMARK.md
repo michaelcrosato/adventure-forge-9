@@ -652,3 +652,21 @@ follows. Review of the selected profile draft catches a seal hash from the
 earlier 14-obligation failure, confusion between exported wire IDs and manager
 handles, overstrict caller cache-stat equality, and a directory listed among
 the generic runner's file artifacts. Corrections precede any selected launch.
+
+Root finishes profile/preparer v4 corrections, including resource/flag array
+types, then executes exact input/constructor/descriptor preflight. Independent
+v4 read-only review finds no blocker. The selected run writes worker-landing
+before hitting the node limit during failure-union round 9. Root independently
+seals 129 events and the one new forest; the worker's supplementary checker
+passes after a hash typo and artifact-map key correction. Failed checker
+evidence is retained. No complete selected generation or campaign proof is
+accepted. The next experiment compacts between choice preimages while keeping
+each round's source predicate fixed.
+
+Root review of the proposed test supervisor finds a descendant-cleanup gap
+after direct-child close. The worker refactors the helper and adds actual
+synthetic process lifecycle tests, then covers the normal-exit descendant case
+as a fifth regression. Root reviews and integrates only the helper/tests at
+`4a78944`; clean-source build plus five tests pass in 4.02 seconds overall.
+The actual campaign invocation is still untouched. No player/provider run or
+experience acceptance is introduced.

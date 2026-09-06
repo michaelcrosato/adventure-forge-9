@@ -456,10 +456,106 @@ remains failed and still records zero replays; this is a separate run.
 | `/tmp/af9-current-symbolic-endpoint-replay-eb85c76-v1.finalization.json` | `faba7aba2a0d6257df056a80e85fe27d47116ff2740ced3eec44c57a3f952022` |
 | `/tmp/af9-current-symbolic-endpoint-replay-root-seal-v1.json` | `b9b69233d20c04ae7da42099b4df00382c62c4c98d231b74fa9e9295d60bb97d` |
 
+## Selected current run prepared and launched
+
+Root corrects the selected profile before execution. The frozen v4 binds the
+actual 28-forest failure seal, distinguishes wire IDs from manager handles,
+checks caller nodes/anchors without treating cache counters as immutable, and
+keeps directories outside the generic runner's file-artifact map. Resource and
+flag arrays are derived from the bound field order; counts remain separate.
+The preparer rejects an existing manifest and binds its own bytes as evidence.
+Draft v1/v2 and the worker's v3 copies remain preserved. Root's attempted
+exclusive v3 creation encountered those copies and wrote nothing; root uses
+separate v4 paths. Independent read-only v4 review finds no blocker.
+
+Preparation reuses the existing frozen checkouts and makes one exact external
+copy of the selected generator. The actual profile's input, constructor and
+descriptor sections pass preflight: 75 logical fields, 106 current/106 next
+bits, 58,572 constructor nodes, 10 resources and 62 flags. Preflight suppresses
+progress writes and omits the generator invocation. A separate current
+descriptor JSON round-trip also passes.
+
+Root launches session 48474, timed child PID 1450352, under unchanged
+1,800/1,830-second checked/external limits and a 1,536 MiB heap. Only the
+worker-landing scene and failure-union candidates may be written, with canonical
+indexes 28 and 29 in a separate supplement directory. The selected descriptor
+explicitly carries no full generation, certificate or release acceptance.
+The original failed generation and all 28 files remain unchanged. This section
+records launch evidence, not process completion; inspect the actual handle.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `/tmp/af9-selected-certificate-current-profile-v4.mjs` | `234923daf74784aa9e347b9e084fe31f8e2f8c6826beae213bc1804b368703ec` |
+| `/tmp/af9-prepare-selected-certificate-current-v4.py` | `dad18af9864918c271a41e9c3a7dc827c0c149f002b3c315a3722c9a01045915` |
+| `/tmp/af9-prepare-selected-certificate-current-v4.log` | `8d64e2eb89e280b3a8485637978c7cfe39ed1be3654630cd47a37135675693c3` |
+| `/tmp/af9-selected-certificate-current-manifest-v1.json` | `a24c9c448351ca487d719925f527d332ef5f169f1505e3c49f5346deecec6845` |
+| `/tmp/af9-selected-certificate-current-input-preflight-root-v1.json` | `97b678c2b3b7b035be4b9c83ce98fc322fd7c117ade4d1c439f32a423b7aa4a0` |
+| `/tmp/af9-selected-certificate-current-preparation-root-v1.json` | `6c2b0fdf67fcbeb9ae555cf299a8f773bf3da81f8fa56897df461903052a70f5` |
+
+## Selected current run: one candidate, then node-limit failure
+
+The selected run closes with exit 1 after 315.22 seconds external / 315.256
+seconds including wrapper checks, maximum RSS 1,589,244 KiB. C fixes in 18
+rounds and W in 12. Worker-landing fixes in 27 rounds with 26 compactions;
+its exported forest has 91,806 nonterminal nodes, 1,444,556 JSON bytes and
+404,583 gzip bytes. Its fixed-event manager node count and final summary node
+count differ because the generator performs further subset validation before
+export; those counts are not conflated with the serialized forest size.
+
+The failure-union manager reaches 1,992,588 nodes at nonfixed round 8, then
+compacts to 470,900 nodes. The next predecessor computation reaches the
+2,000,000-node guard. No failure-union file, selected descriptor or completed
+generator result is published. The report retains foundation counts but has
+no returned complete failure-seed metadata array. The original 28 files remain
+unchanged; together with the new worker-landing file there are 29 untrusted
+candidates. All eventual 30 still require fresh full verification.
+
+Root checks all 129 ordered progress events against log/report/sidecar, every
+source/evidence binding, the closed process and the sole file's bounded gzip,
+hash, reduced/ordered/reachable wire graph and current-variable support. The
+seal accepts failure-evidence integrity only. A supplementary worker checker
+also reports success after correcting a digest typo and absolute-path map
+handling; its first rejected check and both versions remain preserved.
+Exact within-round compaction of accumulated choice predecessors is the next
+candidate-generation experiment; no limits or acceptance checks are relaxed.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `/tmp/af9-selected-certificate-current-eb85c76-v1.json` | `cfa7f0bdb97bacb8531019b284f04c0bd2dc29e8e7b7d6e5d6d665973310fb78` |
+| `/tmp/af9-selected-certificate-current-eb85c76-v1.progress.json` | `7e8209e53e4b292e91be57ddfc4d061ecf84f1453fcbb7171730afb4f207d63a` |
+| `/tmp/af9-selected-certificate-current-eb85c76-v1.log` | `4817420bad2d7e3fc8deb999c373ee627bb768833c9d23d6d227dff7af0a31d2` |
+| `/tmp/af9-selected-certificate-current-eb85c76-v1.finalization.json` | `bd60a53ec22c5941f85c8523d572fb7e4d55ccc3b8ae69d72002e5b61eb567fb` |
+| `/tmp/af9-selected-certificate-current-eb85c76-v1-forests-v1/cone-00028.json.gz` | `39363aa8dc8d4ba78d2d835f0ebbd9356e5bb2d9be758f0a15156d266bbe3769` |
+| `/tmp/af9-selected-certificate-current-failure-root-seal-v1.json` | `742d48d8979f961dca3a483a5f26f1e87b61a103cecc0f5621bbf1b22ae440b7` |
+
+## Detached worker supervision integrated
+
+Release `4a78944` adds `tests/helpers/detached-worker.ts` and five synthetic
+lifecycle tests. The supervisor checks the whole detached Linux process group
+after direct-child exit, escalates to SIGKILL when descendants remain and
+preserves bounded stdout/stderr/timing on failures. Tests cover short-lived and
+persistent descendants after code-0 exit, nonzero output preservation, output
+overflow and timeout with a termination-resistant descendant and closed pipes.
+
+Root reviews the helper and tests, copies the helper unchanged and adjusts
+only the test import for repository layout. Build and all five focused tests
+pass in 4.02 seconds overall with identical before/after source; tests take
+1.90 seconds / 90,876 KiB. The previous 238-test combined result remains bound
+to `a92828d`; a new combined full suite is not claimed. The draft future
+scenario wrapper keeps 720/750-second limits and a 1,536 MiB heap, but the
+repository's actual `tests/scenario.test.ts` remains unchanged until the
+current certificate proof passes.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `/tmp/af9-detached-worker-integration-root-tests-v1.json` | `9fd521fb4116b739d05777cb906f980aa30274f05a356007556896c9220fc1a9` |
+| `/tmp/af9-detached-worker-integration-root-tests-v1.log` | `6c946d3b7d0fbee8713046eada001a5a5a4219791c0d9ff90e472bd6e1643071` |
+
 ## Required acceptance
 
-1. Complete corresponding current generation, fresh certificate verification
-   and endpoint replay. Adopt a repository-contained release check only after
+1. Complete the remaining failure-union candidate and fresh full certificate
+   verification, preserving the separately accepted current endpoint replay.
+   Adopt a repository-contained release check only after
    correctness and performance are established; missing or invalid artifacts
    must fail verification. Runtime checks cannot depend on external evidence.
 2. Run full `npm run verify`, freeze source, and conduct the predeclared fresh

@@ -46,9 +46,13 @@ path and metadata coverage, not universal safety. See
 The external selected-candidate generator now passes seven small oracle,
 zero-cone and owner-transfer tests. Root and independent review agree with
 its equations; its declared scope remains candidate generation only. A
-separate bounded profile is being prepared for the missing worker-landing
-and failure-union forests. All 30 candidates still need fresh verification
-before release adoption. The separately bound 231 symbolic/public-engine
+separate bounded profile passes source/model preflight and writes the worker-
+landing candidate, then hits the two-million-node guard while computing the
+failure union. Root seals the closed failure and sole new file. There are now
+29 preserved candidates across two failed runs; the failure union is still
+missing, and all 30 must pass fresh verification before release adoption.
+Within-round compaction is being investigated without changing proof limits.
+The separately bound 231 symbolic/public-engine
 endpoint replays now pass on the exact current source: 2,712 actions and 2,943
 checkpoints in 21.52 seconds. This closes endpoint replay coverage, not the
 universal campaign safety proof.
@@ -254,6 +258,10 @@ The reviewed adapter/worker are now committed at isolated `a92828d`; its clean
 build and all 238 regular checks pass with identical before/after source.
 This excludes only the unchanged scenario invocation and is not a full
 `npm run verify` or current-certificate result.
+
+Release `4a78944` subsequently adds the detached worker supervisor and five
+synthetic lifecycle regressions. Its build and those five tests pass; the
+campaign invocation remains unchanged pending a complete verified certificate.
 
 After reconstructing and checking the two superseded source topics, root
 removes them following fresh process/dependency checks. Inventory is 14
