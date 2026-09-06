@@ -284,3 +284,32 @@ All twelve are removed. Cumulative cleanup is 79 worktrees and 38 topic
 branches. The new historical fixed-point-compaction probe was added before
 removal, leaving eight worktrees and two branches for current source,
 experimental verification and its accepted/failed reference evidence.
+
+## Completed BDD forest topic removed
+
+Archive `worktree-archives/20260906T024800Z-bdd-forest-topic/` under the durable
+local evidence root preserves clean `audit-bdd-forest` at `c76157c`, all 103
+tracked files, a complete Git bundle and both retained v2 build/test logs.
+Root independently checks source bytes and Git modes, reconstructs the exact
+tip in a fresh clone, checks both patch IDs and byte identity in the tested
+`bec8263` certificate branch, and verifies process and active-runtime bindings.
+The original BDD checkout and topic branch are removed; its evidence remains.
+
+The first root review stops before removal because it omits the tar's
+`bdd-forest-topic/` prefix. V2 also distinguishes Git archive's 0664 permission
+normalization from live/restored 0644 modes; executable bits match, and the
+recorded Git modes and fresh bundle clone restore exact permissions. Both
+review scripts and an explicit observed-failure note are preserved. No v1
+execution log file was captured.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| Archive `manifest.json` | `5f80123bf0dfa5983b80c5dcf37db63ce79d3ae141ba89d00fb17b9491e9a4e6` |
+| `git/audit-bdd-forest.bundle` | `93c26a81a41b6dd687c3947cd4dc6d98166f26161f66d5a34dc18cb095bc882e` |
+| `source/bdd-forest-topic.source.tar.gz` | `dbd62f14eca853fe099f2d3587ac67798765e868916af899ab2ae9f45f7ddae6` |
+| `root-removal-v2.json` | `58e010ce27bfeb04c0e529d863029f32852bd0e2c29a6148a39e62883b6ea1aa` |
+
+Cumulative cleanup is 80 removed worktrees and 39 removed topic branches.
+Thirteen worktrees and four local branches remain for current and experimental
+source and retained reference evidence. Full verification/publication and the
+world completion audit remain open.

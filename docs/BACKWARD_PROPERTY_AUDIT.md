@@ -726,3 +726,22 @@ catalog's path maps and its 29/166/36 authored target sets.
 | --- | --- |
 | `/tmp/af9-authored-endpoints-non-audit-tests-v1.json` | `c558b595a7cdfd86763a87fd02a70fea254f5966aa4c9caa7e8604156457ba06` |
 | `/tmp/af9-authored-endpoints-non-audit-tests-v1.log` | `1c9e4c25c706574ee8a7701f526dcc21e31fa50a5ebe94eaea71b73bbeedd642` |
+
+## Historical certificate verification accepted
+
+The isolated `bec8263` certificate prototype passes historical generation
+and separate fresh verification. Generation retains the exact 600-event
+baseline trace, all 26 bad cones and full historical comparison in 592.61
+seconds. The fresh verifier recomputes exact C, regenerates all 524 failure
+seeds, and checks one failure forest plus all 25 scene forests in 62.46
+seconds / 1,470,332 KiB maximum RSS. All 169,922 reference C classifications
+agree. Root acceptance is `/tmp/af9-symbolic-certificate-historical-root-seal-v1.json`,
+SHA-256 `139d8b2bfc127034f3ecefc06cc854a6ddf7519573194ba0c6b12af88fa27f51`.
+
+This method checks supplied predicates through closure, coverage and initial
+disjointness; it does not trust a generation verdict, recompute W, or claim
+minimal cones/current reachable-state counts. The original 190 engine
+witnesses remain unchanged evidence. The supplementary independent output
+checker, current generation/verification, production adapter and full release
+gates remain pending. See `CERTIFICATE_AUDIT_EXPERIMENT.md` for exact artifacts,
+source bindings, file sizes and the separate current generation allowance.

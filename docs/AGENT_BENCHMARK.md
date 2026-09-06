@@ -550,3 +550,22 @@ Profile review adds metadata/report caps and post-child elapsed enforcement.
 The original unused preparation is retained before the source-bound historical
 generation starts. Historical certificate and current-campaign acceptance
 remain pending. No provider cost figure is available.
+
+The historical generator closes in 592.61 seconds with all 600 allocation/
+semantic events and the complete proof equal to the accepted baseline.
+Root review corrects the generation checker's raw timing comparison, v2
+preflight binding, self path, incomplete-result handling and final artifact
+hash checks before acceptance. The last reviewed addition binds the preflight
+checker script itself; the executed source is frozen and reviewed at SHA
+`3da4e1861df4964b9f1b3fec497740bb26b9b503044dc383d7d0b435b24b6583`.
+Separate certificate verification closes in 62.46 seconds and is independently
+sealed by root after exact event, source, artifact and reference checks.
+The supplementary output checker is still under review. A worker's preparer
+review correctly identifies the then-absent generation root check; root
+creates and accepts that prerequisite before preparing or launching verification.
+
+The archive worker preserves the completed BDD topic; root fixes its own tar
+prefix/mode assumptions before removing the duplicate checkout and branch.
+Both failed/corrected review sources remain in the archive. Current-campaign
+proof, production integration and live acceptance remain pending; no provider
+cost measurement is available.

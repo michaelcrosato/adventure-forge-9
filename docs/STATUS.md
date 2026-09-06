@@ -27,10 +27,14 @@ The isolated certificate prototype at `bec8263` passes its clean build and
 all 85 BDD/symbolic checks, including independent raw-state certificates. It
 recomputes exact completion and checks supplied bad-state predicates against
 the current transitions, including all failure seeds and scene coverage.
-Historical generation has started on a fresh source-bound checkout; a
-separate full certificate validation remains required. Production adoption
-and current proof remain pending; prototype
-review and file-memory measurements are in
+Historical generation and separate verification both pass. Generation takes
+592.61 seconds; fresh verification takes 62.46 seconds / 1,470,332 KiB maximum
+RSS, including all 26 forests, 524 failure seeds and the full historical
+169,922-state C comparison. Root accepts the source-bound historical result;
+a supplementary output review is pending. Current generation is being
+prepared with a separate 1,800/1,830-second one-off window after the preserved
+720-second timeout. Production adoption and current proof remain pending;
+prototype review and file-memory measurements are in
 [CERTIFICATE_AUDIT_EXPERIMENT.md](CERTIFICATE_AUDIT_EXPERIMENT.md).
 The separate current
 231-endpoint catalog now has a repository regression test; it proves authored
@@ -192,3 +196,10 @@ leaving eight worktrees and two branches. Clean experimental `a065fd5` passes
 all 64 focused checks and extends exact copying to C/W with explicit final
 ownership. Its historical comparison is now independently accepted; no new
 current proof or production adoption is accepted yet.
+
+The completed BDD forest topic is archived and removed after root verifies
+source bytes, Git modes, a fresh bundle clone, patch equivalence and process
+and active-runtime dependencies. Its two commits remain in the tested
+certificate branch. Cleanup now accounts for 80 worktrees and 39 topic
+branches removed; 13 worktrees and four branches remain at this checkpoint.
+See `LOCAL_WORK_RESOLUTION.md` for archive hashes and the corrected tar review.

@@ -1,6 +1,7 @@
 # Backward certificate experiment
 
-Status: isolated prototype; no production adoption or current-campaign proof.
+Status: isolated prototype with an accepted historical certificate proof; no
+production adoption or current-campaign proof.
 The release gate and the full world objective remain open. This work follows
 historical acceptance of the quantifier-key change and the current campaign's
 preserved 14-of-30-obligation timeout. See
@@ -46,7 +47,7 @@ logs are `/tmp/af9-symbolic-bdd-forest-build-v2.log` and
 were not retained. Root review of the source is complete. Both BDD commits are included by
 patch-equivalent cherry-picks in the combined prototype below.
 
-The certificate validator is being developed on `audit-symbolic-certificates`.
+The certificate validator is frozen on `audit-symbolic-certificates`.
 Its model descriptor includes the validated scenario, complete variable and
 field order, and a canonical forest of exact domain/initial/playing/completed
 anchors. This distinguishes even resource bounds with identical bit widths.
@@ -142,15 +143,49 @@ with the separate reader's 4 MiB cap. The original unused manifest and passing
 preflight remain preserved; the already built source is verified unchanged
 and never run before reuse.
 
-The generation run starts under v2 manifest with PID 1401902 and root session
-47541. It retains the 2,000,000-node / 500,000-cache / 128-round / 1,536-MiB
-configuration and checked/external 720/750-second limits. It exports each
-completed BAD predicate without changing BDD nodes or caches, then retains
-the full static reference comparison. This run remains pending acceptance.
-A separate process must import every forest and validate fresh exact C,
-every failure seed, all scene inclusions and the full 169,922-state C
-comparison. Generation alone cannot grant certificate or current-campaign
-acceptance. No current generation, fresh player or deployment is launched.
+The generation run closes successfully under v2 manifest with PID 1401902
+and root session 47541. It retains the 2,000,000-node / 500,000-cache /
+128-round / 1,536-MiB configuration and checked/external 720/750-second
+limits. External elapsed time is 592.61 seconds / 1,462,496 KiB maximum RSS;
+the wrapper, including final artifact writes and source/evidence checks,
+measures 592.63 seconds. All 600 allocation/semantic events match the accepted
+quantifier-key baseline after excluding only elapsed/RSS measurements. The
+complete proof, 26 summaries and 169,922-state comparison also match exactly.
+
+The generated 25 scene forests and one failure forest total 5,881,908 JSON
+bytes / 1,665,127 gzip bytes. The largest forest has 166,572 nonterminals.
+Root reviews and executes the independent generation checker, accepting exact
+source/test/configuration bindings, bounded artifact integrity, the closed
+process, complete progress, and proof metadata. It explicitly does not accept
+a certificate proof from generation alone.
+
+A separately prepared process uses the unchanged built probe and every
+source-bound generated forest. Actual-profile input preflight passes. PID
+1409164 / root session 38359 then closes successfully: 62.46 seconds external,
+62.49 seconds including final artifact and binding checks, and 1,470,332 KiB
+maximum RSS. Fresh exact completion converges in 18 rounds. All 524 failure
+seeds are regenerated; the failure forest and all 25 scene forests pass
+current-only/domain, coverage, predecessor-closure and initial-disjointness
+checks. Each forest is loaded exactly once for the proof, including zero roots.
+
+The fresh C classification agrees at every one of the 169,922 static-reference
+states; the reference retains 332,402 transitions and 134,108 completable
+states. All 90 expected progress events are present. The largest reported
+manager contains 1,123,285 nodes during failure checking. This is an observed
+manager statistic, not a count of reachable states or all live managers.
+Root independently validates the complete closed run, exact event catalog,
+source/file hashes, completion ownership and reference counters, and seals
+historical certificate acceptance. A second output checker is under review.
+The original 190 engine witnesses are reused unchanged, not newly replayed.
+
+This verifier does not recompute W or claim minimal bad cones. Its measured
+historical runtime supports a separate verification step; current generation
+and verification remain required. A one-off current generation is being
+prepared with an explicit 1,800/1,830-second checked/external window, following
+the preserved 720-second 14-of-30 timeout. The node/cache/round/heap guards and
+all proof obligations remain unchanged. This generation allowance does not
+change the prospective 720/750-second release-verification window. No current
+run, fresh player or deployment has been launched at this checkpoint.
 
 | Artifact | SHA-256 |
 | --- | --- |
@@ -159,16 +194,21 @@ acceptance. No current generation, fresh player or deployment is launched.
 | `/tmp/af9-symbolic-certificate-historical-generation-profile-v2.mjs` | `df08ece656febcfd9ec0aae948988e60d513e898c9334b9156b55b23c4d1dbe7` |
 | `/tmp/af9-symbolic-certificate-historical-generation-input-preflight-v2.json` | `fc8a01439a74db6b60adbea654f6568a270f60d8ec925446809bcf6b0130cc93` |
 | `/tmp/af9-run-symbolic-certificate-v1.py` | `09dcea86c10b187c1c17c54166e10e536ab11bfed8ca50c09aebe903e1fcf3be` |
+| `/tmp/af9-symbolic-certificate-historical-generation-139e48.json` | `74562c9920e6f91a177a0055730336b522486bd0e806eacf0d025404c91dff7a` |
+| `/tmp/af9-symbolic-certificate-historical-generation-139e48.finalization.json` | `8cb3900d008f60a2aef4cdeef037eb55e61484b3c0985fd1bade6dfe4f180ce7` |
+| `/tmp/af9-symbolic-certificate-historical-generation-root-check-v1.json` | `c4a20dbb289cbbca3f1d7f50c6ae61ab9df109f346281142459385eada226db7` |
+| `/tmp/af9-symbolic-certificate-historical-verification-manifest-v1.json` | `385e19982be996facdc82a721f81b570b486eefd69c4abd5bf2ce8b705188870` |
+| `/tmp/af9-symbolic-certificate-historical-verification-input-preflight-v1.json` | `067a3f808ea2df9f186665e17fa666334348cece8d353cbb5d2620089c963230` |
+| `/tmp/af9-symbolic-certificate-historical-verification-139e48.json` | `89b1b3747791fc00e3688be0f5b6f4010049d2ba9b9e726221e2e9d16838bf2f` |
+| `/tmp/af9-symbolic-certificate-historical-root-seal-v1.json` | `139d8b2bfc127034f3ecefc06cc854a6ddf7519573194ba0c6b12af88fa27f51` |
 
 ## Remaining gates
 
-1. Generate source-bound historical forests while retaining the exact prior
-   proof and static-reference comparison. Validate those forests separately
-   against fresh exact completion and all original failure/scene obligations.
-2. Measure real graph bytes, importer/operation nodes, peak memory and time.
-   Preserve every failed preparation and incomplete process.
-3. Complete the corresponding current proof and endpoint replay. Adopt a
-   repository-contained release check only after correctness and performance
-   are established; missing or invalid artifacts must fail verification.
-4. Run full `npm run verify`, freeze source, and conduct the predeclared fresh
+1. Finish the supplementary independent output review; preserve generation,
+   verification and all preparation evidence separately.
+2. Complete corresponding current generation, fresh certificate verification
+   and endpoint replay. Adopt a repository-contained release check only after
+   correctness and performance are established; missing or invalid artifacts
+   must fail verification. Runtime checks cannot depend on external evidence.
+3. Run full `npm run verify`, freeze source, and conduct the predeclared fresh
    Stage 8 player gate before publication. Continue the broader world work.
