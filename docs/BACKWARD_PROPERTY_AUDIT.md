@@ -589,6 +589,35 @@ and fresh symbolic/engine endpoint replay remain required before adoption.
 | `/tmp/af9-symbolic-fixed-point-compact-historical-139e48.finalization.json` | `5f7b7610c9f87c7df36e96bf3808e8a399ccae30ef49ba264605c9c94b440aeb` |
 | `/tmp/af9-symbolic-fixed-point-compact-historical-root-check-v1.json` | `bf9376d805d76f29d6647c1f3096e73cfe32925a9da4b3eff10c5af5b9dae315` |
 
+### Current fixed-point-compaction run
+
+Fresh current source `11d86ae9e0c0a9ff90a8547f2861d08395e44e97`
+retains build `af9-dce7b1dc57b6d6febcc9bb72` and all 15 accepted
+engine/content/package file hashes. Preparation v1 creates the probe, installs
+locked dependencies, builds and passes the constructor check, then stops
+before writing a manifest because it names a preflight log that does not
+exist. The actual preflight script and passing JSON are preserved. Root's
+v2 validates the unchanged, never-run probe and all four tested modules,
+builds again and binds the real preflight artifacts plus the original failed
+preparation script/log. No log is reconstructed or invented.
+
+The resulting source hash is
+`dfafe65a01bfc634e98deb4056ec0db6967e1def7f4d0ecc87c90573ab38f3d7`.
+The manifest binds 49 evidence files, the accepted historical correction and
+the clean 64-test freeze. It retains 2,000,000 nodes, 500,000 cache entries,
+128 rounds, 1,536 MiB old-space and checked/external limits of 720/750 seconds,
+with both copying intervals set to one. PID 1372054 is running on the frozen
+probe. C fixes at round 18 after 53,413 ms, and W fixes at round 12 after
+89,688 ms, passing the previous W capacity failure. Later scene obligations
+and the full failure cone remain in progress; no current acceptance follows
+from this prefix.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `/tmp/af9-prepare-symbolic-fixed-point-compact-current-v1.log` | `2e624afd00738ae76d3d3f1558fc3e9e9679ba1b7a8581a59d14d90c94f43b34` |
+| `/tmp/af9-prepare-symbolic-fixed-point-compact-current-v2.py` | `30fe0eafaece0dafed6623dded854d8b6fc45db6026daaf28f6954f37da06053` |
+| `/tmp/af9-symbolic-fixed-point-compact-current-manifest-v1.json` | `1d57094f4689f8c02f83f0fe85bb6fb5620cdffb5daaebe648fb75ed9cfb5fd7` |
+
 ## Repository endpoint regression
 
 The accepted current path maps are materialized in

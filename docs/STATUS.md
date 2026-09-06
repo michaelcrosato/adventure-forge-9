@@ -77,8 +77,12 @@ the initial fixed points now passes all 64 focused checks and the historical
 comparison on clean experimental `a065fd5`. The closed run takes 639.25 seconds /
 1,555,724 KiB maximum RSS, completes all 26 obligations and matches the full
 169,922-state reference. It retains the same node/heap/round/time limits.
-The current-campaign run with this correction is being prepared; current
-safety acceptance and production adoption remain pending.
+The current-campaign run with this correction is now running on frozen
+`11d86ae`. C and W both finish, passing the previous W capacity failure;
+the later safety obligations and fresh endpoint replays remain pending.
+The first preparation's nonexistent-log reference is preserved and corrected
+without changing the source or inventing evidence. Current safety acceptance
+and production adoption remain pending.
 The complete current endpoint catalog has separate main-engine replay evidence
 in [BACKWARD_PROPERTY_AUDIT.md](BACKWARD_PROPERTY_AUDIT.md). Its committed
 231-path regression and all 116 selected regular checks pass on clean
