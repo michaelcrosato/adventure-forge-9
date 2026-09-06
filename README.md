@@ -31,12 +31,17 @@ The default model is `gpt-5.6-luna` with maximum reasoning. The adapter uses Cod
 ```sh
 npm run probe
 npm run playtest -- --seed 1
+npm run playtest -- --help
 npm run evidence -- list
 npm run evidence -- verify /absolute/path/to/run
 npm run evidence -- export /absolute/path/to/run /absolute/path/to/run.tar.gz
 ```
 
 Evidence lives under `~/.local/share/adventure-forge-9/runs`, outside the source tree. Each attempt preserves a source snapshot, original observations and responses, actions, exit status, and interviews. Failed attempts stay visible. An append-only event chain and file hashes detect local changes; they do not attest remote model weights.
+
+Help prints the supported options without starting a player. Unknown options,
+missing values and invalid seeds fail before creating a run. Each playtest has
+a fixed 60-turn ceiling.
 
 Mechanical verification never calls a model. A passing mechanical check is separate from a live test, and a live test alone is separate from evidence of improvement.
 

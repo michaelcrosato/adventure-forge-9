@@ -606,17 +606,31 @@ The resulting source hash is
 The manifest binds 49 evidence files, the accepted historical correction and
 the clean 64-test freeze. It retains 2,000,000 nodes, 500,000 cache entries,
 128 rounds, 1,536 MiB old-space and checked/external limits of 720/750 seconds,
-with both copying intervals set to one. PID 1372054 is running on the frozen
-probe. C fixes at round 18 after 53,413 ms, and W fixes at round 12 after
-89,688 ms, passing the previous W capacity failure. Later scene obligations
-and the full failure cone remain in progress; no current acceptance follows
-from this prefix.
+with both copying intervals set to one. C fixes at round 18 after 53,413 ms,
+and W fixes at round 12 after
+89,688 ms, passing the previous W capacity failure. PID 1372054 then closes
+with exit one at the checked time limit: 722.32 seconds / 1,507,016 KiB maximum
+RSS. Fourteen of 30 obligations complete; `non-completion:scene:seal-workroom`
+reaches nonfixed round 14 at 840,662 nodes before the elapsed observer throws.
+No aggregate proof or symbolic replay result is returned. The reported BDD
+statistics are explicitly constructor-only, not the copied active manager.
+The independent v3 checker validates the incomplete evidence and denies
+acceptance. Root separately checks all 425 phase/round/copy events, completed
+summaries, the final elapsed overrun, exact runner command, process absence
+and every source/input/output hash. The node/heap guards do not fail; the
+performance correction under review hoists an unchanged quantifier-cache key
+out of recursive joins. No current universal verdict or production adoption
+is accepted.
 
 | Artifact | SHA-256 |
 | --- | --- |
 | `/tmp/af9-prepare-symbolic-fixed-point-compact-current-v1.log` | `2e624afd00738ae76d3d3f1558fc3e9e9679ba1b7a8581a59d14d90c94f43b34` |
 | `/tmp/af9-prepare-symbolic-fixed-point-compact-current-v2.py` | `30fe0eafaece0dafed6623dded854d8b6fc45db6026daaf28f6954f37da06053` |
 | `/tmp/af9-symbolic-fixed-point-compact-current-manifest-v1.json` | `1d57094f4689f8c02f83f0fe85bb6fb5620cdffb5daaebe648fb75ed9cfb5fd7` |
+| `/tmp/af9-symbolic-fixed-point-compact-current-11d86ae.json` | `8162a3a0c4fee4e93016c8db6c69be6f0f8b01c8ea8a922ea25526c584b8c081` |
+| `/tmp/af9-symbolic-fixed-point-compact-current-11d86ae.finalization.json` | `8bb5753812980ddaf33475621665c90d24a6a9f1bcd5326de43de8fb5f060703` |
+| `/tmp/af9-symbolic-fixed-point-compact-current-root-check-v3.json` | `a2ea513a7d08d28bfc912f67b056b5ec4e4dba04cf7ccc70423aef5b2ca12363` |
+| `/tmp/af9-symbolic-fixed-point-compact-current-failure-root-seal-v1.json` | `ed97e7edcb773474cefe4a3ba3aff80a35bd54d435df9007ce70d3687e5dc0c2` |
 
 ## Repository endpoint regression
 

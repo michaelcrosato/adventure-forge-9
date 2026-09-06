@@ -1,11 +1,46 @@
 import { execFileSync } from 'node:child_process';
 import { realpathSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { parseArgs } from 'node:util';
 import { start, observe, choose, end, stateHash, BUILD_ID } from '../engine/index.js';
 import { CodexPlayer } from './codex.js';
 import { EvidenceWriter, sourceSnapshot, snapshotIdentity, type RunStatus } from './evidence.js';
 import { PLAYER_INSTRUCTION, FREE_INTERVIEW, STRUCTURED_INTERVIEW, CHOICE_SCHEMA, INTERVIEW_SCHEMA, parseInterview } from './prompts.js';
 import { validateRun } from './validate.js';
+
+const USAGE = 'Usage: npm run playtest -- [--seed <integer>] [--model <model>] [--effort <effort>] [--evidence-root <directory>]\n       npm run playtest -- --help\nStarts one subscription playtest with a 60-turn ceiling.';
+
+/** Parse the entire command before creating evidence or initializing a player. */
+export function parsePlaytestArguments(args: readonly string[]) {
+  const { values } = parseArgs({
+    args: [...args],
+    strict: true,
+    allowPositionals: false,
+    options: {
+      help: { type: 'boolean', short: 'h' },
+      seed: { type: 'string' },
+      model: { type: 'string' },
+      effort: { type: 'string' },
+      'evidence-root': { type: 'string' },
+    },
+  });
+  if (values.help) return { help: true as const };
+  if (values.seed !== undefined && (!values.seed.trim() || !Number.isSafeInteger(Number(values.seed)))) {
+    throw new Error('Seed must be a safe integer');
+  }
+  for (const name of ['model', 'effort', 'evidence-root'] as const) {
+    if (values[name] !== undefined && !values[name].trim()) throw new Error(`${name} must not be empty`);
+  }
+  return {
+    help: false as const,
+    options: {
+      seed: values.seed === undefined ? 1 : Number(values.seed),
+      model: values.model,
+      effort: values.effort,
+      evidenceRoot: values['evidence-root'],
+    },
+  };
+}
 
 export async function runPlaytest(options: { root?: string; seed?: number; model?: string; effort?: string; maxTurns?: number; evidenceRoot?: string } = {}) {
   const root = options.root ?? process.cwd();
@@ -90,11 +125,14 @@ export async function runPlaytest(options: { root?: string; seed?: number; model
 }
 
 if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const args = process.argv.slice(2);
-  const option = (name: string) => { const i = args.indexOf(name); return i < 0 ? undefined : args[i + 1]; };
-  const seedText = option('--seed');
-  if (seedText !== undefined && !Number.isSafeInteger(Number(seedText))) throw new Error('Seed must be a safe integer');
-  runPlaytest({ root: process.cwd(), seed: seedText === undefined ? 1 : Number(seedText), model: option('--model'), effort: option('--effort'), evidenceRoot: option('--evidence-root') })
-    .then(result => { if (result.status !== 'completed') process.exitCode = 1; })
-    .catch(error => { console.error(error); process.exitCode = 1; });
+  try {
+    const command = parsePlaytestArguments(process.argv.slice(2));
+    if (command.help) console.log(USAGE);
+    else runPlaytest({ root: process.cwd(), ...command.options })
+      .then(result => { if (result.status !== 'completed') process.exitCode = 1; })
+      .catch(error => { console.error(error); process.exitCode = 1; });
+  } catch (error) {
+    console.error(`${error instanceof Error ? error.message : String(error)}\n${USAGE}`);
+    process.exitCode = 1;
+  }
 }

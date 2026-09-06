@@ -77,9 +77,13 @@ the initial fixed points now passes all 64 focused checks and the historical
 comparison on clean experimental `a065fd5`. The closed run takes 639.25 seconds /
 1,555,724 KiB maximum RSS, completes all 26 obligations and matches the full
 169,922-state reference. It retains the same node/heap/round/time limits.
-The current-campaign run with this correction is now running on frozen
-`11d86ae`. C and W both finish, passing the previous W capacity failure;
-the later safety obligations and fresh endpoint replays remain pending.
+The current-campaign run with this correction closes at the checked time
+limit after 722.32 seconds / 1,507,016 KiB maximum RSS on frozen `11d86ae`.
+C and W both finish, passing the previous W capacity failure; 14 of 30
+safety obligations complete. The seal-workroom cone is unfinished at round
+14, with no aggregate proof result or symbolic endpoint replay. Root checks
+the exact 425-event prefix and every source/evidence binding. A small BDD
+quantifier-key performance correction is under independent review.
 The first preparation's nonexistent-log reference is preserved and corrected
 without changing the source or inventing evidence. Current safety acceptance
 and production adoption remain pending.
@@ -87,6 +91,11 @@ The complete current endpoint catalog has separate main-engine replay evidence
 in [BACKWARD_PROPERTY_AUDIT.md](BACKWARD_PROPERTY_AUDIT.md). Its committed
 231-path regression and all 116 selected regular checks pass on clean
 `71fec09`; only the unchanged full-family scenario audit is excluded.
+A later playtest CLI fix adds three checks; all 119 selected regular checks
+pass. It follows an accidental help invocation that started one unintended
+player. That partial, unsealed 18-action attempt is preserved and excluded
+from the still-pending three-player Stage 8 sample. See
+[PLAYTEST_HELP_INCIDENT.md](PLAYTEST_HELP_INCIDENT.md) for the complete record.
 The production audit
 and its guard remain unchanged; full verification and Stage 8 acceptance are
 still pending.

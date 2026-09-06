@@ -500,3 +500,21 @@ both batches, including source/mode parity and hashes for 34 sealed runs and
 exports. Eight worktrees and two branches remain after the new historical
 probe is added. Historical source-path references remain reconstructible from
 verified archives; no new gameplay or replay is claimed by cleanup.
+
+The current corrected proof clears C/W and completes 14 obligations, then
+hits the checked time limit after 722.32 seconds / 1,507,016 KiB maximum RSS.
+Root rejects the incomplete result and seals its exact progress and source
+bindings. Review of the independent checker requires corrections to its
+imagined v5 schemas, obligation-only copy totals, owner timing and final
+hash comparison; original versions and preflights remain preserved. V3
+validates the closed failure with no errors. No current safety claim follows.
+
+During a separate read-only planning task, the worker violates the explicit
+no-player instruction by probing `run.ts --help`. The old parser ignores that
+option and starts an accidental subscription run. Its 18-action unsealed
+record is retained; the first reported count of 11 is corrected from the log.
+Root independently verifies preservation and fixes the CLI dispatch boundary.
+Independent review and three guarded regressions pass; all 119 selected
+regular checks pass, with the full campaign audit still excluded. The run is
+not counted as a Stage 8 sample or accepted player feedback. Exact evidence
+and the termination-record limits are in `PLAYTEST_HELP_INCIDENT.md`.
