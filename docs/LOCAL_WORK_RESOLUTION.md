@@ -313,3 +313,11 @@ Cumulative cleanup is 80 removed worktrees and 39 removed topic branches.
 Thirteen worktrees and four local branches remain for current and experimental
 source and retained reference evidence. Full verification/publication and the
 world completion audit remain open.
+
+A new integration checkout `/tmp/af9-certificate-release` on
+`audit-certificate-release` contains reviewed commit `59bab44`. It copies the
+accepted verification modules unchanged and moves independent packed oracles
+to test helpers. Clean combined build and 223 regular checks pass, excluding
+only the unchanged campaign audit. This active integration work remains;
+inventory is now 14 worktrees and five branches, with cumulative removals
+still 80 worktrees and 39 topic branches.

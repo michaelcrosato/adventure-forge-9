@@ -31,7 +31,7 @@ Historical generation and separate verification both pass. Generation takes
 592.61 seconds; fresh verification takes 62.46 seconds / 1,470,332 KiB maximum
 RSS, including all 26 forests, 524 failure seeds and the full historical
 169,922-state C comparison. Root accepts the source-bound historical result;
-a supplementary output review is pending. Current generation is being
+the supplementary independent output review also passes. Current generation is being
 prepared with a separate 1,800/1,830-second one-off window after the preserved
 720-second timeout. Production adoption and current proof remain pending;
 prototype review and file-memory measurements are in
@@ -203,3 +203,11 @@ and active-runtime dependencies. Its two commits remain in the tested
 certificate branch. Cleanup now accounts for 80 worktrees and 39 topic
 branches removed; 13 worktrees and four branches remain at this checkpoint.
 See `LOCAL_WORK_RESOLUTION.md` for archive hashes and the corrected tar review.
+
+The new isolated release-layout branch `audit-certificate-release` at `59bab44`
+retains six exact certificate/proof modules and all independent fixture tests,
+with packed oracles under test helpers. Its clean build and all 223 selected
+regular checks pass; only the unchanged failing full campaign invocation is
+excluded. The runtime adapter, current certificates and full release gates
+remain unfinished. Fourteen worktrees and five branches now remain after
+adding this isolated integration checkout.

@@ -175,7 +175,10 @@ manager contains 1,123,285 nodes during failure checking. This is an observed
 manager statistic, not a count of reachable states or all live managers.
 Root independently validates the complete closed run, exact event catalog,
 source/file hashes, completion ownership and reference counters, and seals
-historical certificate acceptance. A second output checker is under review.
+historical certificate acceptance. The supplementary independent output
+checker also passes after root reviews its frozen source; it separately checks
+the exact 26-entry load order, source/evidence bindings, complete result,
+process closure, time limits and all reference counters.
 The original 190 engine witnesses are reused unchanged, not newly replayed.
 
 This verifier does not recompute W or claim minimal bad cones. Its measured
@@ -201,14 +204,42 @@ run, fresh player or deployment has been launched at this checkpoint.
 | `/tmp/af9-symbolic-certificate-historical-verification-input-preflight-v1.json` | `067a3f808ea2df9f186665e17fa666334348cece8d353cbb5d2620089c963230` |
 | `/tmp/af9-symbolic-certificate-historical-verification-139e48.json` | `89b1b3747791fc00e3688be0f5b6f4010049d2ba9b9e726221e2e9d16838bf2f` |
 | `/tmp/af9-symbolic-certificate-historical-root-seal-v1.json` | `139d8b2bfc127034f3ecefc06cc854a6ddf7519573194ba0c6b12af88fa27f51` |
+| `/tmp/af9-symbolic-certificate-historical-verification-root-check-v1.json` | `c711099d38e7d39d679b405a776d5a109160537fb7e8c84d34829ddc075d58b9` |
+
+## Repository layout prepared
+
+Isolated `audit-certificate-release` at
+`59bab447c84c1f045f4ab9414c537724e60ff857` adds six exact `bec8263` verification
+modules at their final `src/verification` paths. Four packed modules remain
+independent fixture oracles under `tests/helpers/packed`; only their engine
+imports and four consuming test imports change. All 16 BDD/symbolic/packed
+test files are retained. Existing main game/player/test files, including the
+failing campaign invocation, remain unchanged.
+
+Worker installation, build and 104 focused tests pass. Root independently
+reviews all copied bytes and import-only differences, commits the layout,
+and then runs a clean combined build plus all 223 regular checks across 38
+test files. Before/after snapshots of every tracked file are identical.
+The combined wrapper takes 21.44 seconds; tests take 19.42 seconds /
+1,161,396 KiB maximum RSS. Only unchanged `tests/scenario.test.ts` is excluded,
+so this does not establish full `npm run verify` or production adoption.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `/tmp/af9-certificate-release-regular-tests-v1.json` | `26d5d33f782dc1d47e077291955ce66ffe2604a41f1514ed52f50c67f727685e` |
+| `/tmp/af9-certificate-release-regular-tests-v1.log` | `923894ef7063df2fcfb130b9db581bccbfa4579df5f0bd2277ca9529f5b8f544` |
+
+The runtime adapter and repository certificate catalog are still pending.
+They must bind current gameplay/core bytes and recompute the proof against
+current transitions. External generation paths and Git commit labels are
+provenance; copying the same forest bytes to repository paths must not be
+misreported as identical whole-source snapshots or a new generation run.
 
 ## Remaining gates
 
-1. Finish the supplementary independent output review; preserve generation,
-   verification and all preparation evidence separately.
-2. Complete corresponding current generation, fresh certificate verification
+1. Complete corresponding current generation, fresh certificate verification
    and endpoint replay. Adopt a repository-contained release check only after
    correctness and performance are established; missing or invalid artifacts
    must fail verification. Runtime checks cannot depend on external evidence.
-3. Run full `npm run verify`, freeze source, and conduct the predeclared fresh
+2. Run full `npm run verify`, freeze source, and conduct the predeclared fresh
    Stage 8 player gate before publication. Continue the broader world work.

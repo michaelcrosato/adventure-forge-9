@@ -742,6 +742,6 @@ This method checks supplied predicates through closure, coverage and initial
 disjointness; it does not trust a generation verdict, recompute W, or claim
 minimal cones/current reachable-state counts. The original 190 engine
 witnesses remain unchanged evidence. The supplementary independent output
-checker, current generation/verification, production adapter and full release
-gates remain pending. See `CERTIFICATE_AUDIT_EXPERIMENT.md` for exact artifacts,
+checker also passes. Current generation/verification, the production adapter
+and full release gates remain pending. See `CERTIFICATE_AUDIT_EXPERIMENT.md` for exact artifacts,
 source bindings, file sizes and the separate current generation allowance.

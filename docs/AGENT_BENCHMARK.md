@@ -569,3 +569,17 @@ prefix/mode assumptions before removing the duplicate checkout and branch.
 Both failed/corrected review sources remain in the archive. Current-campaign
 proof, production integration and live acceptance remain pending; no provider
 cost measurement is available.
+
+The supplementary historical verification checker passes after root review
+of its exact source, including corrected failure-first load order. Its frozen
+output is `/tmp/af9-symbolic-certificate-historical-verification-root-check-v1.json`
+with SHA-256 `c711099d38e7d39d679b405a776d5a109160537fb7e8c84d34829ddc075d58b9`.
+
+The layout worker copies all six core modules unchanged, relocates packed
+oracles under test helpers, and passes build plus 104 focused checks. Root
+reviews exact bytes and import-only differences before committing `59bab44`.
+Root then broadens once to a clean combined build and 223 regular checks,
+including existing game/player regressions: 21.44 seconds overall, 19.42
+seconds / 1,161,396 KiB for tests. Before/after tracked source is identical.
+Only the unchanged full campaign invocation is excluded; full verification
+and production adoption are still pending. No provider/player run is made.
