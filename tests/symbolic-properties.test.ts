@@ -13,7 +13,10 @@ import {
   type SymbolicOptions,
 } from "../src/verification/symbolic-model.js";
 import { proveCompletionSafety } from "../src/verification/symbolic-properties.js";
-import { proveCompletionSafetyByObligation } from "../src/verification/symbolic-obligations.js";
+import {
+  proveCompletionSafetyByObligation,
+  type ObligationProgress,
+} from "../src/verification/symbolic-obligations.js";
 
 type Status = SemanticState["status"];
 type TerminalStatus = Exclude<Status, "playing">;
@@ -1019,14 +1022,7 @@ function checkObligationScenario(
     const callbackIds = new Set<string>();
     const nonzeroOwners = new Set<SymbolicModel>();
     let copiedBad = 0;
-    const progress: {
-      readonly phase: "completion" | "completion-or-failure" | "obligation" | "obligation-compact";
-      readonly id?: string;
-      readonly round: number;
-      readonly nodes: number;
-      readonly previousNodes?: number;
-      readonly fixed: boolean;
-    }[] = [];
+    const progress: ObligationProgress[] = [];
     const compactionProgress: typeof progress = [];
     const split = proveCompletionSafetyByObligation(model, {
       roundLimit: 64,
@@ -1422,14 +1418,7 @@ test("failure absorption retains synthetic invalid-success and uncovered-enabled
 
 test("failure-absorbed mode fails closed at its own fixed point and snapshots options", () => {
   const depthModel = modelFor(validateScenario(FAULT_ONLY_CONTINUATION), { stock: 1 }, "interleaved", "relational", false);
-  const depthProgress: {
-    readonly phase: "completion" | "completion-or-failure" | "obligation" | "obligation-compact";
-    readonly id?: string;
-    readonly round: number;
-    readonly nodes: number;
-    readonly previousNodes?: number;
-    readonly fixed: boolean;
-  }[] = [];
+  const depthProgress: ObligationProgress[] = [];
   assert.throws(
     () => proveCompletionSafetyByObligation(depthModel, {
       roundLimit: 2,
@@ -1987,14 +1976,7 @@ test("split safety obligations reject invalid caps and propagate observer failur
   );
 
   const obligationDepth = modelFor(validateScenario(OBLIGATION_DEPTH), { stock: 1 }, "interleaved", "relational", false);
-  const depthProgress: {
-    readonly phase: "completion" | "completion-or-failure" | "obligation" | "obligation-compact";
-    readonly id?: string;
-    readonly round: number;
-    readonly nodes: number;
-    readonly previousNodes?: number;
-    readonly fixed: boolean;
-  }[] = [];
+  const depthProgress: ObligationProgress[] = [];
   assert.throws(
     () => proveCompletionSafetyByObligation(obligationDepth, {
       roundLimit: 2,
@@ -2067,14 +2049,7 @@ test("obligation compaction fails closed at its boundary and propagates compacti
     "each nonzero final callback owns its own latest compacted manager");
 
   const capped = modelFor(scenario, { stock: 1 }, "interleaved", "relational", false);
-  const capProgress: {
-    readonly phase: "completion" | "completion-or-failure" | "obligation" | "obligation-compact";
-    readonly id?: string;
-    readonly round: number;
-    readonly nodes: number;
-    readonly previousNodes?: number;
-    readonly fixed: boolean;
-  }[] = [];
+  const capProgress: ObligationProgress[] = [];
   assert.throws(
     () => proveCompletionSafetyByObligation(capped, {
       roundLimit: 2,
@@ -2099,5 +2074,633 @@ test("obligation compaction fails closed at its boundary and propagates compacti
     }),
     error => error === compactionError,
     "compaction observer failures are propagated without a partial result",
+  );
+});
+
+/**
+ * A small graph whose completion and absorbed-failure cones both need several
+ * predecessor rounds.  The good route is start -> middle -> finish.  A second
+ * route reaches a fault through bad-a -> bad-b -> bad-c -> bad-d.  This keeps the fixed-point
+ * compaction test independent of the campaign's large authored graph while
+ * exercising C, W, and the original per-choice failure metadata.
+ */
+const FIXED_POINT_DEPTH = {
+  version: 1,
+  initialScene: "start",
+  initialResources: { stock: 1 },
+  initialFacts: [],
+  scenes: [
+    { id: "start", title: "Start", text: [{ text: "The route begins." }] },
+    { id: "middle", title: "Middle", text: [{ text: "The safe route continues." }] },
+    { id: "finish", title: "Finish", text: [{ text: "The final gate is ready." }] },
+    { id: "bad-a", title: "Lower path", text: [{ text: "The lower path descends." }] },
+    { id: "bad-b", title: "Broken yard", text: [{ text: "The broken yard leads onward." }] },
+    { id: "bad-c", title: "Flooded cut", text: [{ text: "The flooded cut narrows." }] },
+    { id: "bad-d", title: "Broken tank", text: [{ text: "The broken tank can fail." }] },
+  ],
+  choices: [
+    {
+      id: "take-safe-route",
+      scene: "start",
+      label: "Take the safe route",
+      description: "Walk to the middle road.",
+      effects: [{ type: "goTo", scene: "middle" }],
+    },
+    {
+      id: "take-lower-route",
+      scene: "start",
+      label: "Take the lower route",
+      description: "Follow the lower path toward the broken yard.",
+      effects: [{ type: "goTo", scene: "bad-a" }],
+    },
+    {
+      id: "continue-safe-route",
+      scene: "middle",
+      label: "Continue to the gate",
+      description: "Walk from the middle road to the final gate.",
+      effects: [{ type: "goTo", scene: "finish" }],
+    },
+    {
+      id: "complete-safe-route",
+      scene: "finish",
+      label: "Complete the route",
+      description: "Close the route at the final gate.",
+      effects: [],
+      outcome: { status: "completed", summary: "The route is complete." },
+    },
+    {
+      id: "continue-lower-route",
+      scene: "bad-a",
+      label: "Descend to the yard",
+      description: "Descend from the lower path into the broken yard.",
+      effects: [{ type: "goTo", scene: "bad-b" }],
+    },
+    {
+      id: "continue-lower-route-2",
+      scene: "bad-b",
+      label: "Cross the flooded cut",
+      description: "Cross the broken yard toward the flooded cut.",
+      effects: [{ type: "goTo", scene: "bad-c" }],
+    },
+    {
+      id: "continue-lower-route-3",
+      scene: "bad-c",
+      label: "Reach the broken tank",
+      description: "Continue from the flooded cut to the broken tank.",
+      effects: [{ type: "goTo", scene: "bad-d" }],
+    },
+    {
+      id: "break-full-tank",
+      scene: "bad-d",
+      label: "Force the broken tank",
+      description: "Push the full tank beyond the safe integer bound.",
+      when: [{ type: "resourceAtLeast", resource: "stock", value: 1 }],
+      effects: [
+        { type: "adjustResource", resource: "stock", delta: Number.MAX_SAFE_INTEGER },
+        { type: "goTo", scene: "bad-b" },
+      ],
+    },
+  ],
+} as const;
+
+type FixedPointConfig = {
+  readonly nonCompletionMode: NonCompletionMode;
+  readonly nonCompletionPartition: NonCompletionPartition;
+  readonly failurePartition: FailurePartition;
+};
+
+interface FixedPointCapture {
+  readonly model: SymbolicModel;
+  readonly graph: RawGraph;
+  readonly result: ReturnType<typeof proveCompletionSafetyByObligation>;
+  readonly progress: readonly {
+    readonly phase: "completion" | "completion-or-failure" | "obligation" | "obligation-compact"
+      | "completion-compact" | "completion-or-failure-compact";
+    readonly round?: number;
+    readonly nodes?: number;
+    readonly previousNodes?: number;
+    readonly fixed?: boolean;
+    readonly id?: string;
+  }[];
+  readonly callbackRoots: ReadonlyMap<string, {
+    readonly owner: SymbolicModel;
+    readonly seed: number;
+    readonly bad: number;
+    readonly summary: ReturnType<typeof proveCompletionSafetyByObligation>["obligations"][number];
+  }>;
+}
+
+function captureFixedPointRun(
+  raw: unknown,
+  bounds: Readonly<Record<string, number>>,
+  config: FixedPointConfig,
+  fixedPointCompactEvery: number,
+  order: "interleaved" | "blocked",
+  transitionMode: "relational" | "partitioned",
+  reorder: boolean,
+): FixedPointCapture {
+  const graph = buildRawGraph(raw, bounds);
+  const model = modelFor(graph.scenario, bounds, order, transitionMode, reorder);
+  const progress: FixedPointCapture["progress"] extends readonly (infer T)[] ? T[] : never = [];
+  const callbackRoots = new Map<string, {
+    readonly owner: SymbolicModel;
+    readonly seed: number;
+    readonly bad: number;
+    readonly summary: ReturnType<typeof proveCompletionSafetyByObligation>["obligations"][number];
+  }>();
+  const result = proveCompletionSafetyByObligation(model, {
+    roundLimit: 64,
+    nonCompletionMode: config.nonCompletionMode,
+    nonCompletionPartition: config.nonCompletionPartition,
+    failurePartition: config.failurePartition,
+    fixedPointCompactEvery,
+    onProgress: event => {
+      progress.push(event);
+      assert.ok(Number.isSafeInteger(event.round) && event.round >= 1, "fixed-point progress round is bounded");
+      assert.ok(Number.isSafeInteger(event.nodes) && event.nodes >= 2, "fixed-point progress node count is bounded");
+      if (event.phase === "completion-compact" || event.phase === "completion-or-failure-compact") {
+        assert.deepEqual(
+          Object.keys(event).sort(),
+          ["fixed", "nodes", "phase", "previousNodes", "round"],
+          "fixed-point compaction has no obligation identity or owner fields",
+        );
+        assert.equal(event.fixed, false, "fixed-point compaction follows a nonfixed round");
+        assert.ok(Number.isSafeInteger(event.previousNodes) && event.previousNodes! >= 2,
+          "fixed-point compaction reports its previous owner node count");
+      }
+    },
+    onObligation: payload => {
+      const summary = payload.summary;
+      assert.equal(callbackRoots.has(summary.id), false, `fixed-point callback ID ${summary.id} is unique`);
+      assertCurrentOnly(payload.model, payload.seed, `${summary.id} seed`);
+      assertCurrentOnly(payload.model, payload.bad, `${summary.id} bad cone`);
+      assert.ok(Object.isFrozen(summary), `${summary.id} summary is frozen`);
+      callbackRoots.set(summary.id, { owner: payload.model, seed: payload.seed, bad: payload.bad, summary });
+    },
+  });
+  return { model, graph, result, progress, callbackRoots };
+}
+
+function copiedRoots(
+  from: SymbolicModel,
+  to: SymbolicModel,
+  roots: readonly number[],
+): readonly number[] {
+  if (from === to) return roots;
+  return from.bdd.copyForestTo(to.bdd, roots);
+}
+
+function semanticObligationSummary(summary: ReturnType<typeof proveCompletionSafetyByObligation>["obligations"][number]): Record<string, unknown> {
+  const { nodes: _nodes, compactions: _compactions, ...semantic } = summary;
+  return semantic;
+}
+
+function assertFixedPointSemantics(
+  baseline: FixedPointCapture,
+  compacted: FixedPointCapture,
+  config: FixedPointConfig,
+): void {
+  const baselineResult = baseline.result;
+  const compactedResult = compacted.result;
+  assert.deepEqual(
+    compactedResult.failureSeeds,
+    baselineResult.failureSeeds,
+    "fixed-point compaction preserves all original failure seed metadata",
+  );
+  assert.deepEqual(
+    compactedResult.obligations.map(semanticObligationSummary),
+    baselineResult.obligations.map(semanticObligationSummary),
+    "fixed-point compaction preserves obligation identities and outcomes",
+  );
+  const baselineRoots = [
+    baselineResult.completable,
+    ...(baselineResult.completionOrFailure === undefined ? [] : [baselineResult.completionOrFailure]),
+  ];
+  const compactedRoots = [
+    compactedResult.completable,
+    ...(compactedResult.completionOrFailure === undefined ? [] : [compactedResult.completionOrFailure]),
+  ];
+  const normalized = copiedRoots(compactedResult.model, baseline.model, compactedRoots);
+  assert.deepEqual(normalized, baselineRoots, "fixed-point compaction preserves C and W roots");
+  assert.equal(
+    baselineResult.completable,
+    formulaForKeys(baseline.model, baseline.graph, baseline.graph.completable),
+    "baseline C root matches the independent finite oracle",
+  );
+  if (baselineResult.completionOrFailure !== undefined) {
+    const completionOrFailureSeed = new Set<string>([
+      ...baseline.graph.states
+        .filter(state => state.status === "completed")
+        .map(state => stateKey(state, baseline.graph.resources, baseline.graph.flags)),
+      ...baseline.graph.faults,
+      ...baseline.graph.invalidSuccess,
+      ...baseline.graph.uncoveredEnabled,
+    ]);
+    const expectedCompletionOrFailure = predecessorClosure(baseline.graph, completionOrFailureSeed);
+    assert.equal(
+      baselineResult.completionOrFailure,
+      formulaForKeys(baseline.model, baseline.graph, expectedCompletionOrFailure),
+      "baseline W root matches the independent finite oracle",
+    );
+  }
+  assert.strictEqual(compactedResult.model.bdd.exists(compactedResult.completable, compactedResult.model.nextVariables), compactedResult.completable,
+    "compacted C belongs to the final current-only owner");
+  if (compactedResult.completionOrFailure !== undefined) {
+    assert.strictEqual(compactedResult.model.bdd.exists(compactedResult.completionOrFailure, compactedResult.model.nextVariables), compactedResult.completionOrFailure,
+      "compacted W belongs to the final current-only owner");
+  }
+
+  const expectedByKey = new Map(expectedObligations(
+    compacted.graph,
+    config.nonCompletionMode,
+    config.nonCompletionPartition,
+    config.failurePartition,
+  ).map(obligation => [obligation.key, obligation]));
+  assert.deepEqual(
+    [...baseline.callbackRoots.keys()],
+    [...compacted.callbackRoots.keys()],
+    "fixed-point compaction preserves callback obligation order",
+  );
+  const compactedNonzeroOwners = new Set<SymbolicModel>();
+  for (const callback of compacted.callbackRoots.values()) {
+    if (callback.summary.seedZero) {
+      assert.strictEqual(callback.owner, compactedResult.model,
+        `${callback.summary.id} zero-seed callback uses the final fixed-point owner`);
+    } else {
+      assert.notStrictEqual(callback.owner, compactedResult.model,
+        `${callback.summary.id} nonzero callback keeps its obligation-local owner`);
+      assert.equal(compactedNonzeroOwners.has(callback.owner), false,
+        `${callback.summary.id} nonzero callback owner is unique`);
+      compactedNonzeroOwners.add(callback.owner);
+    }
+  }
+  for (const callback of baseline.callbackRoots.values()) {
+    if (callback.summary.seedZero) {
+      assert.strictEqual(callback.owner, baseline.model,
+        `${callback.summary.id} default zero-seed callback keeps the input owner`);
+    } else {
+      assert.notStrictEqual(callback.owner, baseline.model,
+        `${callback.summary.id} default nonzero callback uses an obligation-local owner`);
+    }
+  }
+  for (const [key, compactedCallback] of compacted.callbackRoots) {
+    const baselineCallback = baseline.callbackRoots.get(key);
+    assert.ok(baselineCallback !== undefined, `${key} baseline callback exists`);
+    const fixture = expectedByKey.get(key);
+    assert.ok(fixture !== undefined, `${key} has an independent raw obligation`);
+    const compactedCopied = copiedRoots(compactedCallback.owner, baseline.model,
+      [compactedCallback.seed, compactedCallback.bad]);
+    const baselineExpected = [
+      formulaForKeys(baseline.model, baseline.graph, fixture!.seed),
+      formulaForKeys(baseline.model, baseline.graph, fixture!.bad),
+    ];
+    assert.deepEqual(compactedCopied, baselineExpected, `${key} seed and cone preserve raw semantics`);
+    assert.deepEqual(
+      copiedRoots(baselineCallback!.owner, baseline.model, [baselineCallback!.seed, baselineCallback!.bad]),
+      baselineExpected,
+      `${key} baseline seed and cone match the raw oracle`,
+    );
+  }
+}
+
+function assertFixedPointProgress(
+  capture: FixedPointCapture,
+  fixedPointCompactEvery: number,
+  absorbed: boolean,
+): void {
+  const progress = capture.progress;
+  const phases = ["completion", ...(absorbed ? ["completion-or-failure"] : [])] as const;
+  for (const phase of phases) {
+    const fixedPointEvents = progress.filter(event => event.phase === phase);
+    const compactPhase = phase === "completion" ? "completion-compact" : "completion-or-failure-compact";
+    const compactEvents = progress.filter(event => event.phase === compactPhase);
+    assert.ok(fixedPointEvents.length >= 1, `${phase} emits fixed-point rounds`);
+    assert.equal(
+      compactEvents.length,
+      (fixedPointEvents.length - 1) / fixedPointCompactEvery >= 0
+        ? Math.floor((fixedPointEvents.length - 1) / fixedPointCompactEvery)
+        : 0,
+      `${compactPhase} count follows the configured interval`,
+    );
+    for (const event of compactEvents) {
+      const index = progress.indexOf(event);
+      assert.ok(index > 0, `${compactPhase} has a preceding round`);
+      const previous = progress[index - 1]!;
+      assert.equal(previous.phase, phase, `${compactPhase} follows its own fixed-point round`);
+      assert.equal(previous.round, event.round, `${compactPhase} round matches its source round`);
+      assert.equal(previous.fixed, false, `${compactPhase} follows a nonfixed round`);
+      assert.equal(event.previousNodes, previous.nodes, `${compactPhase} preserves previousNodes`);
+      assert.equal(event.round! % fixedPointCompactEvery, 0, `${compactPhase} honors the interval`);
+    }
+  }
+  const completionCompactions = capture.result.completionCompactions;
+  assert.equal(Object.hasOwn(capture.result, "completionCompactions"), true,
+    "enabled fixed-point compaction reports completionCompactions");
+  assert.equal(completionCompactions, progress.filter(event => event.phase === "completion-compact").length,
+    "completionCompactions matches progress");
+  if (absorbed) {
+    assert.equal(Object.hasOwn(capture.result, "completionOrFailureCompactions"), true,
+      "absorbed fixed-point compaction reports W compactions");
+    assert.equal(capture.result.completionOrFailureCompactions,
+      progress.filter(event => event.phase === "completion-or-failure-compact").length,
+      "completionOrFailureCompactions matches progress");
+  } else {
+    assert.equal(Object.hasOwn(capture.result, "completionOrFailureCompactions"), false,
+      "direct mode keeps the W compaction field absent");
+  }
+}
+
+test("fixed-point compaction preserves C, W, all cones, and seeds across layouts", () => {
+  const configurations: readonly FixedPointConfig[] = [
+    { nonCompletionMode: "direct", nonCompletionPartition: "global", failurePartition: "choice" },
+    { nonCompletionMode: "direct", nonCompletionPartition: "scene", failurePartition: "combined" },
+    { nonCompletionMode: "failure-absorbed", nonCompletionPartition: "global", failurePartition: "choice" },
+    { nonCompletionMode: "failure-absorbed", nonCompletionPartition: "scene", failurePartition: "combined" },
+  ];
+  for (const config of configurations) {
+    for (const order of ["interleaved", "blocked"] as const) {
+      for (const transitionMode of ["relational", "partitioned"] as const) {
+        for (const reorder of [false, true]) {
+          const baseline = captureFixedPointRun(
+            FIXED_POINT_DEPTH,
+            { stock: 1 },
+            config,
+            0,
+            order,
+            transitionMode,
+            reorder,
+          );
+          const baselineKeys = baseline.result.obligations.map(summary => summary.id);
+          for (const interval of [1, 2] as const) {
+            const compacted = captureFixedPointRun(
+              FIXED_POINT_DEPTH,
+              { stock: 1 },
+              config,
+              interval,
+              order,
+              transitionMode,
+              reorder,
+            );
+            assert.notStrictEqual(compacted.result.model, compacted.model,
+              "fixed-point compaction rebinds the final result owner");
+            assert.notStrictEqual(compacted.result.model.bdd, compacted.model.bdd,
+              "fixed-point compaction uses a fresh final BDD manager");
+            assert.deepEqual(compacted.result.obligations.map(summary => summary.id), baselineKeys,
+              "fixed-point compaction preserves authored obligation order");
+            assertFixedPointSemantics(baseline, compacted, config);
+            assertFixedPointProgress(compacted, interval, config.nonCompletionMode === "failure-absorbed");
+          }
+        }
+      }
+    }
+  }
+});
+
+test("fixed-point compaction preserves authored flag and resource semantics", () => {
+  const cases: readonly {
+    readonly raw: unknown;
+    readonly bounds: Readonly<Record<string, number>>;
+    readonly config: FixedPointConfig;
+  }[] = [
+    {
+      raw: SAFE_CYCLE,
+      bounds: { energy: 1 },
+      config: { nonCompletionMode: "direct", nonCompletionPartition: "global", failurePartition: "choice" },
+    },
+    {
+      raw: REACHABLE_FAULTS,
+      bounds: { stock: 1 },
+      config: { nonCompletionMode: "failure-absorbed", nonCompletionPartition: "scene", failurePartition: "combined" },
+    },
+  ];
+  for (const candidate of cases) {
+    for (const transitionMode of ["relational", "partitioned"] as const) {
+      for (const interval of [1, 2] as const) {
+        const baseline = captureFixedPointRun(
+          candidate.raw,
+          candidate.bounds,
+          candidate.config,
+          0,
+          "interleaved",
+          transitionMode,
+          false,
+        );
+        const compacted = captureFixedPointRun(
+          candidate.raw,
+          candidate.bounds,
+          candidate.config,
+          interval,
+          "interleaved",
+          transitionMode,
+          false,
+        );
+        assertFixedPointSemantics(baseline, compacted, candidate.config);
+        assertFixedPointProgress(compacted, interval, candidate.config.nonCompletionMode === "failure-absorbed");
+      }
+    }
+  }
+});
+
+test("fixed-point compaction default keeps result shape and caller ownership", () => {
+  const capture = captureFixedPointRun(
+    FIXED_POINT_DEPTH,
+    { stock: 1 },
+    { nonCompletionMode: "failure-absorbed", nonCompletionPartition: "scene", failurePartition: "combined" },
+    0,
+    "interleaved",
+    "relational",
+    false,
+  );
+  assert.strictEqual(capture.result.model, capture.model, "default fixed-point mode keeps the caller owner");
+  assert.equal(Object.hasOwn(capture.result, "completionCompactions"), false,
+    "default result has no completionCompactions field");
+  assert.equal(Object.hasOwn(capture.result, "completionOrFailureCompactions"), false,
+    "default result has no W compaction field");
+  assert.equal(capture.progress.some(event => event.phase === "completion-compact" || event.phase === "completion-or-failure-compact"), false,
+    "default progress has no compaction phases");
+  const expectedKeys = expectedObligations(
+    capture.graph,
+    "failure-absorbed",
+    "scene",
+    "combined",
+  ).map(obligation => obligation.key);
+  assert.deepEqual(
+    capture.result.obligations.map(summary => summary.id),
+    expectedKeys,
+    "default result preserves the authored obligation order",
+  );
+  assert.ok(Object.isFrozen(capture.result), "default result remains immutable");
+});
+
+type FixedPointFreshFailure = "alias" | "bounds" | "layout";
+
+interface FixedPointFreshTrace {
+  calls: number;
+}
+
+class FixedPointFreshFailureModel extends SymbolicModel {
+  readonly trace: FixedPointFreshTrace;
+  private readonly boundsSnapshot: Readonly<Record<string, number>>;
+  private readonly optionsSnapshot: SymbolicOptions;
+  private readonly failure: FixedPointFreshFailure;
+  private readonly failOn: number;
+
+  constructor(
+    input: unknown,
+    bounds: Readonly<Record<string, number>>,
+    options: SymbolicOptions,
+    trace: FixedPointFreshTrace,
+    failure: FixedPointFreshFailure,
+    failOn: number,
+  ) {
+    super(input, bounds, options);
+    this.trace = trace;
+    this.boundsSnapshot = Object.freeze({ ...bounds });
+    this.optionsSnapshot = Object.freeze({
+      order: options.order,
+      transitionMode: options.transitionMode,
+      fieldOrder: options.fieldOrder === undefined ? undefined : Object.freeze([...options.fieldOrder]),
+      nodeLimit: options.nodeLimit,
+      cacheLimit: options.cacheLimit,
+      maxDomain: options.maxDomain,
+    });
+    this.failure = failure;
+    this.failOn = failOn;
+  }
+
+  override fresh(): SymbolicModel {
+    this.trace.calls++;
+    if (this.trace.calls >= this.failOn && this.failure === "alias") return this;
+    if (this.trace.calls >= this.failOn && this.failure === "bounds") {
+      return new FixedPointFreshFailureModel(
+        this.scenario,
+        { ...this.boundsSnapshot, stock: this.boundsSnapshot.stock! + 1 },
+        this.optionsSnapshot,
+        this.trace,
+        this.failure,
+        this.failOn,
+      );
+    }
+    if (this.trace.calls >= this.failOn && this.failure === "layout") {
+      return new FixedPointFreshFailureModel(
+        this.scenario,
+        this.boundsSnapshot,
+        { ...this.optionsSnapshot, fieldOrder: reversedFieldOrder(this.scenario) },
+        this.trace,
+        this.failure,
+        this.failOn,
+      );
+    }
+    return new FixedPointFreshFailureModel(
+      this.scenario,
+      this.boundsSnapshot,
+      this.optionsSnapshot,
+      this.trace,
+      this.failure,
+      this.failOn,
+    );
+  }
+}
+
+test("fixed-point compaction validates first and later fresh owner handoffs", () => {
+  const scenario = validateScenario(FIXED_POINT_DEPTH);
+  const options: SymbolicOptions = {
+    order: "interleaved",
+    transitionMode: "relational",
+    nodeLimit: 100_000,
+    cacheLimit: 20_000,
+  };
+  const wBaseline = captureFixedPointRun(
+    FIXED_POINT_DEPTH,
+    { stock: 2 },
+    { nonCompletionMode: "failure-absorbed", nonCompletionPartition: "scene", failurePartition: "combined" },
+    1,
+    "interleaved",
+    "relational",
+    false,
+  );
+  const completionCompactions = wBaseline.progress.filter(event => event.phase === "completion-compact").length;
+  const wCompactions = wBaseline.progress.filter(event => event.phase === "completion-or-failure-compact").length;
+  assert.ok(completionCompactions >= 1, "the handoff fixture reaches completion compaction");
+  assert.ok(wCompactions >= 2, "the handoff fixture reaches at least two W compactions");
+  const handoffs = [
+    { label: "initial", failOn: 1 },
+    { label: "completion", failOn: 2 },
+    { label: "W-first", failOn: completionCompactions + 2 },
+    { label: "W-later", failOn: completionCompactions + 3 },
+  ] as const;
+  for (const failure of ["alias", "bounds", "layout"] as const) {
+    for (const handoff of handoffs) {
+      const trace: FixedPointFreshTrace = { calls: 0 };
+      // Bounds 2 and 3 have the same encoded width and initial stock 1 is
+      // valid in both. The rejection must therefore come from the copied
+      // static-domain anchors, rather than an invalid constructor input.
+      const model = new FixedPointFreshFailureModel(scenario, { stock: 2 }, options, trace, failure, handoff.failOn);
+      assert.throws(
+        () => proveCompletionSafetyByObligation(model, {
+          roundLimit: 64,
+          nonCompletionMode: "failure-absorbed",
+          nonCompletionPartition: "scene",
+          failurePartition: "combined",
+          fixedPointCompactEvery: 1,
+        }),
+        /fresh|owner|distinct|domain|layout|bound|static/i,
+        `fixed-point ${failure} ${handoff.label} handoff fails closed at call ${handoff.failOn}`,
+      );
+      assert.ok(trace.calls >= handoff.failOn, `fixed-point ${failure} reaches ${handoff.label} handoff`);
+    }
+  }
+});
+
+test("fixed-point compaction validates limits, accessors, and progress observers", () => {
+  const scenario = validateScenario(FIXED_POINT_DEPTH);
+  const model = modelFor(scenario, { stock: 1 }, "interleaved", "relational", false);
+  for (const value of [null, -1, 1.5, Number.NaN, Number.POSITIVE_INFINITY, "2"] as const) {
+    assert.throws(
+      () => proveCompletionSafetyByObligation(model, { fixedPointCompactEvery: value as never }),
+      /fixedPointCompactEvery|compaction/i,
+      "rejects fixedPointCompactEvery=" + String(value),
+    );
+  }
+  let reads = 0;
+  const accessorOptions = {
+    get fixedPointCompactEvery(): number {
+      reads++;
+      return 2;
+    },
+    nonCompletionMode: "failure-absorbed" as const,
+    nonCompletionPartition: "scene" as const,
+    failurePartition: "combined" as const,
+  };
+  const accessorResult = proveCompletionSafetyByObligation(model, accessorOptions);
+  assert.equal(reads, 1, "fixedPointCompactEvery is snapshotted with one getter read");
+  assert.equal(Object.hasOwn(accessorResult, "completionCompactions"), true,
+    "accessor-enabled run exposes completion compactions");
+
+  const capModel = modelFor(scenario, { stock: 1 }, "interleaved", "relational", false);
+  const capProgress: string[] = [];
+  assert.throws(
+    () => proveCompletionSafetyByObligation(capModel, {
+      roundLimit: 1,
+      fixedPointCompactEvery: 1,
+      onProgress: event => capProgress.push(event.phase),
+    }),
+    /completion fixed point|round limit/i,
+    "fixed-point round cap fails closed before a result is returned",
+  );
+  assert.ok(capProgress.includes("completion"), "fixed-point cap reports completion progress");
+
+  const observedModel = modelFor(scenario, { stock: 1 }, "interleaved", "relational", false);
+  const interruption = new Error("intentional fixed-point compaction interruption");
+  assert.throws(
+    () => proveCompletionSafetyByObligation(observedModel, {
+      roundLimit: 64,
+      fixedPointCompactEvery: 1,
+      onProgress: event => {
+        if (event.phase === "completion-compact") throw interruption;
+      },
+    }),
+    error => error === interruption,
+    "fixed-point compaction observer failures propagate exactly",
   );
 });
