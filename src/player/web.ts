@@ -495,6 +495,12 @@ export const APP_JS = String.raw`(() => {
 
   function setBusy(value) {
     busy = value;
+    newButton.disabled = busy;
+    loadButton.disabled = busy;
+    loadInput.disabled = busy;
+    saveButton.disabled = busy || (!checkpoint && !sessionId);
+    leaveButton.disabled = busy || !observation || observation.status !== 'playing';
+    exportButton.disabled = busy || !observation || !observation.receipt;
     if (observation) render(observation);
   }
 
@@ -515,6 +521,7 @@ export const APP_JS = String.raw`(() => {
   function jsonBody(value) { return JSON.stringify(value); }
 
   async function newJourney() {
+    if (busy) return;
     setBusy(true);
     try {
       const payload = await request('/api/start', { method: 'POST', body: jsonBody({ seed: nextSeed++ }) });
@@ -623,12 +630,12 @@ export const APP_JS = String.raw`(() => {
     showNotice('Visible ending exported.', 'success');
   }
 
-  function startLoad() { loadInput.click(); }
+  function startLoad() { if (!busy) loadInput.click(); }
 
   async function loadJourney(event) {
     const file = event.target.files && event.target.files[0];
     event.target.value = '';
-    if (!file) return;
+    if (!file || busy) return;
     setBusy(true);
     try {
       const serialized = await file.text();
@@ -672,6 +679,7 @@ export const APP_JS = String.raw`(() => {
       if (error.status === 404 && !checkpoint) {
         forgetSession();
         sessionId = null;
+        setBusy(false);
         await newJourney();
       } else {
         sceneTitle.textContent = 'Your saved journey is safe.';

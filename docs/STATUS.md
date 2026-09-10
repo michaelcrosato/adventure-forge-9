@@ -1,6 +1,192 @@
 # Current work
 
-Updated: 2026-09-05 (America/Vancouver). The full Skyrim-breadth/BG3-depth goal remains active and far beyond the current game.
+## Current handoff: 2026-09-10, user-directed checkpoint and pause
+
+The user requested committing and pushing the immediate verified integration,
+while explicitly deferring the browser-driver repair. Do not perform that
+repair or start fresh browser/live games as part of this checkpoint.
+Checkpoint publication is not Stage 8 live acceptance or completion of the
+larger explorable-world goal.
+
+The current source and all 693 certificate forests still match the passing
+287/287 `npm run verify` run (486.37 seconds). No behavior changed and tests
+were not rerun for this documentation/publication step. Preflight evidence:
+`~/.local/share/adventure-forge-9/af9-user-checkpoint-preflight-20260910-v1.json`.
+The two experimental branches' file targets are already integrated; retain
+their histories without replacing the current verified implementations.
+
+### Resume from here
+
+1. Create a new version of the external browser witness with explicit `scrollintoview` before native `click` and download-button interactions. Preserve the original failed `af9-factorized-browser-witness-20260909-v1.mjs` and its evidence unchanged. Do not make this repair during the current checkpoint.
+2. Run the complete stateless browser journey: pause an Archive case, perform regional work, resume the case, revisit the decided/closed record, exercise save/download/reload/upload, check mobile rendering, and measure the actual request envelope.
+3. Run exactly the three predeclared fresh neutral Luna/max games, seeds 1-3, with unchanged instructions, interviews and the 60-turn ceiling. Preserve every attempt; require the existing natural regional-entry/allocation, clarity and no-blocker gates before claiming Stage 8 live acceptance.
+
+The original browser click did not scroll to its below-the-fold target and
+sent no choice request. A separate explicit-scroll diagnostic advanced the
+same choice successfully. The repair is to the external test driver, not
+a demonstrated application defect. Full browser and live acceptance remain
+unverified. No fresh player or interview is claimed.
+
+## Prior audit checkpoint: 2026-09-09, complete factorized production proof passes
+
+Build and all **287/287 tests** pass. The adopted bounded campaign gate
+freshly checks **29 scene cones and all 664 original failure seeds**, with
+least C/W recomputed in 18/12 rounds and every current source/artifact binding
+rechecked. Full `npm run verify`: 486.37 seconds wall, 1,427,512 KiB maximum
+RSS, exit 0. The worker's complete checked window was 483,217.224119 ms,
+within its unchanged 720-second/1536-MiB policy. All 231 authored endpoint
+paths also replay successfully.
+
+The original 250,000-family guard is unchanged and its historical failures
+remain retained. The new complete proof replaces the impractical full
+campaign family enumeration, not its safety/completion requirements. Legacy
+combined-certificate IO, finite oracles, source/path/byte/resource checks,
+and all zero-seed obligations remain covered.
+
+Current priorities: correct the external browser driver's missing explicit
+scroll after user approval, finish the frozen stateless browser/save/mobile/
+request-envelope gate, then run exactly the three predeclared fresh neutral
+Luna/max games (seeds 1-3). Only after those gates, resolve integration
+branches, commit and push. Nothing has been published at this checkpoint.
+
+Integration preflight accounts for every additive experimental-branch path:
+34 release-branch files (27 byte-identical) and 26 symbolic-branch files
+(15 byte-identical, with packed experiments retained under test helpers).
+Current proof bindings and the full frozen source snapshot still match the
+passing run. Original inventories are
+`~/.local/share/adventure-forge-9/af9-experimental-branch-integration-20260909-v1.json`
+and `af9-prestage-source-binding-20260909-v1.json`. No branch content has been
+discarded or automatically overwritten by this inventory; the actual merge
+remains pending the release gates.
+
+The browser failure is retained: the first CLI click sent no choice request
+and left revision 0. A fresh explicit-scroll diagnostic advanced the same
+choice to revision 1 without an application error. This is not a completed
+browser journey or blind acceptance. Both browsers/servers are closed; no
+fresh players or interviews ran.
+
+See [FACTORIZED_CERTIFICATE_RELEASE.md](FACTORIZED_CERTIFICATE_RELEASE.md)
+for proof scope, commands, exact external evidence paths and limitations.
+The larger explorable-world goal remains open beyond 29 scenes/166 choices.
+
+## Prior checkpoint: 2026-09-09, native copy policy integrated; 538-component run closed
+
+The native obligation solver now supports an opt-in `obligationChoiceCompactInterval`. Zero preserves the previous absolute-threshold behavior. A positive interval resets the next copy trigger to the larger of the configured minimum and the retained owner size plus the interval after every checked handoff. Inputs are validated and snapshotted once, and all existing hard guards and exact fixed-point checks remain intact. The experimental native generator uses a 750,000-node minimum and 250,000-node interval; its independent verifier uses the previously successful 1,250,000-node operational copy trigger and records that setting.
+
+- Current `npm run verify`: build passed, 277/278 tests passed, exit 1, 143.13 seconds. Added interval cases cover both layouts, safe/unsafe fixtures, exact seed/cone and C/W equivalence, forced/no between-choice copies, malformed options, one-time getters, huge intervals, and the unchanged disabled default. The only failure remains the original campaign family-audit 250,000-state guard; it was not removed or raised.
+- Fresh native generation v3 is terminal: 538/693 candidate forests, consisting of all 29 scene cones and 509 failure components. It failed at the unchanged 2,000,000-node cap while solving `bound-exit:open-emergency-bypass`, after 1,339.25 seconds external wall time. The last checked copy retained 1,595,145 nodes during round 2. This is a node-limit failure, not the old absolute-threshold copying stall or a complete certificate.
+- The run successfully generated `bound-exit:run-the-watchline` and `bound-exit:take-workers-through-flood`. The new watchline forest is byte-identical to the earlier independently checked single-component artifact. This identity does not turn the partial current-source catalog into a complete, independently accepted campaign proof.
+- Two root-owned family-analysis alternatives stayed outside the repository. Future-write liveness passed 9 fixture tests, but its full isolated audit still exceeded 250,000 families in 135.54 seconds. Retaining one sufficient permanent justifier per blocked AND-guard passed 7 fixture tests; a workload-only probe still reached 250,000 families in 9.81 seconds, so another full run was not attempted. Neither refinement was adopted, and neither received campaign acceptance.
+- All runs launched in this checkpoint are closed. No new subagents, live/blind play, merge, commit, or push occurred. Git inspection and fetch found `main` 88 commits ahead of `origin/main` and no remote-only commits; two historical audit branches remain retained. The active commit/push goal is unfinished, and publication is held while the current gate fails unless the user explicitly chooses a documented research-only checkpoint.
+
+Original evidence is under `/home/micha/.local/share/adventure-forge-9/`: `af9-native-copy-policy-verify-20260909-v1.log`, `af9-factorized-candidates-20260909-v3/` with its sibling `.log` and `.closed.json`, `af9-family-write-liveness-20260909-v1/`, and `af9-family-sufficient-justifier-20260909-v1/`. The closed record hashes all 1,078 files from the failed native attempt. The new source/evidence checkpoint is `af9-factorized-source-20260909-v6.tar.gz` and its sibling `.sha256` manifest. See `docs/FACTORIZED_CERTIFICATE_EXPERIMENT.md` for commands, limits, and scope.
+
+Next priority: a bounded single-component `open-emergency-bypass` preflight using a smaller proof representation. Investigate an inductive resource-budget violation predicate justified by monotone single-use gain flags, with the existing independent checker still requiring exact original seed inclusion, initial disjointness, and closure under every authored choice. A candidate may be a sound closed overapproximation; it need not be the expensive least bad cone. Reject unsupported invariants rather than relaxing proof checks. Exact seed sub-partitions are another possibility but would require an explicit coverage contract. Do not raise the node guard or start another full generation without evidence that the new bottleneck is addressed. The full current catalog, independent foundations/checker, current regression gate, frozen endpoint gate, and exactly three predeclared blind subscription players remain outstanding before campaign publication.
+
+## Historical checkpoint: 2026-09-09, watchline component independently checked
+
+The root-owned audit investigation added bounded exact support metadata to the BDD implementation. For universes of at most 512 variables, existential quantification and simultaneous substitution now skip subgraphs whose support is disjoint from the requested variables; larger universes retain the original traversal. Input validation, substitution semantics, serialized forests, and hard node/cache guards are unchanged. Five new tests cover truth-table equivalence, cache settings, import/copy, the large-universe fallback, and guard preservation.
+
+- `npm run verify`: build passed, 268/269 tests passed, exit 1, 130.43 seconds. The only failure remains the original family-audit 250,000-state guard. The full regression gate is NOT green.
+- The external allocation-interval probe reached the same third-sweep checkpoint in 41.30 seconds versus 157.31 seconds before support pruning, approximately 3.8 times faster at that checkpoint. This is one paired observation, not a whole-audit benchmark. Its three-minute run still timed out.
+- A separately declared six-minute probe then generated `bound-exit:run-the-watchline` to a fixed point in round 12: 292.28 seconds external wall time, 950,172 exported cone nodes, 131 checked copies. This is one candidate component, not a complete certificate.
+- A fresh original-relational checker independently accepted that component under exact current source bindings in 100.09 seconds. It checked the original seed and all authored-choice closure obligations. The existing copy trigger was configured to 1,250,000 nodes; the hard 2,000,000-node cap and 1,536 MiB JavaScript heap cap were unchanged. The first checker attempt, using the absolute 1,000,000-node trigger, timed out after 361.53 seconds; its failed evidence is retained.
+- Both successful records deliberately retain `complete: false` and `accepted: false`: no complete 693-component catalog, independent least C/W calculation, frozen endpoint gate, or blind-player gate was established by these component runs.
+- All runs in this checkpoint are closed. No publication, commit, push, live/blind play, new delegation, or cost claim occurred. The broader game goal remains open.
+
+Current evidence lives outside the repository under `/home/micha/.local/share/adventure-forge-9/`: `af9-support-pruning-verify-20260909-v1.log`, `af9-adaptive-compaction-probe-20260909-v3*`, `af9-adaptive-compaction-probe-20260909-v4*`, and `af9-watchline-relational-check-20260909-v1*` / `v2*`. The source checkpoint is `af9-factorized-source-20260909-v5.tar.gz`, with its sibling SHA-256 manifest. Detailed commands, failed attempts, scope, and resource observations are recorded in `docs/FACTORIZED_CERTIFICATE_EXPERIMENT.md`.
+
+Next priority: integrate a bounded retained-size-aware copy policy into the native generator with focused equivalence tests, then attempt a complete fresh 693-component generation and independent verification under the new source bindings. The native generator still uses its absolute 750,000-node trigger; the independent verifier's default remains 1,000,000. The standalone probes have not silently changed either policy. Do not reuse the old 466-component prefix as a current complete certificate. The unchanged regression gate, frozen endpoint gate, and exactly three predeclared blind subscription players still precede publication and broader game work.
+
+## Historical checkpoint: 2026-09-09, approved repairs applied and validated
+
+- The user approved the disclosed repairs. Both test union checks now use `in` narrowing. The external probe's missing self-loop `goTo` is corrected in a new v2 runner; the failed v1 runner and its original evidence are unchanged. The approval-related blocker is resolved. No gameplay or repository proof algorithm was changed.
+- Fresh `npm run verify`: build passed; 263/264 tests passed, zero skipped/cancelled. The sole failure remains `tests/scenario.test.ts:6`, which exceeded the unchanged 250,000-family exhaustive-audit guard. External elapsed time was 138.62 seconds; peak RSS 2,566,776 KiB. The repaired range tests now compile and pass in the full suite.
+- The corrected standalone allocation-interval probe passed all 16 fixture cases in 40.117377 ms before campaign work. Its `run-the-watchline` component attempt reached round 4 but exceeded the unchanged 180-second checked budget (180.78 seconds external, peak RSS 1,352,992 KiB). No component certificate was generated or independently verified, and no compaction policy was adopted into the repository.
+- All validation processes are terminal. Exhaustive campaign safety remains unproven; the closed 466/693-forest generation is still incomplete. Next work remains proof scalability under exact checks and hard guards, not another unchanged full restart. Full proof, regression, frozen endpoint, and three predeclared blind-player gates still precede publication, and the larger game objective remains open.
+- Evidence is outside the repository: `/home/micha/.local/share/adventure-forge-9/af9-approved-repair-verify-20260909-v1.log`, `af9-adaptive-compaction-probe-20260909-v2.mjs`, the sibling probe `.log`, and its native run records under the same directory. The repaired source and current docs are archived in `af9-factorized-source-20260909-v4.tar.gz`, with source/probe/log digests in the sibling `.sha256` file. No new agent or publication was used.
+
+## Previous audit status: 2026-09-09, repair approval required
+
+- No generation, audit, or probe is running. The standalone adaptive-compaction probe stopped after 0.30 seconds external, before campaign work, because its `increment` fixture choice omitted the required self-loop `goTo`. No fixture-equivalence or campaign-performance result was obtained. The probe and original failure evidence remain outside the repository.
+- The existing two TS2339 test errors also remain unrepaired. Approval to change those two `Object.hasOwn` checks was requested and remains unanswered across successive goal turns. Further validation now requires permission to repair the disclosed test errors and the probe fixture; automatic continuation is not being treated as that permission. No repository behavior was changed in this probe turn.
+- The last full generation remains the closed, incomplete 466/693-forest attempt described below. The previously successful ledger-component check is still only local evidence. No passing full regression gate, complete independent proof, publication, or blind-play acceptance is claimed, and the full game objective remains open.
+- Probe evidence: `/home/micha/.local/share/adventure-forge-9/af9-adaptive-compaction-probe-20260909-v1.mjs`, the sibling `.log`, the run directory's `input.json` and `failure.json`, and `af9-adaptive-compaction-probe-20260909-v1.closed.sha256` under the same evidence directory. Next requested action is approval for the two test-narrowing repairs and the fixture's self-loop `goTo`, followed by the appropriate bounded reruns.
+
+## Previous audit status: 2026-09-09, generation v2 closed incomplete
+
+- Session 27960 is terminal, exit 1. Fresh generation v2 exceeded its predeclared checked time limit after 1,800,583.055959 ms internal / 1,800.84 seconds external (30m00.84s), with peak RSS 1,559,456 KiB. It must not be reported as running or restarted merely to obtain another observation.
+- The native failure report confirms 466/693 forests: all 29 scene forests and 437 failure forests. The last artifact is `arithmetic-error:run-the-watchline`, `cone-00465.json.gz`; `bound-exit:run-the-watchline` was unfinished in round 4. The native report retains `complete: false`, `accepted: false`. No complete candidate was submitted to the independent verifier.
+- The log exposes a concrete generation bottleneck: retained roots exceeded the 750,000-node between-choice compaction threshold, causing repeated full copies after very small allocations. For example, a copy after `visit-reedway-clinic` retained 796,193 nodes from an owner with 796,203 allocated nodes. The run reported a time-limit failure, not a node-limit failure. Do not launch another unchanged full restart; examine a retained-size-aware allocation interval in a bounded experiment first, preserving all exact predicates, owner checks, and hard guards.
+- The two-line TypeScript test repair still awaits approval. The latest `npm run verify` stopped at build before running tests; no passing regression result is inferred. Full independent proof, regression, frozen endpoint, and exactly three predeclared blind-player gates still precede publication. The complete game goal remains open.
+- Original closed-run evidence: `/home/micha/.local/share/adventure-forge-9/af9-factorized-candidates-20260909-v2/failure.json`, the sibling run `.log` and `.launch.json`, and `/home/micha/.local/share/adventure-forge-9/af9-factorized-candidates-20260909-v2.closed.sha256`. The digest file covers the retained native JSON, all 466 compressed forests, log, and launch metadata. Source remained unchanged from the pre-launch v3 archive. No new agent or publication was used for this observation turn.
+
+## Previous audit status: 2026-09-09 22:32 UTC, fresh generation running
+
+- Fresh current-source factorized generation v2 started at 22:32:46 UTC. Shell session 27960 returned live construction/completion progress. It targets all 693 forests with a predeclared 1,800,000 ms checked limit, 1810-second external timeout plus 10-second kill grace, unchanged 2,000,000-node cap, 1536 MiB heap cap, and 128-round guard. Do not restart it on an observation timeout; poll that session authoritatively.
+- This run is independent of the pending two-line test repair: the test file is not in the generator's proof source bindings. The last full `npm run verify` still failed compilation. No approval to repair the test, passing regression gate, complete certificate, or release acceptance is inferred from the automatic goal continuation.
+- Source is frozen for generation. The native producer records and rechecks its own current bindings; the pre-launch source is retained in the v3 archive described below. Original launch metadata, output directory, and log are `/home/micha/.local/share/adventure-forge-9/af9-factorized-candidates-20260909-v2.launch.json`, `af9-factorized-candidates-20260909-v2/`, and `af9-factorized-candidates-20260909-v2.log` under that same directory.
+- Next: observe this exact run to a terminal result. A complete candidate would still require strict independent verification, an approved test repair and full regression gate, then frozen endpoint and three-player blind gates before publication. A partial or timed-out generation cannot advance those gates. The full game objective remains open.
+
+## Previous audit status: 2026-09-09, relational-range preflight passed
+
+This section supersedes prior audit-result and next-action notes below. No generation or audit process remains running.
+
+- The factorized cone checker now restricts each target to the existential output range of its original relation before calling the original relational predecessor. This is an exact identity, not a narrower safety property; gameplay, generator code, complete-run source bindings, and all hard limits remain unchanged.
+- The previously failing ledger component passed every authored choice closure check in 54.75 seconds external (54,539.24242 ms internal), with five cone copies and peak RSS 1,505,644 KiB. The preceding version timed out after 183.90 seconds without finishing. This pass concerns one historical component only; the report remains `complete: false`, `accepted: false`.
+- The bounded worker added `tests/factorized-relational-range.test.ts`. Its focused runtime tests passed 2/2 in 0.297 seconds reported wall time. However, the manager's latest `npm run verify` failed at TypeScript compilation in 2.11 seconds: TS2339 at lines 220 and 227 because `Object.hasOwn` does not narrow the success/fault union. The full suite did not run. The user has been asked to approve replacing those two checks with `in` checks; no silent repair or passing integration result is claimed.
+- Next: obtain approval for that two-line test repair and rerun the full gate. Only then consider a fresh bounded generation under current source bindings. A complete independently verified certificate, frozen endpoint gate, and exactly three predeclared blind subscription players still precede publication. The larger game objective remains open.
+- Original evidence: `/home/micha/.local/share/adventure-forge-9/af9-factorized-ledger-component-check-20260909-v2.log`, `af9-factorized-range-verify-20260909-v1.log`, and `factorized-relational-range-v1.log` / `factorized-relational-range-v2.log` under that same directory. The current source and docs are retained as `af9-factorized-source-20260909-v3.tar.gz`, with evidence digests in the sibling `.sha256` file. Details and commands are in `docs/FACTORIZED_CERTIFICATE_EXPERIMENT.md`.
+
+## Previous audit status: 2026-09-09, closed component preflight
+
+This section supersedes older running-session and pending-result notes below. No audit or generation process from this experiment remains running.
+
+- The factorized generator remains incomplete: 362/693 forests were written before its checked time limit (903.81 seconds external). The subsequent aggregate relational prefix verifier failed at the unchanged 2,000,000-node limit after checking 253 failure components. Neither result is an accepted safety proof.
+- The factorized verifier now checks backward closure separately for every authored choice using the original relational predecessor, with validated fresh-owner copies. The legacy monolithic verifier and the complete-run source-binding requirement are unchanged.
+- The native historical-component preflight also remained incomplete. `bound-exit:surrender-council-seal-for-ledger` stayed under the node guard but exceeded its 180-second checked limit (183.90 seconds external, peak RSS 1,572,808 KiB). Repeated copies retained 577,264 nodes. Do not launch a longer generation merely to bypass this unresolved verification cost.
+- Latest `npm run verify`: build passed; 261/262 tests passed, zero skipped; only `tests/scenario.test.ts` failed at the unchanged 250,000-family guard. External elapsed time was 133.78 seconds, peak RSS 2,566,660 KiB. This run covers the per-choice verifier and the worker's final forced-compaction tests, not just the earlier implementation.
+- Next priority: reduce full-cone copying/relational-check overhead without weakening the proof, then obtain a complete current-source certificate and pass independent verification. The frozen endpoint gate and exactly three predeclared blind subscription players still follow; no publication or live-play acceptance is claimed. The complete game goal remains larger than the present campaign.
+- Original evidence is outside the repository: `/home/micha/.local/share/adventure-forge-9/af9-factorized-prefix-check-20260909-v1.log`, `af9-factorized-ledger-component-check-20260909-v1.log`, and `af9-factorized-verify-20260909-v2.log` under the same directory. The updated source archive is `af9-factorized-source-20260909-v2.tar.gz`, with `af9-factorized-source-20260909-v2.sha256` recording its digest and the associated evidence digests. See `docs/FACTORIZED_CERTIFICATE_EXPERIMENT.md` for commands and scope.
+
+## Latest audit experiment, 2026-09-09 (supersedes earlier run-in-progress notes)
+
+The fourth functional-preimage run is terminal, exit 1: all 29 scene forests were written, but the combined failure cone again hit the unchanged two-million-node guard, despite checked between-choice copying. It took 469.36 seconds wall time and 1,653,256 KiB maximum RSS; no source-change error was reported. Original evidence: `/home/micha/.local/share/adventure-forge-9/af9-functional-candidates-20260909-v4/` and its sibling `.log`. There is no running generation job or accepted certificate.
+
+The last full `npm run verify` built and ran all 260 tests: 259 passed, no skips; the sole failure is the unchanged 250,000-family audit guard. Wall time was 128.48 seconds. Original log: `/home/micha/.local/share/adventure-forge-9/af9-choice-compaction-verify-20260909-v1.log`.
+
+Next priority: an explicit factorized failure-certificate experiment, preserving separate backward-closed components instead of constructing a monolithic union. The original relational model independently regenerated all 664 failure seeds in 0.40 seconds and found 44 nonzero bound-exit seeds. All seeds, including zeros, must remain accounted for. A factorized generator and independent relational verifier are now implemented under an explicit new schema, with the legacy monolithic format preserved. The implementation build and strengthened focused fixture passed. The bounded worker owned only the new test file; the manager owns implementation and integration. Full `npm run verify` closed at 261/262 passing, no skips, 129.07 seconds wall time; the sole failure remains the unchanged 250,000-family guard. Original log: `/home/micha/.local/share/adventure-forge-9/af9-factorized-verify-20260909-v1.log`. The verifier requires all 664 failure identifiers, recomputes least C/W, and checks each seed/cone independently. The first factorized campaign run closed at its checked time limit with 362/693 forests: all scenes and 333 failure components, including 29 nonzero components. It took 903.81 seconds wall time, maximum RSS 1,510,516 KiB, exit 1, with no node-limit or source-change error reported. Original evidence is `/home/micha/.local/share/adventure-forge-9/af9-factorized-candidates-20260909-v1/` and its sibling `.log`. A bounded independent relational preflight is now checking the available failure prefix (session 23781) before a longer generator run is considered. It cannot grant complete-certificate or scene-coverage acceptance. All 693 forests remain required; no prior partial run is substituted. Its predeclared limits and proof contract are in `docs/FACTORIZED_CERTIFICATE_EXPERIMENT.md`. The prospective proof contract and original catalog evidence are in `docs/FUNCTIONAL_PREIMAGE_EXPERIMENT.md`. No source or audit limit has been relaxed to admit a regression.
+
+Priority remains a complete independently verified current-source safety certificate, then frozen-source endpoint checks and three predeclared blind players, before publication. Browser recovery edits and recovered verifier code remain unpublished. The larger RPG goal remains open.
+
+Updated: 2026-09-09 (America/Vancouver). The full Skyrim-breadth/BG3-depth goal remains active and far beyond the current game.
+
+Current continuation: the browser now blocks overlapping journey operations,
+including asynchronous save-file reads. All four new browser regressions pass.
+The complete `npm run verify` builds and passes 123 of 124 checks; the sole
+failure is the unchanged 250,000-family campaign audit (137.37 seconds overall).
+Nothing has been published. See [REVIEW_20260909.md](REVIEW_20260909.md) for the
+review scope, original logs, exact source files and limitations.
+
+Recovery note: the runtime and temporary-artifact statements below describe
+the September 5-6 checkpoints. Session 20888 is no longer available, all eight
+recorded temporary worktree directories are missing, and the latest v6
+generator, manifest and finalization file are absent. No final verdict for
+that attempt can be recovered from its old launch record. The release code
+still exists in Git at `4a78944`; durable live-run/archive directories also
+exist, but their integrity was not reverified in this continuation. A filename
+search found no candidate forests or latest generator outputs there. Recover
+the committed verifier and make future generator tooling reproducible before
+regenerating missing certificates. Do not infer a passed proof or discard the
+release gate from the unavailable temporary evidence.
+
+Audit recovery now has the 34 additive release files back in the working tree.
+The build and all 247 existing regular checks pass after adding a deterministic
+substitution method for candidate generation; the original relational
+certificate-verification path and failing scenario gate remain intact.
+Independent tests of the new method precede a bounded campaign probe. See
+[FUNCTIONAL_PREIMAGE_EXPERIMENT.md](FUNCTIONAL_PREIMAGE_EXPERIMENT.md) for the
+prospective proof, limits and acceptance criteria.
 
 Stage 8 is integrated locally at game source `2f6212d`: earlier Reedway access,
 safe Archive pause/resume and decided-record revisits, and Sera's salvage credit
@@ -60,8 +246,9 @@ seals the unchanged inputs and empty candidate output. A separately reviewed
 v6 iteration updates the closure after each choice in reverse authored order;
 it computes the same least closure and passes all nine focused tests. The v2
 profile passes its actual input/model preflight and starts once in root session
-20888, timed child PID 1618206, with unchanged proof limits. This run remains
-in progress and grants no candidate, certificate or release acceptance.
+20888, timed child PID 1618206, with unchanged proof limits. Its handle and
+temporary result files are unavailable at the September 9 continuation; its
+launch record grants no candidate, certificate or release acceptance.
 The assembly tool also passes an input-only check of the preserved 29 forests,
 current release constructor/core and accepted 231-endpoint replay. The final
 failure forest and fresh full semantic verification remain required.

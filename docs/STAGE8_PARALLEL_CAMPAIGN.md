@@ -1,9 +1,13 @@
 # Parallel campaign activity — prospective contract
 
-Status: implemented locally at `c64c47c`; focused behavior and a 52-action
-browser journey pass there. Later copy review is integrated at `2f6212d`.
-Full verification fails at the existing workload guard; the separate older
-future-read assertion is corrected. No Stage 8 live players or publication.
+Status: full mechanical verification now passes, including the complete
+factorized universal-safety gate and all 231 authored endpoint replays
+(287/287 tests). The historical family-limit failures below remain retained.
+The final stateless browser gate needs an explicit-scroll driver correction
+before the predeclared three fresh players. On 2026-09-10 the user requested
+checkpoint publication without that repair or new playtests. Stage 8 live
+acceptance remains unclaimed. See FACTORIZED_CERTIFICATE_RELEASE.md and
+STATUS.md.
 The prospective contract below was recorded before implementation.
 Behavior baseline is `8b2be2c`; its wording comparison is complete, but both
 Stage 7 regional exposure batches failed at 1/3. Preserve those failures and

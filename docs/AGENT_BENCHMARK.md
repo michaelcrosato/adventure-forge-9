@@ -680,3 +680,136 @@ SHA-256, and rechecks all 204 selected-run evidence bindings. The original
 new-worker report/logs and a separate path-restoration record preserve both
 histories. This correction occurs after the selected process was closed;
 no failed result is rewritten or accepted as a full proof.
+
+## September 9 bounded gameplay review
+
+One read-only reviewer was requested as `gpt-5.6-luna` / `max` for three
+regional content files and `tests/parallel-campaign.test.ts`. No files were
+assigned for editing and no further worker was spawned. The reviewer proposed
+two findings; manager review rejected both: an internal action ID was mistaken
+for a required phase restriction, and a local credit threshold was mistaken
+for a global debt cap. Actual public copy and the accepted regional contract
+support the current behavior. Accepted changes: zero. Correction effort: one
+manager source/contract comparison and disposition message. No worker changes
+were integrated and no gameplay regressions were introduced by delegation.
+
+Reported shell-command time was approximately one second. Total worker elapsed
+time and monetary cost are unavailable; no speed/cost comparison is claimed.
+The manager independently fixed a browser session race and added four passing
+regressions. Full verification passed 123 of 124 checks in 137.37 seconds,
+retaining the existing campaign-audit failure. Original evidence and limits
+are recorded in [REVIEW_20260909.md](REVIEW_20260909.md).
+
+## Functional predecessor fixtures, 2026-09-09
+
+A bounded `functional_preimage_tests` worker was requested with model
+`gpt-5.6-luna` and `max` reasoning, owning only
+`tests/bdd-compose.test.ts` and `tests/functional-preimage.test.ts`. This records
+the requested configuration, not an independently measured model identity.
+The manager owned generator/model integration, campaign probes, and evidence.
+
+The first six runtime tests passed, but the manager's integration build found a
+TypeScript union-access error. One bounded correction fixed that error,
+corrected the description of unreachable negative-prefix arithmetic, and
+activated compaction in the small generator parity fixture. The corrected
+worker build passed and the six focused tests passed in 683.732735 ms according
+to the test runner. Total worker elapsed time and monetary cost were not
+available. No live play, interviews, or campaign acceptance were performed by
+this worker.
+
+Evidence is retained outside the repository:
+`/home/micha/.local/share/adventure-forge-9/functional-preimage-v2-build.log`,
+`/home/micha/.local/share/adventure-forge-9/functional-preimage-v2-focused.log`,
+and the failed integration log
+`/home/micha/.local/share/adventure-forge-9/af9-functional-focused-tests-20260909-v1.log`.
+
+## Factorized certificate oracle, 2026-09-09
+
+The existing bounded `functional_preimage_tests` worker was reused with the
+requested `gpt-5.6-luna` / `max` configuration. This records the requested
+configuration, not an independently measured model identity. Ownership was
+limited to the new `tests/factorized-certificates.test.ts`; the manager owned
+all production/tooling code, review, integration, and campaign runs.
+
+The first fixture run failed due to an oracle projection mismatch and a
+nonclosed-cone example without a predecessor. These fixture issues were
+corrected with original failed evidence preserved. Manager review then asked
+for raw-derived failure metadata and direct reachable-bad-state rejection
+checks. The final two grouped tests passed in 291.49553 ms according to the
+runner; the worker reported 0.315 seconds command wall time. Total worker
+elapsed time and monetary cost were not measured. This worker did not perform
+live play, interviews, or campaign acceptance.
+
+Command: `npx tsx --test tests/factorized-certificates.test.ts`.
+Original evidence: `/home/micha/.local/share/adventure-forge-9/factorized-certificates-v1.log`
+through `factorized-certificates-v4.log`. Detailed scope and limitations are
+recorded in `docs/FACTORIZED_CERTIFICATE_EXPERIMENT.md`.
+
+## Factorized verifier forced-compaction follow-up, 2026-09-09
+
+The existing `functional_preimage_tests` worker retained ownership of `tests/factorized-certificates.test.ts` and added bounded coverage for forced per-choice cone copies, compaction progress, invalid thresholds, and disabled copying. No new agent was spawned for the component-preflight/regression continuation. The worker reported `npx tsx --test tests/factorized-certificates.test.ts` passing 2/2 grouped tests in 353.968682 ms runner time (0.375 seconds reported wall time), with its v5 log retained as previously reported. Actual served model identity, total worker elapsed time, and monetary cost were not independently measured.
+
+Manager integration evidence: the native one-component relational preflight timed out in 183.90 seconds without completing the component; `npm run verify` then took 133.78 seconds and passed 261/262 tests, failing only the unchanged 250,000-family exhaustive-audit guard. These are not accepted campaign-proof or blind-player results. Original manager logs: `/home/micha/.local/share/adventure-forge-9/af9-factorized-ledger-component-check-20260909-v1.log` and `/home/micha/.local/share/adventure-forge-9/af9-factorized-verify-20260909-v2.log`. Source snapshot and evidence digests: `/home/micha/.local/share/adventure-forge-9/af9-factorized-source-20260909-v2.tar.gz` and its sibling `.sha256` file.
+
+## Relational-range fixture follow-up, 2026-09-09
+
+The existing `functional_preimage_tests` worker was reused for one bounded independent task, with sole write ownership of `tests/factorized-relational-range.test.ts`. No new worker was spawned. It added raw DSL predecessor/range equivalence checks plus accepted/rejected cone fixtures and traced fresh-owner calls. Root retained ownership of the implementation and integration.
+
+Worker command: `npx tsx --test tests/factorized-relational-range.test.ts`. Its first run failed a fixture flag-declaration constraint; its second passed 2/2 grouped runtime tests in about 275 ms runner time and 0.297 seconds reported wall time. Both original logs are outside the repository: `/home/micha/.local/share/adventure-forge-9/factorized-relational-range-v1.log` and `factorized-relational-range-v2.log` under the same directory. Served model identity, total worker elapsed time, and cost were not independently measured.
+
+Integration did not pass: root's `npm run verify` stopped at TypeScript build with two TS2339 union-narrowing errors in the new test, before running any suite tests (2.11 seconds external, peak RSS 391,384 KiB). Root disclosed the error and asked for approval before correcting it. Separately, the real historical ledger-component preflight passed in 54.75 seconds under unchanged limits; this is only one component, not campaign safety. Manager logs are `af9-factorized-range-verify-20260909-v1.log` and `af9-factorized-ledger-component-check-20260909-v2.log` in the same external evidence directory. The current source archive, including the failing test, is `af9-factorized-source-20260909-v3.tar.gz`, with sibling evidence digests. No new generation, publication, or blind play occurred.
+
+## Manager-approved test repair and integration rerun, 2026-09-09
+
+After explicit user approval, root repaired the two TypeScript union-narrowing checks in the worker-authored `tests/factorized-relational-range.test.ts`. No new agent was spawned or delegated a task. `npm run verify` now builds successfully and passes 263/264 tests, failing only the unchanged 250,000-family exhaustive-audit guard. External elapsed time was 138.62 seconds; peak RSS 2,566,776 KiB. Original evidence: `/home/micha/.local/share/adventure-forge-9/af9-approved-repair-verify-20260909-v1.log`. This supersedes the earlier pending-approval/build-failure integration status, while preserving those original logs.
+
+Root also corrected its external probe fixture in a new v2 runner, preserving v1 evidence. The probe passed all 16 tiny fixture cases, then timed out on the campaign component after 180.78 seconds without generating a certificate. This was manager-run diagnostic work, not subagent work or live play. No worker identity or cost claim is inferred from these results. Source and evidence digests are retained with `/home/micha/.local/share/adventure-forge-9/af9-factorized-source-20260909-v4.tar.gz` and its sibling `.sha256` file.
+
+## 2026-09-09: root-owned native copy-policy checkpoint
+
+No new subagent was used for the native allocation-interval integration, its expanded equivalence tests, the 538-component generation attempt, or the two detached family-analysis alternatives. No model identity or cost is inferred. The current full regression command passed 277/278 tests, failing only the unchanged campaign family guard (143.13 seconds). The native run stopped on its unchanged BDD node cap after 1,339.25 seconds; it did not complete the full certificate. Detached alternatives passed 9 and 7 fixture tests but did not bring the campaign workload under its guard and were not adopted. They ran alongside the native attempt, so their elapsed times are not controlled performance comparisons. Original evidence and limits are indexed in `docs/STATUS.md` and `docs/FACTORIZED_CERTIFICATE_EXPERIMENT.md`; no commit, push, or live/blind play is claimed.
+
+## 2026-09-09: complete factorized production gate
+
+Manager integrated the factorized production bundle and bounded worker without
+new subagents. The independent original-relational candidate check covered
+all 693 components in 292.02 seconds; the subsequently source-bound production
+`npm run verify` passed build and 287/287 tests in 486.37 seconds, maximum RSS
+1,427,512 KiB. Its worker window was 483,217.224119 ms, C/W rounds 18/12.
+The portable projected producer passed seven tiny fixtures in that suite;
+the full candidate dataset was generated by the retained external producer.
+
+Commands included the candidate staging script, source `tar` snapshot,
+`npm run verify`, `npm run playtest -- --help`, and the npm-cache
+`agent-browser` 0.27.0 stateless browser probe. No project dependency was
+installed or changed. The browser driver attempted one unscrolled click,
+but no choice request occurred; a fresh explicit-scroll diagnostic produced
+one actual choice and revision 1. The complete browser gate has not passed.
+Driver repair awaits user approval. Both browsers and servers are closed.
+No new blind player, interview, merge, commit or push is claimed.
+
+This manager continuation reached its documentation checkpoint in 1,706
+seconds (28m26s); timings are elapsed observations, not cost estimates or
+controlled model comparisons. See `FACTORIZED_CERTIFICATE_RELEASE.md` for
+original external records and remaining release gates. The full RPG goal
+remains larger than this campaign/proof checkpoint.
+
+## 2026-09-10: user-directed publication checkpoint
+
+The user explicitly requested noting, but not performing, the browser-driver
+repair and publishing the immediate verified work before pausing. No driver
+repair, new browser game, blind subscription player or interview was run.
+No new subagent or model-identity/cost claim is involved.
+
+`git fetch origin` and current source/certificate identity checks passed:
+source snapshot `4adabe12e6010a35d9f2161b46dde1d6eb6ca659e3d8b8880c8e038b18608700`
+and all 693 forests match the prior passing production verification. Tests
+were not rerun because this step changes documentation and Git history only;
+the retained full run remains 287/287 passes in 486.37 seconds. Preflight is
+`~/.local/share/adventure-forge-9/af9-user-checkpoint-preflight-20260910-v1.json`.
+
+Publication must retain the already integrated experimental histories without
+replacing the verified tree. The external publication receipt and Git history
+record the resulting commits and remote state. Browser/live acceptance and
+full-world completion remain explicitly open; STATUS.md records the resume
+sequence and preservation of the original failed driver.

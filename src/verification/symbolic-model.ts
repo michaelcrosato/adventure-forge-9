@@ -1,0 +1,740 @@
+import { validateScenario, type Choice, type Condition, type Scenario } from "../engine/content.js";
+import type { GameState, GameStatus } from "../engine/types.js";
+import { Bdd } from "./bdd.js";
+
+/** Experimental exact finite model. This module does not replace the release audit. */
+export interface SemanticState {
+  readonly scene: string;
+  readonly status: GameStatus;
+  readonly resources: Readonly<Record<string, number>>;
+  readonly flags: Readonly<Record<string, boolean>>;
+  readonly ending: number;
+}
+
+interface Field {
+  readonly id: string;
+  readonly maximum: number;
+  readonly current: readonly number[];
+  readonly next: readonly number[];
+}
+
+interface PartitionFactor {
+  readonly field: Field;
+  /** Successful input/output relation for this changed field only. */
+  readonly relation: number;
+}
+
+export interface SymbolicChoice {
+  readonly id: string;
+  readonly enabled: number;
+  readonly relation: number;
+  readonly arithmeticError: number;
+  readonly boundExit: number;
+  readonly terminal: boolean;
+}
+
+export interface SymbolicOptions {
+  readonly order?: "interleaved" | "blocked";
+  /** Exact field permutation used for symbolic bit assignment. */
+  readonly fieldOrder?: readonly string[];
+  /** Opt-in per-field image/preimage evaluation; relational remains the default. */
+  readonly transitionMode?: "relational" | "partitioned";
+  readonly nodeLimit?: number;
+  readonly cacheLimit?: number;
+  /** Unary effect tables are deliberately limited in this first experiment. */
+  readonly maxDomain?: number;
+}
+
+const STATUSES: readonly GameStatus[] = ["playing", "completed", "departed", "dead"];
+
+function normalizeFieldOrder(
+  requested: unknown,
+  specs: readonly { readonly id: string }[],
+): readonly string[] {
+  const expected = specs.map(spec => spec.id);
+  if (requested === undefined) return Object.freeze([...expected]);
+  if (!Array.isArray(requested)) throw new Error("fieldOrder must be an array");
+  if (requested.length !== expected.length) {
+    throw new Error(`fieldOrder must contain exactly ${expected.length} fields`);
+  }
+  const known = new Set(expected);
+  const seen = new Set<string>();
+  const snapshot: string[] = [];
+  for (let index = 0; index < requested.length; index++) {
+    if (!Object.hasOwn(requested, index)) throw new Error("fieldOrder must not be sparse");
+    const id = requested[index];
+    if (typeof id !== "string") throw new Error(`fieldOrder[${index}] must be a field id`);
+    if (!known.has(id)) throw new Error(`fieldOrder contains unknown field ${JSON.stringify(id)}`);
+    if (seen.has(id)) throw new Error(`fieldOrder contains duplicate field ${JSON.stringify(id)}`);
+    seen.add(id);
+    snapshot.push(id);
+  }
+  if (seen.size !== known.size) throw new Error("fieldOrder must include every field exactly once");
+  return Object.freeze(snapshot);
+}
+
+function flagNames(scenario: Scenario): string[] {
+  const names = new Set<string>();
+  const read = (conditions: readonly Condition[] | undefined) => {
+    for (const condition of conditions ?? []) if (condition.type === "flag") names.add(condition.flag);
+  };
+  for (const scene of scenario.scenes) for (const line of scene.text) read(line.when);
+  for (const choice of scenario.choices) {
+    read(choice.when);
+    for (const effect of choice.effects) if (effect.type === "setFlag") names.add(effect.flag);
+  }
+  return [...names].sort();
+}
+
+/** A failure contains an authored action path, never a fabricated GameState. */
+export class SymbolicTransitionError extends Error {
+  constructor(
+    readonly reason: "arithmetic-error" | "bound-exit",
+    readonly choiceId: string,
+    readonly path: readonly string[],
+  ) {
+    super(`Symbolic ${reason} is reachable through ${choiceId}`);
+    this.name = "SymbolicTransitionError";
+  }
+}
+
+export class SymbolicModel {
+  readonly scenario: Scenario;
+  readonly bdd: Bdd;
+  readonly initial: number;
+  readonly validDomain: number;
+  readonly playing: number;
+  readonly completed: number;
+  readonly choices: readonly SymbolicChoice[];
+  readonly currentVariables: readonly number[];
+  readonly nextVariables: readonly number[];
+  readonly fieldOrder: readonly string[];
+  readonly transitionMode: "relational" | "partitioned";
+  readonly flags: readonly string[];
+  readonly resources: readonly string[];
+  private readonly fields = new Map<string, Field>();
+  private readonly scenes: readonly string[];
+  private readonly endings: readonly (readonly [GameStatus, string])[];
+  private readonly toCurrent: ReadonlyMap<number, number>;
+  private readonly toNext: ReadonlyMap<number, number>;
+  private readonly variableCount: number;
+  private readonly resourceBounds: Readonly<Record<string, number>>;
+  private readonly compileOptions: Readonly<Required<SymbolicOptions>>;
+  private readonly choiceMembership: ReadonlySet<SymbolicChoice>;
+  private readonly partitionFactors = new Map<SymbolicChoice, readonly PartitionFactor[]>();
+  private readonly functionalTransitions = new Map<SymbolicChoice, {
+    readonly substitutions: ReadonlyMap<number, number>;
+    readonly success: number;
+  }>();
+
+  constructor(input: unknown, bounds: Readonly<Record<string, number>>, options: SymbolicOptions = {}) {
+    this.scenario = validateScenario(input);
+    this.scenes = Object.freeze(this.scenario.scenes.map(scene => scene.id));
+    this.flags = Object.freeze(flagNames(this.scenario));
+    this.resources = Object.freeze(Object.keys(this.scenario.initialResources).sort());
+    const endings: [GameStatus, string][] = [];
+    for (const choice of this.scenario.choices) if (choice.outcome !== undefined) {
+      const pair: [GameStatus, string] = [choice.outcome.status, choice.outcome.summary];
+      if (!endings.some(([status, summary]) => status === pair[0] && summary === pair[1])) endings.push(pair);
+    }
+    this.endings = Object.freeze(endings.map(pair => Object.freeze(pair)));
+    const maxDomain = options.maxDomain ?? 256;
+    if (!Number.isSafeInteger(maxDomain) || maxDomain < 1 || maxDomain > 4096) {
+      throw new Error("Unsupported symbolic unary-table domain limit");
+    }
+    if (Object.keys(bounds).length !== this.resources.length
+      || Object.keys(bounds).some(name => !this.resources.includes(name))) {
+      throw new Error("Symbolic bounds must specify exactly the declared resources");
+    }
+    const specs: { id: string; maximum: number }[] = [
+      { id: "scene", maximum: this.scenes.length - 1 },
+      { id: "status", maximum: STATUSES.length - 1 },
+      { id: "ending", maximum: this.endings.length },
+    ];
+    for (const name of this.resources) {
+      const bound = Object.hasOwn(bounds, name) ? bounds[name] : undefined;
+      if (bound === undefined || !Number.isSafeInteger(bound) || bound < 0 || bound >= maxDomain) {
+        throw new Error(`Unsupported symbolic bound for ${name}`);
+      }
+      if (this.scenario.initialResources[name]! > bound) throw new Error(`Initial ${name} exceeds symbolic bound`);
+      const clock = this.scenario.clocks?.find(clock => clock.resource === name);
+      if (clock !== undefined && clock.max !== bound) throw new Error(`Clock ${name} must use its declared maximum`);
+      specs.push({ id: `resource:${name}`, maximum: bound });
+    }
+    for (const name of this.flags) specs.push({ id: `flag:${name}`, maximum: 1 });
+    const fieldOrder = normalizeFieldOrder(options.fieldOrder, specs);
+    const specsById = new Map(specs.map(spec => [spec.id, spec] as const));
+    const orderedSpecs = fieldOrder.map(id => {
+      const spec = specsById.get(id);
+      if (spec === undefined) throw new Error(`Unknown symbolic field ${id}`);
+      return spec;
+    });
+    const width = (maximum: number) => Math.max(1, Math.ceil(Math.log2(maximum + 1)));
+    const bitCount = orderedSpecs.reduce((count, spec) => count + width(spec.maximum), 0);
+    const order = options.order ?? "interleaved";
+    if (order !== "interleaved" && order !== "blocked") throw new Error("Unknown symbolic variable order");
+    const transitionMode = options.transitionMode ?? "relational";
+    if (transitionMode !== "relational" && transitionMode !== "partitioned") {
+      throw new Error("Unknown symbolic transition mode");
+    }
+    this.resourceBounds = Object.freeze(Object.fromEntries(specs
+      .filter(spec => spec.id.startsWith("resource:"))
+      .map(spec => [spec.id.slice("resource:".length), spec.maximum])));
+    this.compileOptions = Object.freeze({ order, fieldOrder, transitionMode, maxDomain,
+      nodeLimit: options.nodeLimit ?? 250_000, cacheLimit: options.cacheLimit ?? 100_000 });
+    this.variableCount = bitCount * 2;
+    this.bdd = new Bdd(this.variableCount, this.compileOptions);
+    const currentVariables: number[] = [], nextVariables: number[] = [];
+    let offset = 0;
+    for (const spec of orderedSpecs) {
+      const current: number[] = [], next: number[] = [];
+      for (let bit = 0; bit < width(spec.maximum); bit++) {
+        const index = offset++;
+        current.push(order === "interleaved" ? index * 2 : index);
+        next.push(order === "interleaved" ? index * 2 + 1 : bitCount + index);
+      }
+      currentVariables.push(...current); nextVariables.push(...next);
+      this.fields.set(spec.id, Object.freeze({ ...spec, current: Object.freeze(current), next: Object.freeze(next) }));
+    }
+    this.currentVariables = Object.freeze(currentVariables);
+    this.nextVariables = Object.freeze(nextVariables);
+    this.fieldOrder = fieldOrder;
+    this.transitionMode = transitionMode;
+    this.toCurrent = new Map(nextVariables.map((variable, index) => [variable, currentVariables[index]!]));
+    this.toNext = new Map(currentVariables.map((variable, index) => [variable, nextVariables[index]!]));
+    let domain = 1;
+    for (const field of this.fields.values()) {
+      let values = 0;
+      for (let value = 0; value <= field.maximum; value++) values = this.bdd.or(values, this.equal(field.id, value));
+      domain = this.bdd.and(domain, values);
+    }
+    let lifecycle = this.bdd.and(this.equal("status", 0), this.equal("ending", 0));
+    for (const [index, [status]] of this.endings.entries()) {
+      lifecycle = this.bdd.or(lifecycle, this.bdd.and(this.equal("status", STATUSES.indexOf(status)), this.equal("ending", index + 1)));
+    }
+    this.validDomain = this.bdd.and(domain, lifecycle);
+    this.playing = this.bdd.and(this.validDomain, this.equal("status", 0));
+    this.completed = this.bdd.and(this.validDomain, this.equal("status", 1));
+    this.initial = this.encode({
+      scene: this.scenario.initialScene, status: "playing", ending: 0,
+      resources: this.scenario.initialResources,
+      flags: Object.fromEntries(this.flags.map(flag => [flag, false])),
+    });
+    this.choices = Object.freeze(this.scenario.choices.map(choice => this.compileChoice(choice)));
+    this.choiceMembership = new Set(this.choices);
+  }
+
+  /** Recompile this exact immutable specification into a distinct manager. */
+  fresh(): SymbolicModel {
+    return new SymbolicModel(this.scenario, this.resourceBounds, this.compileOptions);
+  }
+
+  private assertChoiceOwner(choice: SymbolicChoice): void {
+    if (!this.choiceMembership.has(choice)) throw new Error("Symbolic choice belongs to a different model");
+  }
+
+  private field(id: string): Field {
+    const field = this.fields.get(id);
+    if (field === undefined) throw new Error(`Unknown symbolic field ${id}`);
+    return field;
+  }
+
+  private equal(id: string, value: number, phase: "current" | "next" = "current"): number {
+    const field = this.field(id);
+    if (!Number.isSafeInteger(value) || value < 0 || value > field.maximum) throw new Error(`Invalid symbolic ${id} value`);
+    let result = 1;
+    for (const [bit, variable] of field[phase].entries()) {
+      const literal = this.bdd.variable(variable);
+      result = this.bdd.and(result, Math.floor(value / 2 ** bit) % 2 === 1 ? literal : this.bdd.not(literal));
+    }
+    return result;
+  }
+
+  private unchanged(id: string): number {
+    const field = this.field(id);
+    let result = 1;
+    for (const [bit, variable] of field.current.entries()) {
+      result = this.bdd.and(result, this.bdd.not(this.bdd.xor(this.bdd.variable(variable), this.bdd.variable(field.next[bit]!))));
+    }
+    return result;
+  }
+
+  private condition(condition: Condition): number {
+    if (condition.type === "flag") return this.equal(`flag:${condition.flag}`, condition.value ? 1 : 0);
+    const field = this.field(`resource:${condition.resource}`);
+    let result = 0;
+    for (let value = 0; value <= field.maximum; value++) {
+      const matches = condition.type === "resourceAtLeast" ? value >= condition.value : value <= condition.value;
+      if (matches) result = this.bdd.or(result, this.equal(field.id, value));
+    }
+    return result;
+  }
+
+  private compileChoice(choice: Choice): SymbolicChoice {
+    let enabled = this.bdd.and(this.playing, this.equal("scene", this.scenes.indexOf(choice.scene)));
+    for (const condition of choice.when ?? []) enabled = this.bdd.and(enabled, this.condition(condition));
+    const flagWrites = new Map<string, boolean>();
+    let destination = choice.scene;
+    for (const effect of choice.effects) {
+      if (effect.type === "goTo") destination = effect.scene;
+      else if (effect.type === "setFlag") flagWrites.set(effect.flag, effect.value);
+    }
+    const constraints = new Map<string, number>();
+    const substitutions = new Map<number, number>();
+    const substituteConstant = (id: string, value: number): void => {
+      for (const [bit, variable] of this.field(id).current.entries()) {
+        substitutions.set(variable, Math.floor(value / 2 ** bit) % 2);
+      }
+    };
+    constraints.set("scene", this.equal("scene", this.scenes.indexOf(destination), "next"));
+    substituteConstant("scene", this.scenes.indexOf(destination));
+    const status = choice.outcome?.status ?? "playing";
+    const ending = choice.outcome === undefined ? 0
+      : this.endings.findIndex(([kind, summary]) => kind === status && summary === choice.outcome!.summary) + 1;
+    constraints.set("status", this.equal("status", STATUSES.indexOf(status), "next"));
+    constraints.set("ending", this.equal("ending", ending, "next"));
+    substituteConstant("status", STATUSES.indexOf(status));
+    substituteConstant("ending", ending);
+    for (const flag of this.flags) {
+      if (flagWrites.has(flag)) substituteConstant(`flag:${flag}`, flagWrites.get(flag) ? 1 : 0);
+      constraints.set(`flag:${flag}`, flagWrites.has(flag)
+        ? this.equal(`flag:${flag}`, flagWrites.get(flag) ? 1 : 0, "next") : this.unchanged(`flag:${flag}`));
+    }
+    const effectFailures = choice.effects.map(() => ({ arithmetic: 0, bound: 0 }));
+    for (const resource of this.resources) {
+      const field = this.field(`resource:${resource}`);
+      const effects = [...choice.effects.entries()].filter(([, effect]) =>
+        ((effect.type === "setResource" || effect.type === "adjustResource") && effect.resource === resource)
+        || (effect.type === "advanceClock" && this.scenario.clocks?.find(clock => clock.id === effect.clock)?.resource === resource));
+      if (effects.length === 0) { constraints.set(field.id, this.unchanged(field.id)); continue; }
+      let resourceRelation = 0;
+      const outputBits = Array<number>(field.current.length).fill(0);
+      for (let input = 0; input <= field.maximum; input++) {
+        let output = input;
+        let failure: "arithmetic-error" | "bound-exit" | undefined;
+        let failureIndex = -1;
+        for (const [index, effect] of effects) {
+          if (effect.type === "setResource") output = effect.value;
+          else if (effect.type === "adjustResource") output += effect.delta;
+          else if (effect.type === "advanceClock") {
+            const clock = this.scenario.clocks!.find(clock => clock.id === effect.clock)!;
+            output = effect.delta >= clock.max - output ? clock.max : output + effect.delta;
+          }
+          if (!Number.isSafeInteger(output) || output < 0) { failure = "arithmetic-error"; failureIndex = index; break; }
+          if (output > field.maximum) { failure = "bound-exit"; failureIndex = index; break; }
+        }
+        const source = this.equal(field.id, input);
+        if (failure === "arithmetic-error") effectFailures[failureIndex]!.arithmetic = this.bdd.or(effectFailures[failureIndex]!.arithmetic, source);
+        else if (failure === "bound-exit") effectFailures[failureIndex]!.bound = this.bdd.or(effectFailures[failureIndex]!.bound, source);
+        else {
+          resourceRelation = this.bdd.or(resourceRelation, this.bdd.and(source, this.equal(field.id, output, "next")));
+          for (let bit = 0; bit < outputBits.length; bit++) {
+            if (Math.floor(output / 2 ** bit) % 2 === 1) outputBits[bit] = this.bdd.or(outputBits[bit]!, source);
+          }
+        }
+      }
+      constraints.set(field.id, resourceRelation);
+      for (const [bit, variable] of field.current.entries()) substitutions.set(variable, outputBits[bit]!);
+    }
+    // Resource folds commute on successful transitions, but fault diagnostics
+    // must retain the original cross-resource effect order.
+    let arithmeticError = 0, boundExit = 0, beforeFailure = enabled;
+    for (const failure of effectFailures) {
+      arithmeticError = this.bdd.or(arithmeticError, this.bdd.and(beforeFailure, failure.arithmetic));
+      boundExit = this.bdd.or(boundExit, this.bdd.and(beforeFailure, failure.bound));
+      beforeFailure = this.bdd.and(beforeFailure, this.bdd.not(this.bdd.or(failure.arithmetic, failure.bound)));
+    }
+    // Build later variable fields first to share suffixes, then apply the
+    // source guard. Only conjunction order changes; every field is required.
+    let relation = 1;
+    for (const field of [...this.fields.values()].reverse()) {
+      const constraint = constraints.get(field.id);
+      if (constraint === undefined) throw new Error(`Missing symbolic constraint for ${field.id}`);
+      relation = this.bdd.and(constraint, relation);
+    }
+    relation = this.bdd.and(enabled, relation);
+    const result = Object.freeze({ id: choice.id, enabled, relation,
+      arithmeticError: this.bdd.and(enabled, arithmeticError),
+      boundExit: this.bdd.and(enabled, boundExit), terminal: choice.outcome !== undefined });
+    this.functionalTransitions.set(result, Object.freeze({ substitutions, success: beforeFailure }));
+    if (this.transitionMode === "partitioned") {
+      const factors: PartitionFactor[] = [];
+      for (const field of this.fields.values()) {
+        const factor = constraints.get(field.id);
+        if (factor === undefined) throw new Error(`Missing partition factor for ${field.id}`);
+        // The guard fixes a valid source state. Compare under that guard so a
+        // field written to its already-required value (or an unchanged field)
+        // does not introduce a needless identity factor.
+        const guardedFactor = this.bdd.and(enabled, factor);
+        const guardedIdentity = this.bdd.and(enabled, this.unchanged(field.id));
+        if (guardedFactor === guardedIdentity) continue;
+        factors.push(Object.freeze({ field, relation: factor }));
+      }
+      this.partitionFactors.set(result, Object.freeze(factors));
+    }
+    return result;
+  }
+
+  encode(state: SemanticState): number {
+    let result = this.bdd.and(this.equal("scene", this.scenes.indexOf(state.scene)), this.equal("status", STATUSES.indexOf(state.status)));
+    result = this.bdd.and(result, this.equal("ending", state.ending));
+    for (const resource of this.resources) {
+      if (!Object.hasOwn(state.resources, resource)) throw new Error(`Missing modeled resource ${resource}`);
+      result = this.bdd.and(result, this.equal(`resource:${resource}`, state.resources[resource]!));
+    }
+    for (const flag of this.flags) {
+      const value = Object.hasOwn(state.flags, flag) ? state.flags[flag] : false;
+      if (typeof value !== "boolean") throw new Error(`Invalid modeled flag ${flag}`);
+      result = this.bdd.and(result, this.equal(`flag:${flag}`, value ? 1 : 0));
+    }
+    if (this.bdd.and(result, this.validDomain) !== result) throw new Error("Invalid modeled lifecycle or domain");
+    return result;
+  }
+
+  project(state: GameState): SemanticState {
+    const ending = state.receipt === undefined ? 0
+      : this.endings.findIndex(([status, summary]) => status === state.receipt!.kind && summary === state.receipt!.summary) + 1;
+    if (state.receipt !== undefined && ending === 0) throw new Error("Unknown modeled receipt");
+    return Object.freeze({ scene: state.scene, status: state.status, ending,
+      resources: Object.freeze(Object.fromEntries(this.resources.map(name => [name, state.resources[name]!]))),
+      flags: Object.freeze(Object.fromEntries(this.flags.map(name => [name, Object.hasOwn(state.flags, name) && state.flags[name] === true]))),
+    });
+  }
+
+  decode(assignment: readonly boolean[]): SemanticState {
+    if (!Array.isArray(assignment) || assignment.length !== this.variableCount
+      || Array.from(assignment).some(value => typeof value !== "boolean")) {
+      throw new Error("Invalid symbolic assignment");
+    }
+    const value = (id: string) => this.field(id).current.reduce((result, variable, bit) => result + (assignment[variable] ? 2 ** bit : 0), 0);
+    const scene = this.scenes[value("scene")], status = STATUSES[value("status")];
+    if (scene === undefined || status === undefined) throw new Error("Invalid symbolic scene/status assignment");
+    const state: SemanticState = Object.freeze({ scene, status, ending: value("ending"),
+      resources: Object.freeze(Object.fromEntries(this.resources.map(name => [name, value(`resource:${name}`)]))),
+      flags: Object.freeze(Object.fromEntries(this.flags.map(name => [name, value(`flag:${name}`) === 1]))),
+    });
+    this.encode(state);
+    return state;
+  }
+
+  atScene(id: string): number {
+    return this.bdd.and(this.validDomain, this.equal("scene", this.scenes.indexOf(id)));
+  }
+
+  /**
+   * Exact deterministic preimage by simultaneous substitution of output bits.
+   * The successful-source guard rejects every intermediate effect failure,
+   * including an overflow followed by a reset. The existing relational
+   * preimage remains the independent certificate-verification path.
+   */
+  functionalPreimage(target: number, choice?: SymbolicChoice): number {
+    if (this.bdd.exists(target, this.nextVariables) !== target) {
+      throw new Error("Functional preimage requires a current-only predicate");
+    }
+    if (choice !== undefined) this.assertChoiceOwner(choice);
+    let result = 0;
+    for (const selected of choice === undefined ? this.choices : [choice]) {
+      const transition = this.functionalTransitions.get(selected);
+      if (transition === undefined) throw new Error("Missing functional transition");
+      const predecessor = this.bdd.and(transition.success, this.bdd.compose(target, transition.substitutions));
+      result = this.bdd.or(result, predecessor);
+    }
+    return result;
+  }
+
+  /**
+   * Partitioned transitions operate on a predicate over source/current bits.
+   * Existentially eliminating every next bit is an exact support test: the
+   * result can equal the original handle only when the predicate is
+   * independent of all next variables. This deliberately fails closed rather
+   * than silently treating a mixed-phase predicate as a source predicate.
+   */
+  private assertCurrentOnly(root: number, operation: "image" | "preimage"): void {
+    if (this.bdd.exists(root, this.nextVariables) !== root) {
+      throw new Error(`Partitioned ${operation} requires a current-only predicate`);
+    }
+  }
+
+  private factorsFor(choice: SymbolicChoice): readonly PartitionFactor[] {
+    const factors = this.partitionFactors.get(choice);
+    if (factors === undefined) throw new Error("Missing partition factors for symbolic choice");
+    return factors;
+  }
+
+  /** Exact sequential image of independent changed-field relations. */
+  private partitionedImage(source: number, choice: SymbolicChoice): number {
+    this.assertChoiceOwner(choice);
+    let result = this.bdd.and(source, choice.enabled);
+    for (const factor of this.factorsFor(choice)) {
+      if (result === 0) return 0;
+      result = this.bdd.and(result, factor.relation);
+      result = this.bdd.exists(result, factor.field.current);
+      const rename = new Map<number, number>(factor.field.next.map((variable, index) => [variable, factor.field.current[index]!]));
+      result = this.bdd.rename(result, rename);
+    }
+    // Every skipped field is identity on an enabled source. Every changed
+    // field has an exact bounded factor, so the final result is already in
+    // the valid output domain; no full-frame lifecycle gate is inserted.
+    return result;
+  }
+
+  /** Exact sequential preimage of independent changed-field relations. */
+  private partitionedPreimage(target: number, choice: SymbolicChoice): number {
+    this.assertChoiceOwner(choice);
+    let result = target;
+    for (const factor of this.factorsFor(choice)) {
+      const rename = new Map<number, number>(factor.field.current.map((variable, index) => [variable, factor.field.next[index]!]));
+      result = this.bdd.rename(result, rename);
+      result = this.bdd.andExists(result, factor.relation, factor.field.next);
+    }
+    return this.bdd.and(result, choice.enabled);
+  }
+
+  image(source: number, choice?: SymbolicChoice): number {
+    if (this.transitionMode === "partitioned") {
+      this.assertCurrentOnly(source, "image");
+      if (choice !== undefined) return this.partitionedImage(source, choice);
+      return this.choices.reduce((result, option) => this.bdd.or(result, this.partitionedImage(source, option)), 0);
+    }
+    if (choice !== undefined) {
+      this.assertChoiceOwner(choice);
+      if (this.bdd.and(source, choice.enabled) === 0) return 0;
+      return this.bdd.rename(this.bdd.andExists(source, choice.relation, this.currentVariables), this.toCurrent);
+    }
+    return this.choices.reduce((result, option) => this.bdd.or(result, this.image(source, option)), 0);
+  }
+
+  preimage(target: number, choice?: SymbolicChoice): number {
+    if (this.transitionMode === "partitioned") {
+      this.assertCurrentOnly(target, "preimage");
+      if (choice !== undefined) return this.partitionedPreimage(target, choice);
+      return this.choices.reduce((result, option) => this.bdd.or(result, this.partitionedPreimage(target, option)), 0);
+    }
+    if (choice !== undefined) this.assertChoiceOwner(choice);
+    const nextTarget = this.bdd.rename(target, this.toNext);
+    const pre = (option: SymbolicChoice) => this.bdd.andExists(nextTarget, option.relation, this.nextVariables);
+    return choice === undefined ? this.choices.reduce((result, option) => this.bdd.or(result, pre(option)), 0) : pre(choice);
+  }
+
+  /** Find a real action prefix represented by forward distance frontiers. */
+  witness(sourcePredicate: number, frontiers: readonly number[]): readonly string[] {
+    let distance = -1, target = 0;
+    for (const [index, frontier] of frontiers.entries()) {
+      const hit = this.bdd.and(sourcePredicate, frontier);
+      if (hit !== 0) { distance = index; target = this.encode(this.decode(this.bdd.satisfyingAssignment(hit)!)); break; }
+    }
+    if (distance < 0) throw new Error("No reachable symbolic witness source");
+    const reversed: string[] = [];
+    for (let step = distance; step > 0; step--) {
+      let found = false;
+      for (const choice of this.choices) {
+        const previous = this.bdd.and(frontiers[step - 1]!, this.preimage(target, choice));
+        if (previous === 0) continue;
+        reversed.push(choice.id);
+        target = this.encode(this.decode(this.bdd.satisfyingAssignment(previous)!));
+        found = true; break;
+      }
+      if (!found) throw new Error("Symbolic witness predecessor is missing");
+    }
+    if (target !== this.initial) throw new Error("Symbolic witness does not start at the real initial projection");
+    return Object.freeze(reversed.reverse());
+  }
+}
+
+export interface SymbolicReachability {
+  readonly exhaustive: true;
+  /** Every numeric formula in this result belongs to this exact model. */
+  readonly model: SymbolicModel;
+  readonly compactions: number;
+  readonly reachable: number;
+  readonly completable: number;
+  readonly deadEnds: number;
+  readonly noCompletion: number;
+  readonly reachableCount: bigint;
+  readonly frontiers: readonly number[];
+  readonly forwardRounds: number;
+  readonly backwardRounds: number;
+  readonly unreachableScenes: readonly string[];
+  readonly unreachableChoices: readonly string[];
+  readonly sceneWitnesses: Readonly<Record<string, readonly string[]>>;
+  readonly choiceWitnesses: Readonly<Record<string, readonly string[]>>;
+  readonly endingWitnesses: Readonly<Record<string, readonly string[]>>;
+}
+
+export interface SymbolicReachabilityOptions {
+  /**
+   * Opt-in exact generation replacement between choice operations. The first
+   * copy occurs at this many allocated unique nodes; each later copy waits for
+   * the post-copy size plus this allocation interval. No default compaction.
+   */
+  readonly compactAtNodes?: number;
+  /**
+   * Opt-in distribution of each round's fixed masks over its choice union.
+   * Retains exactly the same next frontier and newly completable states.
+   */
+  readonly accumulationMode?: "unmasked" | "masked";
+}
+
+export type SymbolicProgressObserver = (
+  phase: "forward" | "backward" | "scenes" | "choices" | "compact",
+  step: number,
+  owner: SymbolicModel,
+) => void;
+
+/** An observer may throw to stop an incomplete diagnostic; no partial success is returned. */
+export function symbolicReachability(
+  model: SymbolicModel,
+  roundLimit = 128,
+  onProgress?: SymbolicProgressObserver,
+  options: SymbolicReachabilityOptions = {},
+): SymbolicReachability {
+  if (!Number.isSafeInteger(roundLimit) || roundLimit < 1) throw new Error("Invalid symbolic round limit");
+  if (options === null || typeof options !== "object" || Array.isArray(options)) {
+    throw new Error("Invalid symbolic reachability options");
+  }
+  const compactAtNodes = options.compactAtNodes;
+  if (compactAtNodes !== undefined && (!Number.isSafeInteger(compactAtNodes) || compactAtNodes < 1)) {
+    throw new Error("Invalid symbolic compaction threshold");
+  }
+  const requestedAccumulationMode = options.accumulationMode;
+  const accumulationMode = requestedAccumulationMode === undefined ? "unmasked" : requestedAccumulationMode;
+  if (accumulationMode !== "unmasked" && accumulationMode !== "masked") {
+    throw new Error("Invalid symbolic accumulation mode");
+  }
+  const maskContributions = accumulationMode === "masked";
+  // Start an opt-in traversal in a private generation, so the caller's model
+  // does not accumulate its first round of temporary nodes or lose cache data.
+  if (compactAtNodes !== undefined) model = model.fresh();
+  let bdd = model.bdd;
+  let frontiers = [model.initial];
+  let reachable = model.initial, frontier = model.initial, forwardRounds = 0;
+  let completable = 0, legal = 0, compactions = 0;
+  // The accumulator is a live root while one round is being evaluated. It
+  // must travel with the other roots when a generation is replaced between
+  // choices.
+  let pending = 0;
+  let nextCompactionAt = compactAtNodes;
+
+  function addCompactionInterval(retainedUnique: number): number {
+    if (compactAtNodes === undefined) return Number.POSITIVE_INFINITY;
+    return retainedUnique >= Number.MAX_SAFE_INTEGER - compactAtNodes
+      ? Number.MAX_SAFE_INTEGER
+      : retainedUnique + compactAtNodes;
+  }
+
+  function compactIfNeeded(): void {
+    if (nextCompactionAt === undefined || bdd.stats().uniqueEntries < nextCompactionAt) return;
+    // Clearing memo entries is exact and reduces coexistence during copying.
+    // The old node table/handles remain valid until the old manager is collected.
+    bdd.clearOperationCaches();
+    const nextModel = model.fresh();
+    nextModel.bdd.clearOperationCaches();
+    const copied = bdd.copyForestTo(nextModel.bdd, [reachable, frontier, completable, legal, pending, ...frontiers]);
+    // Publish the entire root bundle and its owner only after copying succeeds.
+    reachable = copied[0]!;
+    frontier = copied[1]!;
+    completable = copied[2]!;
+    legal = copied[3]!;
+    pending = copied[4]!;
+    frontiers = copied.slice(5);
+    model = nextModel;
+    bdd = nextModel.bdd;
+    compactions++;
+    // A retained forest can already be larger than the initial threshold.
+    // Advance by a full interval so it does not trigger a copy at every
+    // subsequent disabled or zero-work choice.
+    nextCompactionAt = addCompactionInterval(bdd.stats().uniqueEntries);
+    onProgress?.("compact", compactions, model);
+    // Do not loop here if the retained forest itself exceeds the threshold.
+    // The node guard still bounds every copy and subsequent exact operation.
+  }
+
+  while (true) {
+    if (++forwardRounds > roundLimit) throw new Error("Symbolic forward limit exceeded; coverage incomplete");
+    compactIfNeeded();
+    onProgress?.("forward", forwardRounds, model);
+    // Keep the authored fault precedence: all arithmetic/bound diagnostics
+    // are checked before transition images can exhaust the BDD budget.
+    for (let choiceIndex = 0; choiceIndex < model.choices.length; choiceIndex++) {
+      compactIfNeeded();
+      const choice = model.choices[choiceIndex]!;
+      for (const [reason, predicate] of [["arithmetic-error", choice.arithmeticError], ["bound-exit", choice.boundExit]] as const) {
+        const failed = bdd.and(frontier, predicate);
+        if (failed !== 0) throw new SymbolicTransitionError(reason, choice.id, [...model.witness(failed, frontiers), choice.id]);
+      }
+    }
+    pending = 0;
+    // Evaluate one choice at a time. A choice is reacquired by index after
+    // each possible generation copy; numeric handles never cross owners.
+    for (let choiceIndex = 0; choiceIndex < model.choices.length; choiceIndex++) {
+      compactIfNeeded();
+      const choice = model.choices[choiceIndex]!;
+      const image = model.image(frontier, choice);
+      // reachable is fixed throughout this round. ITE applies the difference
+      // without first materializing the complement of the entire reachable set.
+      pending = bdd.or(pending, maskContributions ? bdd.ite(reachable, 0, image) : image);
+    }
+    compactIfNeeded();
+    const next = maskContributions ? pending : bdd.and(pending, bdd.not(reachable));
+    pending = 0;
+    if (next === 0) break;
+    reachable = bdd.or(reachable, next); frontier = next; frontiers.push(next);
+  }
+  compactIfNeeded();
+  completable = bdd.and(reachable, model.completed);
+  let backwardRounds = 0;
+  while (true) {
+    if (++backwardRounds > roundLimit) throw new Error("Symbolic backward limit exceeded; coverage incomplete");
+    compactIfNeeded();
+    onProgress?.("backward", backwardRounds, model);
+    pending = 0;
+    // As in the forward pass, retain only the current choice image at each
+    // step and carry the union root through any safe boundary copy.
+    for (let choiceIndex = 0; choiceIndex < model.choices.length; choiceIndex++) {
+      compactIfNeeded();
+      const choice = model.choices[choiceIndex]!;
+      const preimage = model.preimage(completable, choice);
+      // Both masks are fixed until every choice has contributed. Distributing
+      // them keeps the exact union while removing known/unreachable states early.
+      const contribution = maskContributions
+        ? bdd.ite(completable, 0, bdd.and(reachable, preimage))
+        : preimage;
+      pending = bdd.or(pending, contribution);
+    }
+    compactIfNeeded();
+    const more = maskContributions ? pending : bdd.and(bdd.and(pending, reachable), bdd.not(completable));
+    pending = 0;
+    if (more === 0) break;
+    completable = bdd.or(completable, more);
+  }
+  const sceneWitnesses: Record<string, readonly string[]> = Object.create(null);
+  const choiceWitnesses: Record<string, readonly string[]> = Object.create(null);
+  const endingWitnesses: Record<string, readonly string[]> = Object.create(null);
+  const unreachableScenes: string[] = [];
+  for (const [index, scene] of model.scenario.scenes.entries()) {
+    compactIfNeeded();
+    onProgress?.("scenes", index, model);
+    const predicate = model.atScene(scene.id);
+    if (bdd.and(reachable, predicate) === 0) unreachableScenes.push(scene.id);
+    else sceneWitnesses[scene.id] = model.witness(predicate, frontiers);
+  }
+  const unreachableChoices: string[] = [];
+  for (let index = 0; index < model.choices.length; index++) {
+    compactIfNeeded();
+    onProgress?.("choices", index, model);
+    const choice = model.choices[index]!;
+    legal = bdd.or(legal, choice.enabled);
+    if (bdd.and(reachable, choice.enabled) === 0) { unreachableChoices.push(choice.id); continue; }
+    const path = Object.freeze([...model.witness(choice.enabled, frontiers), choice.id]);
+    choiceWitnesses[choice.id] = path;
+    if (choice.terminal) endingWitnesses[choice.id] = path;
+  }
+  compactIfNeeded();
+  return Object.freeze({ exhaustive: true, model, compactions, reachable, completable,
+    deadEnds: bdd.and(bdd.and(reachable, model.playing), bdd.not(legal)),
+    noCompletion: bdd.and(bdd.and(reachable, model.playing), bdd.not(completable)),
+    reachableCount: bdd.count(reachable, model.currentVariables), frontiers: Object.freeze(frontiers), forwardRounds, backwardRounds,
+    unreachableScenes: Object.freeze(unreachableScenes), sceneWitnesses: Object.freeze(sceneWitnesses),
+    unreachableChoices: Object.freeze(unreachableChoices), choiceWitnesses: Object.freeze(choiceWitnesses), endingWitnesses: Object.freeze(endingWitnesses),
+  });
+}
