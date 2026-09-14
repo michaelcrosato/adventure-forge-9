@@ -321,6 +321,50 @@ export const BLACKGLASS_SCENES = [
           { type: "resourceAtLeast", resource: "risk", value: 3 },
         ],
       },
+      {
+        text: "Reedway's warning has returned with you. The Blackglass dispatch board is open: publish it for every patrol, or keep it with the night crew.",
+        when: [
+          { type: "flag", flag: "blackglass-dispatch-available", value: true },
+          { type: "flag", flag: "blackglass-dispatch-resolved", value: false },
+        ],
+      },
+      {
+        text: "The public dispatch ledger carries Reedway's warning. Blackglass patrols will move their stores before the next rise.",
+        when: [{ type: "flag", flag: "blackglass-dispatch-published", value: true }],
+      },
+      {
+        text: "The night crew kept Reedway's warning off the public board. The quiet route remains known to the people who need it.",
+        when: [{ type: "flag", flag: "blackglass-dispatch-kept-quiet", value: true }],
+      },
+    ],
+  },
+  {
+    id: "blackglass-dispatch",
+    title: "Blackglass Dispatch Board",
+    text: [
+      {
+        text: "The dispatch board hangs between the quay and the night crew's lamp room. Reedway's warning can become a public order or stay with the people who move through the works after dark.",
+      },
+      {
+        text: "Orin's ferry horn gave the upper-bank crews time to move their stores. Varo wants the warning entered before the next patrol shift.",
+        when: [{ type: "flag", flag: "reedway-warning-ferry", value: true }],
+      },
+      {
+        text: "Sera's quiet towpath carried the warning before the patrol lamps returned. Nessa wants the route kept with the night crew.",
+        when: [{ type: "flag", flag: "reedway-warning-towpath", value: true }],
+      },
+      {
+        text: "One supply can put the warning on every watch roster. One point of Risk can keep it quiet and preserve the night crew's cover.",
+        when: [{ type: "flag", flag: "blackglass-dispatch-resolved", value: false }],
+      },
+      {
+        text: "The public dispatch ledger now carries the warning. Patrols will move stores before the next rise.",
+        when: [{ type: "flag", flag: "blackglass-dispatch-published", value: true }],
+      },
+      {
+        text: "The warning stays with the night crew. The quiet route remains available to the people who know its cost.",
+        when: [{ type: "flag", flag: "blackglass-dispatch-kept-quiet", value: true }],
+      },
     ],
   },
 ] as const satisfies readonly SceneData[];
@@ -365,6 +409,25 @@ export const BLACKGLASS_CHOICES = [
     description: "Bring Orin's working line and Nessa's marks back to the town that sent you.",
     when: [{ type: "flag", flag: "blackglass-resolved", value: true }],
     effects: [{ type: "goTo", scene: "lowsail-after-blackglass" }],
+  },
+  {
+    id: "visit-blackglass-dispatch",
+    scene: "lowsail-after-blackglass",
+    label: "Visit the Blackglass dispatch board",
+    description: "Carry Reedway's warning into the Blackglass dispatch room before you close the pressure account.",
+    when: [
+      { type: "flag", flag: "blackglass-dispatch-available", value: true },
+      { type: "flag", flag: "blackglass-dispatch-resolved", value: false },
+    ],
+    effects: [{ type: "goTo", scene: "blackglass-dispatch" }],
+  },
+  {
+    id: "revisit-blackglass-dispatch",
+    scene: "lowsail-after-blackglass",
+    label: "Revisit the Blackglass dispatch board",
+    description: "Return to the board and see how the published or quiet warning changed the works.",
+    when: [{ type: "flag", flag: "blackglass-dispatch-resolved", value: true }],
+    effects: [{ type: "goTo", scene: "blackglass-dispatch" }],
   },
   {
     id: "leave-after-blackglass",
@@ -726,6 +789,47 @@ export const BLACKGLASS_CHOICES = [
     description: "Turn back from the wet ledge before reaching the pressure room.",
     effects: [],
     outcome: { status: "departed", summary: "You leave the conduit gallery before the pressure sequence. Blackglass keeps its rising water." },
+  },
+  {
+    id: "publish-blackglass-dispatch",
+    scene: "blackglass-dispatch",
+    label: "Publish the Reedway warning",
+    description: "Spend one supply to put the warning on every Blackglass watch roster.",
+    when: [
+      { type: "flag", flag: "blackglass-dispatch-resolved", value: false },
+      { type: "resourceAtLeast", resource: "supplies", value: 1 },
+    ],
+    effects: [
+      { type: "adjustResource", resource: "supplies", delta: -1 },
+      { type: "setFlag", flag: "blackglass-dispatch-resolved", value: true },
+      { type: "setFlag", flag: "blackglass-dispatch-published", value: true },
+      { type: "addFact", fact: "blackglass-dispatch-published" },
+      { type: "goTo", scene: "lowsail-after-blackglass" },
+    ],
+  },
+  {
+    id: "keep-blackglass-dispatch-quiet",
+    scene: "blackglass-dispatch",
+    label: "Keep the warning with the night crew",
+    description: "Add one Risk to keep Reedway's warning off the public board and preserve the quiet route.",
+    when: [
+      { type: "flag", flag: "blackglass-dispatch-resolved", value: false },
+      { type: "resourceAtMost", resource: "risk", value: 18 },
+    ],
+    effects: [
+      { type: "adjustResource", resource: "risk", delta: 1 },
+      { type: "setFlag", flag: "blackglass-dispatch-resolved", value: true },
+      { type: "setFlag", flag: "blackglass-dispatch-kept-quiet", value: true },
+      { type: "addFact", fact: "blackglass-dispatch-kept-quiet" },
+      { type: "goTo", scene: "lowsail-after-blackglass" },
+    ],
+  },
+  {
+    id: "leave-blackglass-dispatch",
+    scene: "blackglass-dispatch",
+    label: "Leave the dispatch board",
+    description: "Return to Lowsail's account without deciding how widely the warning should travel.",
+    effects: [{ type: "goTo", scene: "lowsail-after-blackglass" }],
   },
   {
     id: "close-blackglass-chapter-clean",

@@ -1,6 +1,12 @@
 # Current work
 
-## Current handoff: 2026-09-14, persistent Reedway upper-bank watch
+## Current handoff: 2026-09-14, Reedway warning to Blackglass dispatch
+
+The Reedway upper-bank warning now carries into a resolved Blackglass journey. From Lowsail, the new Blackglass dispatch board offers a public-ledger route that spends one Supply and a quiet night-crew route that adds one Risk; both set durable facts and expose a changed revisit. The source change is in `src/content/blackglass.ts`, `src/content/reedway.ts`, and `src/content/scenario.ts`, with authored endpoint coverage in `tests/blackglass-dispatch.test.ts` and `tests/authored-witnesses.ts`.
+
+External evidence for this handoff is kept outside the repository: the complete 739-forest candidate catalog is `/tmp/af9-blackglass-dispatch-projected-extended-20260914-v2/candidates.json`; independent original-relational verification is `/tmp/af9-blackglass-dispatch-projected-extended-20260914-v2-verification.json` (31 scenes, 708 failure seeds); and the repository gate log is `/tmp/af9-blackglass-dispatch-verify-20260914-v2.log` (290/290 tests passed in 525285.980433 ms). The prior production bundle is recoverable at `/tmp/af9-campaign-previous-20260914-v2`.
+
+Browser/save/mobile/three-player acceptance remains unverified. The complete user goal remains larger than this slice.
 
 The Reedway region now includes a persistent optional upper-bank watch. From
 the same inherited commons state, the player can spend one supply on Orin

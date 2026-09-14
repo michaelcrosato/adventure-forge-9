@@ -745,6 +745,7 @@ export const REEDWAY_CHOICES = [
     effects: [
       { type: "adjustResource", resource: "supplies", delta: -1 },
       { type: "setFlag", flag: "reedway-warning-ferry", value: true },
+      { type: "setFlag", flag: "blackglass-dispatch-available", value: true },
       { type: "addFact", fact: "reedway-warning-ferry" },
       { type: "goTo", scene: "reedway-commons" },
     ],
@@ -763,6 +764,7 @@ export const REEDWAY_CHOICES = [
     effects: [
       { type: "adjustResource", resource: "risk", delta: 1 },
       { type: "setFlag", flag: "reedway-warning-towpath", value: true },
+      { type: "setFlag", flag: "blackglass-dispatch-available", value: true },
       { type: "addFact", fact: "reedway-warning-towpath" },
       { type: "goTo", scene: "reedway-commons" },
     ],

@@ -183,6 +183,8 @@ export const FACT_LABELS = {
   "blackglass-workers-guided": "Orin Pell's workers crossed under Nessa Quill's guidance.",
   "blackglass-aid-restored": "You spent a supply to restore Nessa Quill's aid after Mara was compelled.",
   "blackglass-chapter-closed": "You closed the Blackglass account and carried its pressure record back to Lowsail.",
+  "blackglass-dispatch-published": "You entered Reedway's warning in the Blackglass public dispatch ledger.",
+  "blackglass-dispatch-kept-quiet": "You kept Reedway's warning with the Blackglass night crew, away from the public dispatch ledger.",
   ...REEDWAY_FACT_LABELS,
 } as const satisfies Readonly<Record<string, string>>;
 
