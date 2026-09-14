@@ -1,6 +1,19 @@
 # Current work
 
-## Current handoff: 2026-09-14, Reedway warning to Blackglass dispatch
+## Current handoff: 2026-09-14, Saltreach beyond Reedway
+
+Saltreach now extends the campaign beyond the Reedway upper watch. Either the public ferry warning or the quiet towpath warning can open Saltreach from the same resolved Blackglass state, with a supply-costing tidehouse response or a risk-costing channel-mark response. The resolved Saltreach state changes the Reedway commons text and can be revisited without leaking the unchosen route.
+
+External evidence is preserved outside the repository:
+
+- Candidate catalog: `/tmp/af9-saltreach-projected-extended-20260914-v1/candidates.json` with 34 scene forests and 748 choice failure forests, 782 forests total.
+- Independent verifier: `/tmp/af9-saltreach-projected-extended-20260914-v1-verification.json` with 34 scene checks and 748 failure seeds.
+- Installed stage: `/tmp/af9-saltreach-stage-20260914-v2`; prior bundle backup: `/tmp/af9-campaign-previous-20260914-v3`.
+- Required gate: `/tmp/af9-saltreach-verify-20260914-v1.log`, 292/292 passing in 599360.488969 ms.
+
+Browser, save/load in a live browser, mobile layout, and three-player acceptance remain unverified. The complete user goal remains larger than this slice.
+
+## Previous handoff: 2026-09-14, Reedway warning to Blackglass dispatch
 
 The Reedway upper-bank warning now carries into a resolved Blackglass journey. From Lowsail, the new Blackglass dispatch board offers a public-ledger route that spends one Supply and a quiet night-crew route that adds one Risk; both set durable facts and expose a changed revisit. The source change is in `src/content/blackglass.ts`, `src/content/reedway.ts`, and `src/content/scenario.ts`, with authored endpoint coverage in `tests/blackglass-dispatch.test.ts` and `tests/authored-witnesses.ts`.
 

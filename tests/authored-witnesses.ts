@@ -2,6 +2,48 @@
 // Paths are sorted by code-point ID for deterministic test iteration; path contents are unchanged.
 // This fixture records endpoint replay evidence and is not a universal reachability proof.
 
+const SALTREACH_PREFIX = [
+  "choose-canalwright",
+  "visit-clinic",
+  "make-clinic-promise",
+  "refuse-council-control",
+  "use-canalwright-kit",
+  "pay-scouts",
+  "read-stolen-order",
+  "repair-and-share-water",
+  "release-shared-water",
+  "bring-shared-water-to-clinic",
+  "close-clinic-and-open-archive",
+  "enter-lantern-hall",
+  "read-nessa-maintenance-log",
+  "trace-seal-chain",
+  "reconstruct-seal-pressure",
+  "call-lantern-hearing",
+  "publish-technical-record",
+  "continue-to-blackglass",
+  "begin-blackglass-crossing",
+  "take-shared-maintenance-line",
+  "follow-shared-repair-marks",
+  "set-pressure-before-next-surge",
+  "return-to-lowsail-from-blackglass",
+  "explore-reedway-from-lowsail",
+  "visit-reedway-barge",
+  "fit-reedway-regulator-as-canalwright",
+  "visit-reedway-workers",
+  "install-reedway-regulator-at-workers",
+  "leave-reedway-workers",
+  "visit-reedway-upper-watch",
+] as const;
+
+const SALTREACH_FERRY_WATCH = [...SALTREACH_PREFIX, "post-reedway-warning-by-ferry", "revisit-reedway-upper-watch-by-ferry"] as const;
+const SALTREACH_TOWPATH_WATCH = [...SALTREACH_PREFIX, "carry-reedway-warning-by-towpath", "revisit-reedway-upper-watch-by-towpath"] as const;
+const SALTREACH_FERRY_SCENE = [...SALTREACH_FERRY_WATCH, "follow-ferry-warning-to-saltreach"] as const;
+const SALTREACH_TIDEHOUSE = [...SALTREACH_FERRY_SCENE, "visit-saltreach-tidehouse"] as const;
+const SALTREACH_CHANNEL = [...SALTREACH_FERRY_SCENE, "visit-saltreach-channel-works"] as const;
+const SALTREACH_TIDEHOUSE_DONE = [...SALTREACH_TIDEHOUSE, "secure-saltreach-tidehouse"] as const;
+const SALTREACH_CHANNEL_DONE = [...SALTREACH_CHANNEL, "mark-saltreach-channel"] as const;
+const SALTREACH_RETURNED = [...SALTREACH_TIDEHOUSE_DONE, "return-to-reedway-from-saltreach"] as const;
+
 export const AUTHORED_WITNESSES = {
   "scene": {
     "archive-hall": [
@@ -398,6 +440,15 @@ export const AUTHORED_WITNESSES = {
       "return-to-blackglass-from-reedway",
       "return-to-lowsail-from-blackglass",
       "visit-blackglass-dispatch"
+    ],
+    "saltreach-channel-works": [
+      ...SALTREACH_CHANNEL
+    ],
+    "saltreach-commons": [
+      ...SALTREACH_FERRY_SCENE
+    ],
+    "saltreach-tidehouse": [
+      ...SALTREACH_TIDEHOUSE
     ]
   },
   "choice": {
@@ -3045,6 +3096,46 @@ export const AUTHORED_WITNESSES = {
       "visit-blackglass-dispatch",
       "publish-blackglass-dispatch",
       "revisit-blackglass-dispatch"
+    ],
+    "follow-ferry-warning-to-saltreach": [
+      ...SALTREACH_FERRY_WATCH,
+      "follow-ferry-warning-to-saltreach"
+    ],
+    "follow-towpath-warning-to-saltreach": [
+      ...SALTREACH_TOWPATH_WATCH,
+      "follow-towpath-warning-to-saltreach"
+    ],
+    "revisit-saltreach-from-reedway": [
+      ...SALTREACH_RETURNED,
+      "revisit-saltreach-from-reedway"
+    ],
+    "visit-saltreach-tidehouse": [
+      ...SALTREACH_FERRY_SCENE,
+      "visit-saltreach-tidehouse"
+    ],
+    "visit-saltreach-channel-works": [
+      ...SALTREACH_FERRY_SCENE,
+      "visit-saltreach-channel-works"
+    ],
+    "return-to-reedway-from-saltreach": [
+      ...SALTREACH_TIDEHOUSE_DONE,
+      "return-to-reedway-from-saltreach"
+    ],
+    "secure-saltreach-tidehouse": [
+      ...SALTREACH_TIDEHOUSE,
+      "secure-saltreach-tidehouse"
+    ],
+    "mark-saltreach-channel": [
+      ...SALTREACH_CHANNEL,
+      "mark-saltreach-channel"
+    ],
+    "leave-saltreach-tidehouse": [
+      ...SALTREACH_TIDEHOUSE,
+      "leave-saltreach-tidehouse"
+    ],
+    "leave-saltreach-channel-works": [
+      ...SALTREACH_CHANNEL,
+      "leave-saltreach-channel-works"
     ]
   },
   "ending": {
@@ -3529,6 +3620,6 @@ export const AUTHORED_WITNESSES = {
 
 export const AUTHORED_WITNESS_PROVENANCE = {
   buildId: "af9-51bc2262f22d7220159899f2",
-  catalogSHA: "a2db621b4c2befb01c151fb916c40d983980cf3b304c019e684f7f5d1235a209",
+  catalogSHA: "6c36d8d008e5c2d8a6a1a5f7f778af0c17be6f5949b2a3adabc73906cfd66e86",
   independentCheckerSHA: "597a355b202646bfcebf64c10b10300e080e00905f0f1f91a321abb3d047dea3",
 } as const;

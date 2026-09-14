@@ -103,6 +103,14 @@ export const REEDWAY_SCENES = [
         when: [{ type: "flag", flag: "reedway-warning-towpath", value: true }],
       },
       {
+        text: "Nyra's Saltreach tidehouse keeps the convoy stores dry. The causeway crew sends its next warning back toward the upper watch.",
+        when: [{ type: "flag", flag: "saltreach-tidehouse-secured", value: true }],
+      },
+      {
+        text: "Halden's Saltreach channel marks guide the night convoy around the deep mud. The upper watch now has a second route to the works.",
+        when: [{ type: "flag", flag: "saltreach-channel-marked", value: true }],
+      },
+      {
         text: "Sera has pulled her crew out of your work after the seizure. Hired porters charge more than she did.",
         when: [{ type: "flag", flag: "reedway-salvager-hostile", value: true }],
       },

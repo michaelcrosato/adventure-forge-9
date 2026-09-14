@@ -1,6 +1,7 @@
 import { BLACKGLASS_CHOICES, BLACKGLASS_CLOCKS, BLACKGLASS_SCENES } from "./blackglass.js";
 import { LANTERN_CHOICES, LANTERN_SCENES } from "./lantern.js";
 import { REEDWAY_CHOICES, REEDWAY_FACT_LABELS, REEDWAY_SCENES } from "./reedway.js";
+import { SALTREACH_CHOICES, SALTREACH_FACT_LABELS, SALTREACH_SCENES } from "./saltreach.js";
 
 export type ScenarioStatus = "completed" | "departed" | "dead";
 
@@ -186,6 +187,7 @@ export const FACT_LABELS = {
   "blackglass-dispatch-published": "You entered Reedway's warning in the Blackglass public dispatch ledger.",
   "blackglass-dispatch-kept-quiet": "You kept Reedway's warning with the Blackglass night crew, away from the public dispatch ledger.",
   ...REEDWAY_FACT_LABELS,
+  ...SALTREACH_FACT_LABELS,
 } as const satisfies Readonly<Record<string, string>>;
 
 /**
@@ -431,6 +433,7 @@ export const RAW_SCENARIO = {
     ...LANTERN_SCENES,
     ...BLACKGLASS_SCENES,
     ...REEDWAY_SCENES,
+    ...SALTREACH_SCENES,
   ],
   choices: [
     {
@@ -1197,5 +1200,6 @@ export const RAW_SCENARIO = {
     ...LANTERN_CHOICES,
     ...BLACKGLASS_CHOICES,
     ...REEDWAY_CHOICES,
+    ...SALTREACH_CHOICES,
   ],
 } as const satisfies ScenarioData;
