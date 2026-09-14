@@ -1,5 +1,36 @@
 # Current work
 
+## Current handoff: 2026-09-14, persistent Reedway upper-bank watch
+
+The Reedway region now includes a persistent optional upper-bank watch. From
+the same inherited commons state, the player can spend one supply on Orin
+Pell's ferry horn or spend one Risk on Sera Vale's quiet towpath. Each route
+sets its own fact and flag, changes the commons text, and exposes a distinct
+revisit so the earlier area is materially different after the choice. The
+slice adds one scene, six nonterminal choices, two flags and two fact labels.
+
+The focused route/replay checks pass 3/3, and the authored endpoint catalog
+now replays 30 scenes, 172 choices and 36 endings. The fresh factorized
+campaign candidate catalog contains 718 forests: 30 scene cones and 688
+failure cones. Independent relational verification passed all 30 scenes and
+688 failure seeds, rechecked every forest checksum and source binding, and
+left `accepted: false` as required for an untrusted candidate run.
+
+The verified bundle is installed under `certificates/campaign/`; the previous
+bundle is retained outside the repository at
+`/tmp/af9-campaign-previous-20260914-v1`. Full `npm run verify` then passed
+289/289 tests in 430,517 ms. External run records remain at
+`/tmp/af9-upper-watch-projected-20260914-v1/`,
+`/tmp/af9-upper-watch-projected-20260914-v1-verification.json`, and
+`/tmp/af9-upper-watch-verify-20260914-v2.log`. The interrupted functional
+producer and its 363-forest partial record remain at
+`/tmp/af9-upper-watch-functional-20260914-v2/`; it is not used as a proof.
+
+Browser/save/mobile acceptance and the three predeclared blind-player runs
+remain unverified. The larger Skyrim-breadth/BG3-depth goal remains open;
+next gameplay work should extend persistent travel beyond Reedway while
+preserving changed revisits and cross-region consequences.
+
 ## Current handoff: 2026-09-10, user-directed checkpoint and pause
 
 The user requested committing and pushing the immediate verified integration,

@@ -18,6 +18,8 @@ export const REEDWAY_FACT_LABELS = {
   "reedway-relief-commissioned-with-porters": "You took on debt to hire porters for the worker relief delivery.",
   "reedway-deckhand-treated": "You treated Sera Vale's injured deckhand, Milo Fen.",
   "reedway-deckhand-splinted-as-medic": "You splinted Sera Vale's injured deckhand under your field-medic practice.",
+  "reedway-warning-ferry": "You sent the upstream warning by Orin Pell's ferry horn.",
+  "reedway-warning-towpath": "You carried the upstream warning along Sera Vale's quiet towpath.",
 } as const satisfies Readonly<Record<string, string>>;
 
 export const REEDWAY_SCENES = [
@@ -84,6 +86,21 @@ export const REEDWAY_SCENES = [
       {
         text: "Relief crates have reached the upper-bank workers. Orin's people are distributing the load you arranged.",
         when: [{ type: "flag", flag: "reedway-relief-sent", value: true }],
+      },
+      {
+        text: "The upper-bank watch is waiting for a flood warning. You can reach it by ferry horn or by Sera's quiet towpath.",
+        when: [
+          { type: "flag", flag: "reedway-warning-ferry", value: false },
+          { type: "flag", flag: "reedway-warning-towpath", value: false },
+        ],
+      },
+      {
+        text: "Orin's ferry horn carried the warning upstream. The upper-bank crews are moving their stores before the next rise.",
+        when: [{ type: "flag", flag: "reedway-warning-ferry", value: true }],
+      },
+      {
+        text: "You carried the warning along Sera's quiet towpath. The upper-bank crews heard it before the ferry lamps returned.",
+        when: [{ type: "flag", flag: "reedway-warning-towpath", value: true }],
       },
       {
         text: "Sera has pulled her crew out of your work after the seizure. Hired porters charge more than she did.",
@@ -244,6 +261,35 @@ export const REEDWAY_SCENES = [
       },
     ],
   },
+  {
+    id: "reedway-upper-watch",
+    title: "Upper-Bank Watch",
+    text: [
+      {
+        text: "The upper-bank watch stands above the reed flats. Its crews can move grain and medicine before the flood reaches the low road.",
+        when: [
+          { type: "flag", flag: "reedway-warning-ferry", value: false },
+          { type: "flag", flag: "reedway-warning-towpath", value: false },
+        ],
+      },
+      {
+        text: "Orin's ferry can sound a warning horn across the bank, but the crew needs one supply to keep the signal boat fueled.",
+        when: [{ type: "flag", flag: "reedway-warning-ferry", value: false }],
+      },
+      {
+        text: "Sera's quiet towpath reaches the watch without the ferry lamps. It will cost one point of Risk to move unseen.",
+        when: [{ type: "flag", flag: "reedway-warning-towpath", value: false }],
+      },
+      {
+        text: "The ferry horn has already warned the upper bank. Storekeepers are moving their stock above the next flood mark.",
+        when: [{ type: "flag", flag: "reedway-warning-ferry", value: true }],
+      },
+      {
+        text: "The towpath warning reached the upper bank before the patrol lamps came back. The watch has marked the quiet route for the next crew.",
+        when: [{ type: "flag", flag: "reedway-warning-towpath", value: true }],
+      },
+    ],
+  },
 ] as const satisfies readonly SceneData[];
 
 export const REEDWAY_CHOICES = [
@@ -302,6 +348,33 @@ export const REEDWAY_CHOICES = [
     label: "Visit Orin's landing",
     description: "Hear what the regulator would make possible and decide how relief will reach the workers.",
     effects: [{ type: "goTo", scene: "reedway-worker-landing" }],
+  },
+  {
+    id: "visit-reedway-upper-watch",
+    scene: "reedway-commons",
+    label: "Visit the upper-bank watch",
+    description: "Carry a flood warning to the crews above the reed flats. The ferry horn and Sera's quiet towpath ask different prices.",
+    when: [
+      { type: "flag", flag: "reedway-warning-ferry", value: false },
+      { type: "flag", flag: "reedway-warning-towpath", value: false },
+    ],
+    effects: [{ type: "goTo", scene: "reedway-upper-watch" }],
+  },
+  {
+    id: "revisit-reedway-upper-watch-by-ferry",
+    scene: "reedway-commons",
+    label: "Revisit the warned upper-bank watch",
+    description: "Return to the watch and see how the ferry warning changed the upper-bank preparations.",
+    when: [{ type: "flag", flag: "reedway-warning-ferry", value: true }],
+    effects: [{ type: "goTo", scene: "reedway-upper-watch" }],
+  },
+  {
+    id: "revisit-reedway-upper-watch-by-towpath",
+    scene: "reedway-commons",
+    label: "Revisit the quiet upper-bank watch",
+    description: "Return to the watch and see what the quiet towpath warning changed for the next crew.",
+    when: [{ type: "flag", flag: "reedway-warning-towpath", value: true }],
+    effects: [{ type: "goTo", scene: "reedway-upper-watch" }],
   },
   {
     id: "return-to-lowsail-from-reedway",
@@ -657,5 +730,48 @@ export const REEDWAY_CHOICES = [
       { type: "addFact", fact: "reedway-relief-commissioned-with-porters" },
       { type: "goTo", scene: "reedway-worker-landing" },
     ],
+  },
+  {
+    id: "post-reedway-warning-by-ferry",
+    scene: "reedway-upper-watch",
+    label: "Sound the warning by ferry horn",
+    description: "Spend one supply to fuel Orin's signal boat and send the flood warning across the upper bank.",
+    when: [
+      { type: "flag", flag: "reedway-warning-ferry", value: false },
+      { type: "flag", flag: "reedway-warning-towpath", value: false },
+      { type: "flag", flag: "reedway-ferry-powered", value: true },
+      { type: "resourceAtLeast", resource: "supplies", value: 1 },
+    ],
+    effects: [
+      { type: "adjustResource", resource: "supplies", delta: -1 },
+      { type: "setFlag", flag: "reedway-warning-ferry", value: true },
+      { type: "addFact", fact: "reedway-warning-ferry" },
+      { type: "goTo", scene: "reedway-commons" },
+    ],
+  },
+  {
+    id: "carry-reedway-warning-by-towpath",
+    scene: "reedway-upper-watch",
+    label: "Carry the warning by quiet towpath",
+    description: "Use Sera's quiet route and add one Risk to reach the upper-bank watch before the patrol lamps return.",
+    when: [
+      { type: "flag", flag: "reedway-warning-ferry", value: false },
+      { type: "flag", flag: "reedway-warning-towpath", value: false },
+      { type: "flag", flag: "reedway-salvager-hostile", value: false },
+      { type: "resourceAtMost", resource: "risk", value: 18 },
+    ],
+    effects: [
+      { type: "adjustResource", resource: "risk", delta: 1 },
+      { type: "setFlag", flag: "reedway-warning-towpath", value: true },
+      { type: "addFact", fact: "reedway-warning-towpath" },
+      { type: "goTo", scene: "reedway-commons" },
+    ],
+  },
+  {
+    id: "leave-reedway-upper-watch",
+    scene: "reedway-upper-watch",
+    label: "Return to the commons",
+    description: "Leave the upper-bank watch and return to the Reedway commons.",
+    effects: [{ type: "goTo", scene: "reedway-commons" }],
   },
 ] as const satisfies readonly ChoiceData[];
