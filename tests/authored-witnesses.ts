@@ -65,6 +65,14 @@ const GLOAMFEN_MARSH_ROAD = [...GLOAMFEN_MARSH, "visit-gloamfen-marsh-road"] as 
 const GLOAMFEN_SLUICE_DONE = [...GLOAMFEN_SLUICEHOUSE, "secure-gloamfen-lock"] as const;
 const GLOAMFEN_MARSH_DONE = [...GLOAMFEN_MARSH_ROAD, "mark-gloamfen-marsh-road"] as const;
 const GLOAMFEN_RETURNED = [...GLOAMFEN_SLUICE_DONE, "return-to-cinderwake-from-gloamfen"] as const;
+const STORMVAULT_ORIGIN = [...GLOAMFEN_SLUICE_DONE] as const;
+const STORMVAULT_SIGNAL = [...STORMVAULT_ORIGIN, "take-stormvault-signal-road"] as const;
+const STORMVAULT_CISTERN = [...STORMVAULT_ORIGIN, "take-stormvault-cistern-road"] as const;
+const STORMVAULT_SIGNAL_TOWER = [...STORMVAULT_SIGNAL, "visit-stormvault-signal-tower"] as const;
+const STORMVAULT_CISTERN_SCENE = [...STORMVAULT_CISTERN, "visit-stormvault-cistern"] as const;
+const STORMVAULT_SIGNAL_DONE = [...STORMVAULT_SIGNAL_TOWER, "raise-stormvault-signal"] as const;
+const STORMVAULT_CISTERN_DONE = [...STORMVAULT_CISTERN_SCENE, "open-stormvault-cistern"] as const;
+const STORMVAULT_RETURNED = [...STORMVAULT_SIGNAL_DONE, "return-to-gloamfen-from-stormvault"] as const;
 
 export const AUTHORED_WITNESSES = {
   "scene": {
@@ -209,6 +217,15 @@ export const AUTHORED_WITNESSES = {
     ],
     "gloamfen-marsh-road": [
       ...GLOAMFEN_MARSH_ROAD
+    ],
+    "stormvault-landing": [
+      ...STORMVAULT_SIGNAL
+    ],
+    "stormvault-signal-tower": [
+      ...STORMVAULT_SIGNAL_TOWER
+    ],
+    "stormvault-cistern": [
+      ...STORMVAULT_CISTERN_SCENE
     ],
     "lantern-hearing": [
       "hear-council",
@@ -3305,6 +3322,46 @@ export const AUTHORED_WITNESSES = {
     "leave-gloamfen-marsh-road": [
       ...GLOAMFEN_MARSH_ROAD,
       "leave-gloamfen-marsh-road"
+    ],
+    "take-stormvault-signal-road": [
+      ...STORMVAULT_ORIGIN,
+      "take-stormvault-signal-road"
+    ],
+    "take-stormvault-cistern-road": [
+      ...STORMVAULT_ORIGIN,
+      "take-stormvault-cistern-road"
+    ],
+    "revisit-stormvault-from-gloamfen": [
+      ...STORMVAULT_RETURNED,
+      "revisit-stormvault-from-gloamfen"
+    ],
+    "visit-stormvault-signal-tower": [
+      ...STORMVAULT_SIGNAL,
+      "visit-stormvault-signal-tower"
+    ],
+    "visit-stormvault-cistern": [
+      ...STORMVAULT_CISTERN,
+      "visit-stormvault-cistern"
+    ],
+    "return-to-gloamfen-from-stormvault": [
+      ...STORMVAULT_SIGNAL_DONE,
+      "return-to-gloamfen-from-stormvault"
+    ],
+    "raise-stormvault-signal": [
+      ...STORMVAULT_SIGNAL_TOWER,
+      "raise-stormvault-signal"
+    ],
+    "open-stormvault-cistern": [
+      ...STORMVAULT_CISTERN_SCENE,
+      "open-stormvault-cistern"
+    ],
+    "leave-stormvault-signal-tower": [
+      ...STORMVAULT_SIGNAL_TOWER,
+      "leave-stormvault-signal-tower"
+    ],
+    "leave-stormvault-cistern": [
+      ...STORMVAULT_CISTERN_SCENE,
+      "leave-stormvault-cistern"
     ]
   },
   "ending": {

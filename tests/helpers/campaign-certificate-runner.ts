@@ -7,7 +7,8 @@ import { auditCampaignCertificate, CAMPAIGN_CERTIFICATE_CONFIG } from "../../src
 assert.equal(process.argv.length, 2, "Campaign certificate worker accepts no arguments");
 const requiredHeapFlag = `--max-old-space-size=${CAMPAIGN_CERTIFICATE_CONFIG.runtimePolicy.nodeMaxOldSpaceSizeMiB}`;
 assert(process.execArgv.includes(requiredHeapFlag), `Campaign certificate worker requires ${requiredHeapFlag}`);
-assert(getHeapStatistics().heap_size_limit <= 1600 * 1024 * 1024, "Unexpected worker heap limit");
+const maximumHeapMiB = CAMPAIGN_CERTIFICATE_CONFIG.runtimePolicy.nodeMaxOldSpaceSizeMiB + 64;
+assert(getHeapStatistics().heap_size_limit <= maximumHeapMiB * 1024 * 1024, "Unexpected worker heap limit");
 const { report } = auditCampaignCertificate(event => {
   process.stdout.write(`${JSON.stringify({ type: "progress", ...event })}\n`);
 });

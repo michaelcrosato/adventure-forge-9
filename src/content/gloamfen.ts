@@ -30,6 +30,14 @@ export const GLOAMFEN_SCENES = [
         text: "Iven's marsh-road marks lead the night haul between the kilns. The route is exposed, but the carts no longer need a guide at every turn.",
         when: [{ type: "flag", flag: "gloamfen-marsh-road-marked", value: true }],
       },
+      {
+        text: "Nera's Stormvault signal now turns above the marsh. The Gloamfen haul can climb the switchback before the smoke closes.",
+        when: [{ type: "flag", flag: "stormvault-signal-raised", value: true }],
+      },
+      {
+        text: "Elian's Stormvault cistern now feeds the ridge. The return haul can leave Gloamfen with water in its drums.",
+        when: [{ type: "flag", flag: "stormvault-cistern-opened", value: true }],
+      },
     ],
   },
   {

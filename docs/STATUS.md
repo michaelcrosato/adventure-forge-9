@@ -1,6 +1,20 @@
 # Current work
 
-## Current handoff: 2026-09-14, Gloamfen beyond Cinderwake
+## Current handoff: 2026-09-15, Stormvault beyond Gloamfen
+
+Stormvault extends the campaign beyond Gloamfen with three authored scenes and ten choices. The signal-tower route exposes archive evidence; the cistern route trades certainty for risk, with revisits and returns wired into the existing campaign.
+
+- Catalog: 46 scenes, 227 choices, 954 forests, and 908 failure seeds.
+- Certificate policy: 4,000,000 BDD nodes and 4,096 MiB Node heap for generation and verification.
+- Functional evidence: whole-campaign producer v1 exhausted the heap, v2 reached the 3,000,000-node limit, and v3 reached its checked time limit after a valid 15-scene prefix at 1,800,407 ms. Evidence remains outside the repository at `/tmp/af9-stormvault-functional-20260914-v1`, `/tmp/af9-stormvault-functional-20260914-v2`, and `/tmp/af9-stormvault-functional-20260914-v3`.
+- Scene evidence: fresh-process per-scene generation produced the complete prefix; tooling and witness evidence are at `/tmp/af9-scene-split-20260914-v1` and `/tmp/af9-scene-witness-cellar-20260914-v1`.
+- Projection evidence: all ten resource cones completed with induction checks in `/tmp/af9-stormvault-projected-node4m-runtime60-20260915-v1`; final catalog assembly reused those cones in `/tmp/af9-stormvault-projected-node4m-runtime60-20260915-v4`.
+- Independent verifier: `/tmp/af9-stormvault-projected-node4m-runtime60-20260915-v4-verification.json` and its log accepted 46 scenes and 908 failure seeds with `accepted: false` pending the repository gate.
+- Installed certificate stage: `/tmp/af9-stormvault-stage-20260915-v1`; previous bundle backup: `/tmp/af9-campaign-previous-20260915-v1`.
+- Full `npm run verify` gate: passed `300/300` tests in `2,967,427.799374 ms`; gate log is `/tmp/af9-stormvault-verify-runtime60-20260915-v3.log`, and the detached worker report is `/tmp/af9-campaign-certificate-run-iiG5gY` (`46` scene obligations, `908` failure obligations, exact completion and backward safety verified).
+- Limitation: the whole-campaign producer did not complete in one process; full scene coverage came from isolated fresh-process scene proofs, while failure coverage came from independently induced and verified resource projections.
+
+## Previous handoff: 2026-09-14, Gloamfen beyond Cinderwake
 
 Gloamfen extends the authored campaign beyond Cinderwake into a soot-black marsh edge. The route has three scenes (`gloamfen-landing`, Mara's `gloamfen-sluicehouse`, and Iven's `gloamfen-marsh-road`) and ten deterministic choices. The sluice approach spends one Supply to secure Mara's gates; the marsh-road approach adds one Risk to mark Iven's haul line. Both routes support revisit, return, save/restore, replay, and changed Cinderwake return text. Authored witnesses now cover 43 scenes and 217 choices.
 

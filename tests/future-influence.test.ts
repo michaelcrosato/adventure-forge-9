@@ -215,9 +215,10 @@ test("permanent closure cannot hide unknown behavior from the influence proof", 
 
 test("resolved shores retain future costs while preserving old displayed history as parameters", () => {
   const result = analyzeFutureInfluence(SCENARIO, sharedLowResolved());
-  assert.deepEqual(result.conservedResources, ["archive-evidence", "evacuees", "tide"]);
+  assert.deepEqual(result.conservedResources, ["evacuees", "tide"]);
   assert.ok(result.activeResources.includes("water"), "the canalwright exchange still spends water");
   assert.ok(result.activeResources.includes("risk"), "old completed choices still read Risk");
+  assert.ok(result.activeResources.includes("archive-evidence"), "Stormvault still reads Archive evidence");
   assert.ok(result.conservedFlags.includes("archive-verdict-exposed"));
   assert.ok(result.conservedFlags.includes("shared-water"));
   assert.ok(result.activeFlags.includes("reedway-salvager-hostile"), "care can still reset hostility");
