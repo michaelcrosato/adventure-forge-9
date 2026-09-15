@@ -11,8 +11,9 @@ The policy-aligned external certificate evidence is preserved outside the reposi
 - Independent verifier: `/tmp/af9-gloamfen-projected-node3m-runtime60-20260914-v2-verification.json` (43 scenes, 868 failure seeds, complete, accepted false, `1072139.038699 ms`).
 - Staged bundle source: `/tmp/af9-gloamfen-stage-20260914-v1`; previous Cinderwake bundle: `/tmp/af9-campaign-previous-20260914-v6`.
 - Full repository gate: `/tmp/af9-gloamfen-verify-runtime60-20260914-v1.log` (`298/298`, `1102797.459353 ms`).
+- Desktop browser smoke evidence: `/tmp/af9-browser-live-gloamfen-20260914.json` and `/tmp/af9-browser-live-gloamfen-20260914.png` (44 DOM actions from a fresh journey, Gloamfen reached, three choices visible, 5,923-byte checkpoint persisted, no browser errors).
 
-The verifier capacity is now a 3,000,000-node BDD limit with a 60-minute checked / 60.5-minute external window; cache, round, transition, resource, and relational checks are unchanged. Browser surface, live browser acceptance, mobile layout, and three-player coordination remain unverified. The complete campaign goal remains larger than this slice.
+The verifier capacity is now a 3,000,000-node BDD limit with a 60-minute checked / 60.5-minute external window; cache, round, transition, resource, and relational checks are unchanged. The desktop live smoke path is verified, while broad browser coverage, mobile layout, and three-player coordination remain unverified. The complete campaign goal remains larger than this slice.
 
 ## Previous handoff: 2026-09-14, Cinderwake beyond Fenward
 
