@@ -58,7 +58,7 @@ export function generateCampaignCandidates(output: string, maxElapsedMs = 180_00
   mkdirSync(directory, { mode: 0o700 });
   const bindings = currentCampaignCertificateBindings();
   const generatorHash = hashBytes(readFileSync(new URL(import.meta.url)));
-  const limits = { maxNodes: 2_000_000, maxJsonBytes: 128 * 1024 * 1024, maxCompressedBytes: 32 * 1024 * 1024 };
+  const limits = { maxNodes: 8_000_000, maxJsonBytes: 128 * 1024 * 1024, maxCompressedBytes: 32 * 1024 * 1024 };
   const obligationChoiceCompactAt = 750_000;
   const forests: ForestArtifact[] = [];
   const saveJson = (name: string, value: unknown) => writeFileSync(join(directory, name),

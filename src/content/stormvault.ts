@@ -30,6 +30,14 @@ export const STORMVAULT_SCENES = [
         text: "Elian's cistern now feeds the rise. The return haul can climb with water in its drums instead of gambling on the kiln road below.",
         when: [{ type: "flag", flag: "stormvault-cistern-opened", value: true }],
       },
+      {
+        text: "The upper shelf continues to Crownwater, where Mira's bell and Teren's weir watch the next storm line.",
+        when: [{ type: "flag", flag: "stormvault-resolved", value: true }, { type: "flag", flag: "crownwater-resolved", value: false }],
+      },
+      {
+        text: "Crownwater's bell or weir now carries the high route beyond Stormvault. The shelf has a warning or a clean descent, but not both.",
+        when: [{ type: "flag", flag: "crownwater-resolved", value: true }],
+      },
     ],
   },
   {

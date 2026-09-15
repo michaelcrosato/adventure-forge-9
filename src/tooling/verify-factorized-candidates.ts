@@ -24,7 +24,7 @@ export function verifyFactorizedCandidates(inputDirectory: string, outputFile: s
   assert.equal(input.schema, "af9-factorized-candidate-generation-v1");
   assert.deepEqual(input.bindings, bindings, "Candidate source bindings differ from this checkout");
   assert(Array.isArray(input.forests), "Candidate forests must be an array");
-  const limits = { maxNodes: 2_000_000, maxJsonBytes: 128 * 1024 * 1024, maxCompressedBytes: 32 * 1024 * 1024 };
+  const limits = { maxNodes: 8_000_000, maxJsonBytes: 128 * 1024 * 1024, maxCompressedBytes: 32 * 1024 * 1024 };
   const entries = input.forests.map(entry => validateForestArtifact(entry, limits));
   const sceneIds = bindings.catalog.sceneIds;
   const sceneForestIds = sceneIds.map(id => `non-completion:scene:${id}`);

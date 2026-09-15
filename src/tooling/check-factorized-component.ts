@@ -36,7 +36,7 @@ export function checkFactorizedComponent(directoryInput: string, seedId: string,
     currentBindings.runtimeVerifier.files.filter(file => file.path !== experimentalPath));
   assert.equal(producerBindings.runtimeVerifier.sourceHash,
     hashBytes(Buffer.from(JSON.stringify(producerBindings.runtimeVerifier.files), "utf8")));
-  const limits = { maxNodes: 2_000_000, maxJsonBytes: 128 * 1024 * 1024, maxCompressedBytes: 32 * 1024 * 1024 };
+  const limits = { maxNodes: 8_000_000, maxJsonBytes: 128 * 1024 * 1024, maxCompressedBytes: 32 * 1024 * 1024 };
   assert(Array.isArray(failed.forests));
   const entries = failed.forests.map(value => validateForestArtifact(value, limits));
   const expectedIds = [...currentBindings.catalog.sceneIds.map(id => `non-completion:scene:${id}`), ...currentBindings.catalog.failureIds];

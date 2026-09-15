@@ -23,7 +23,7 @@ export function generateFactorizedCandidates(output: string, maxElapsedMs = 900_
     functionalGenerator: hashBytes(readFileSync(new URL("./generate-certificates.ts", import.meta.url))),
   });
   const generatorHashes = sourceHashes();
-  const limits = { maxNodes: 2_000_000, maxJsonBytes: 128 * 1024 * 1024, maxCompressedBytes: 32 * 1024 * 1024 };
+  const limits = { maxNodes: 8_000_000, maxJsonBytes: 128 * 1024 * 1024, maxCompressedBytes: 32 * 1024 * 1024 };
   const strategy = { roundLimit: 128, nonCompletionMode: "failure-absorbed" as const,
     nonCompletionPartition: "scene" as const, failurePartition: "choice" as const,
     fixedPointCompactEvery: 1, obligationCompactEvery: 1, obligationChoiceCompactAt: 750_000,

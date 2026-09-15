@@ -73,6 +73,14 @@ const STORMVAULT_CISTERN_SCENE = [...STORMVAULT_CISTERN, "visit-stormvault-ciste
 const STORMVAULT_SIGNAL_DONE = [...STORMVAULT_SIGNAL_TOWER, "raise-stormvault-signal"] as const;
 const STORMVAULT_CISTERN_DONE = [...STORMVAULT_CISTERN_SCENE, "open-stormvault-cistern"] as const;
 const STORMVAULT_RETURNED = [...STORMVAULT_SIGNAL_DONE, "return-to-gloamfen-from-stormvault"] as const;
+const CROWNWATER_ORIGIN = [...STORMVAULT_SIGNAL_DONE] as const;
+const CROWNWATER_BELL = [...CROWNWATER_ORIGIN, "take-crownwater-bell-road"] as const;
+const CROWNWATER_WEIR = [...CROWNWATER_ORIGIN, "take-crownwater-weir-road"] as const;
+const CROWNWATER_BELLHOUSE = [...CROWNWATER_BELL, "visit-crownwater-bellhouse"] as const;
+const CROWNWATER_WEIR_SCENE = [...CROWNWATER_WEIR, "visit-crownwater-weir"] as const;
+const CROWNWATER_BELL_DONE = [...CROWNWATER_BELLHOUSE, "ring-crownwater-bell"] as const;
+const CROWNWATER_WEIR_DONE = [...CROWNWATER_WEIR_SCENE, "set-crownwater-weir"] as const;
+const CROWNWATER_RETURNED = [...CROWNWATER_BELL_DONE, "return-to-stormvault-from-crownwater"] as const;
 
 export const AUTHORED_WITNESSES = {
   "scene": {
@@ -226,6 +234,15 @@ export const AUTHORED_WITNESSES = {
     ],
     "stormvault-cistern": [
       ...STORMVAULT_CISTERN_SCENE
+    ],
+    "crownwater-landing": [
+      ...CROWNWATER_BELL
+    ],
+    "crownwater-bellhouse": [
+      ...CROWNWATER_BELLHOUSE
+    ],
+    "crownwater-weir": [
+      ...CROWNWATER_WEIR_SCENE
     ],
     "lantern-hearing": [
       "hear-council",
@@ -3362,6 +3379,46 @@ export const AUTHORED_WITNESSES = {
     "leave-stormvault-cistern": [
       ...STORMVAULT_CISTERN_SCENE,
       "leave-stormvault-cistern"
+    ],
+    "take-crownwater-bell-road": [
+      ...CROWNWATER_ORIGIN,
+      "take-crownwater-bell-road"
+    ],
+    "take-crownwater-weir-road": [
+      ...CROWNWATER_ORIGIN,
+      "take-crownwater-weir-road"
+    ],
+    "revisit-crownwater-from-stormvault": [
+      ...CROWNWATER_RETURNED,
+      "revisit-crownwater-from-stormvault"
+    ],
+    "visit-crownwater-bellhouse": [
+      ...CROWNWATER_BELL,
+      "visit-crownwater-bellhouse"
+    ],
+    "visit-crownwater-weir": [
+      ...CROWNWATER_WEIR,
+      "visit-crownwater-weir"
+    ],
+    "return-to-stormvault-from-crownwater": [
+      ...CROWNWATER_BELL_DONE,
+      "return-to-stormvault-from-crownwater"
+    ],
+    "ring-crownwater-bell": [
+      ...CROWNWATER_BELLHOUSE,
+      "ring-crownwater-bell"
+    ],
+    "set-crownwater-weir": [
+      ...CROWNWATER_WEIR_SCENE,
+      "set-crownwater-weir"
+    ],
+    "leave-crownwater-bellhouse": [
+      ...CROWNWATER_BELLHOUSE,
+      "leave-crownwater-bellhouse"
+    ],
+    "leave-crownwater-weir": [
+      ...CROWNWATER_WEIR_SCENE,
+      "leave-crownwater-weir"
     ]
   },
   "ending": {

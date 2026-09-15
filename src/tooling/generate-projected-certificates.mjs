@@ -28,7 +28,7 @@ const hash=bytes=>createHash("sha256").update(bytes).digest("hex");
 const selfHash=hash(readFileSync(self));
 const bindings=fixturesOnly?undefined:currentCampaignCertificateBindings();
 const policy={nodeLimit:2_000_000,cacheLimit:500_000,roundLimit:128,minimumCopyAt:750_000,allocationInterval:250_000,generationMs:120_000,verificationMs:120_000,coneCompactAt:1_250_000};
-const limits={maxNodes:2_000_000,maxJsonBytes:128*1024*1024,maxCompressedBytes:32*1024*1024};
+const limits={maxNodes:8_000_000,maxJsonBytes:128*1024*1024,maxCompressedBytes:32*1024*1024};
 const save=(name,value)=>writeFileSync(join(directory,name),JSON.stringify(value)+"\n",{flag:"wx",mode:0o600});
 const event=value=>process.stdout.write(JSON.stringify(value)+"\n");
 

@@ -583,3 +583,16 @@ root checks fresh bundle restores, exact source/overlay bytes and modes, all
 originals. Nine worktrees and three branches remain; cumulative cleanup is
 87 worktrees and 41 topic branches. Current sources and direct evidence files
 remain available and hash-matched.
+## Current handoff: 2026-09-15, Crownwater beyond Stormvault
+
+Crownwater is now the next authored campaign district after Stormvault. The release contains 49 scenes, 237 choices, 36 endings, 322 authored paths, 6,302 actions, and 6,624 checkpoints. The new Crownwater branch adds Bellhouse and Weir routes, explicit Stormvault gating, replay-safe revisits, and resource/fact assertions for both resolutions.
+
+The factorized campaign certificate now contains 997 forests: 49 scene forests and 948 choice failure-seed forests (four failure obligations per choice). The corrected scene prefix is `/tmp/af9-crownwater-scene-prefix-20260915-v6`; the final source-bound candidate catalog is `/tmp/af9-crownwater-rebound-node8m-runtime4h-20260915-v1`; the independent verification report and log are `/tmp/af9-crownwater-rebound-node8m-runtime4h-20260915-v1-verification.json` and `/tmp/af9-crownwater-rebound-node8m-runtime4h-20260915-v1-verification.log`; and the staged bundle is `/tmp/af9-crownwater-stage-node8m-runtime4h-20260915-v1`.
+
+Independent verification passed with `complete:true`, `accepted:false`, 49 scenes, 948 failure seeds, 997 forests loaded once, 39 completion rounds, 39 completion-or-failure rounds, and 6,803,575 ms elapsed (about 113 minutes). The production bundle loader also rechecked every manifest and forest byte/hash before installation. The previous repository bundle is preserved at `/tmp/af9-campaign-previous-20260915-v2`.
+
+The required `npm run verify` passed with 302 tests, 0 failures, 0 skipped, and 7,033,798 ms test duration (about 117 minutes). Evidence is retained outside the repository at `/tmp/af9-crownwater-npm-verify-node8m-runtime4h-20260915-v1.log`.
+
+The certificate policy is now an 8,000,000-node forest bound, 8,192 MiB verifier heap, and a 14,400,000 ms checked window with a 14,430,000 ms external timeout. The earlier 3,600,000 ms guard was reached during archive-hall after all fixed points and failure seeds had passed; the policy was expanded to match the observed exact scene-replay cost rather than weakening checks.
+
+This remains factorized backward-safety and completion evidence over the original relational model. It does not claim exhaustive reachable-state enumeration, exact noncompletion semantics, least-bad failure cones, or production adoption: `accepted:false` is the expected certificate artifact state.

@@ -36,7 +36,7 @@ export const CAMPAIGN_RESOURCE_BOUNDS = Object.freeze({
 
 export const CAMPAIGN_CERTIFICATE_CONFIG = Object.freeze({
   verifier: Object.freeze({
-    nodeLimit: 4_000_000,
+    nodeLimit: 8_000_000,
     cacheLimit: 500_000,
     roundLimit: 128,
     order: "interleaved" as const,
@@ -53,9 +53,9 @@ export const CAMPAIGN_CERTIFICATE_CONFIG = Object.freeze({
     failurePartition: "choice",
   }),
   runtimePolicy: Object.freeze({
-    checkedElapsedMs: 3_600_000,
-    externalTimeoutMs: 3_630_000,
-    nodeMaxOldSpaceSizeMiB: 4096,
+    checkedElapsedMs: 14_400_000,
+    externalTimeoutMs: 14_430_000,
+    nodeMaxOldSpaceSizeMiB: 8192,
   }),
 });
 

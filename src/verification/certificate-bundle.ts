@@ -120,7 +120,7 @@ export const DEFAULT_CERTIFICATE_BUNDLE_LIMITS: CertificateBundleLimits = Object
   maxManifestBytes: 4 * 1024 * 1024,
   maxDescriptorBytes: 2 * 1024 * 1024,
   file: Object.freeze({
-    maxNodes: 2_000_000,
+    maxNodes: 8_000_000,
     maxJsonBytes: 128 * 1024 * 1024,
     maxCompressedBytes: 32 * 1024 * 1024,
   }),

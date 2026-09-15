@@ -6,6 +6,7 @@ import { FENWARD_CHOICES, FENWARD_FACT_LABELS, FENWARD_SCENES } from "./fenward.
 import { CINDERWAKE_CHOICES, CINDERWAKE_FACT_LABELS, CINDERWAKE_SCENES } from "./cinderwake.js";
 import { GLOAMFEN_CHOICES, GLOAMFEN_FACT_LABELS, GLOAMFEN_SCENES } from "./gloamfen.js";
 import { STORMVAULT_CHOICES, STORMVAULT_FACT_LABELS, STORMVAULT_SCENES } from "./stormvault.js";
+import { CROWNWATER_CHOICES, CROWNWATER_FACT_LABELS, CROWNWATER_SCENES } from "./crownwater.js";
 
 export type ScenarioStatus = "completed" | "departed" | "dead";
 
@@ -196,6 +197,7 @@ export const FACT_LABELS = {
   ...CINDERWAKE_FACT_LABELS,
   ...GLOAMFEN_FACT_LABELS,
   ...STORMVAULT_FACT_LABELS,
+  ...CROWNWATER_FACT_LABELS,
 } as const satisfies Readonly<Record<string, string>>;
 
 /**
@@ -446,6 +448,7 @@ export const RAW_SCENARIO = {
   ...CINDERWAKE_SCENES,
   ...GLOAMFEN_SCENES,
   ...STORMVAULT_SCENES,
+  ...CROWNWATER_SCENES,
   ],
   choices: [
     {
@@ -1217,5 +1220,6 @@ export const RAW_SCENARIO = {
   ...CINDERWAKE_CHOICES,
   ...GLOAMFEN_CHOICES,
   ...STORMVAULT_CHOICES,
+  ...CROWNWATER_CHOICES,
   ],
 } as const satisfies ScenarioData;
