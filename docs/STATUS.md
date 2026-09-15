@@ -1,6 +1,20 @@
 # Current work
 
-## Current handoff: 2026-09-14, Cinderwake beyond Fenward
+## Current handoff: 2026-09-14, Gloamfen beyond Cinderwake
+
+Gloamfen extends the authored campaign beyond Cinderwake into a soot-black marsh edge. The route has three scenes (`gloamfen-landing`, Mara's `gloamfen-sluicehouse`, and Iven's `gloamfen-marsh-road`) and ten deterministic choices. The sluice approach spends one Supply to secure Mara's gates; the marsh-road approach adds one Risk to mark Iven's haul line. Both routes support revisit, return, save/restore, replay, and changed Cinderwake return text. Authored witnesses now cover 43 scenes and 217 choices.
+
+The policy-aligned external certificate evidence is preserved outside the repository:
+
+- Functional scene-prefix source: `/tmp/af9-gloamfen-functional-node3m-20260914-v1` (43 scene forests preserved from the interrupted producer prefix).
+- Projected catalog: `/tmp/af9-gloamfen-projected-node3m-runtime60-20260914-v1/candidates.json` (911 forests: 43 scene forests plus 868 choice-failure forests).
+- Independent verifier: `/tmp/af9-gloamfen-projected-node3m-runtime60-20260914-v2-verification.json` (43 scenes, 868 failure seeds, complete, accepted false, `1072139.038699 ms`).
+- Staged bundle source: `/tmp/af9-gloamfen-stage-20260914-v1`; previous Cinderwake bundle: `/tmp/af9-campaign-previous-20260914-v6`.
+- Full repository gate: `/tmp/af9-gloamfen-verify-runtime60-20260914-v1.log` (`298/298`, `1102797.459353 ms`).
+
+The verifier capacity is now a 3,000,000-node BDD limit with a 60-minute checked / 60.5-minute external window; cache, round, transition, resource, and relational checks are unchanged. Browser surface, live browser acceptance, mobile layout, and three-player coordination remain unverified. The complete campaign goal remains larger than this slice.
+
+## Previous handoff: 2026-09-14, Cinderwake beyond Fenward
 
 Cinderwake extends the authored campaign beyond Fenward with an industrial-belt landing, a lockhouse route, and a smoke-road route. The branch is deterministic and content-owned: `take-cinderwake-lock-road` spends one Supply to reach Bex's Lockhouse, while `take-cinderwake-smoke-road` spends one Risk to reach Tessa's Smoke Road; each route has its own resolution and return path. Fenward revisit text now records the Cinderwake outcome, and the authored witness catalog covers 40 scenes and 207 choices.
 

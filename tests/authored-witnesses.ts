@@ -57,6 +57,14 @@ const CINDERWAKE_SMOKE_ROAD = [...CINDERWAKE_BELT, "visit-cinderwake-smoke-road"
 const CINDERWAKE_LOCK_DONE = [...CINDERWAKE_LOCKHOUSE, "secure-cinderwake-lock"] as const;
 const CINDERWAKE_SMOKE_DONE = [...CINDERWAKE_SMOKE_ROAD, "mark-cinderwake-smoke-road"] as const;
 const CINDERWAKE_RETURNED = [...CINDERWAKE_LOCK_DONE, "return-to-fenward-from-cinderwake"] as const;
+const GLOAMFEN_ORIGIN = [...CINDERWAKE_SMOKE_DONE] as const;
+const GLOAMFEN_SLUICE = [...GLOAMFEN_ORIGIN, "take-gloamfen-sluice-road"] as const;
+const GLOAMFEN_MARSH = [...GLOAMFEN_ORIGIN, "take-gloamfen-marsh-road"] as const;
+const GLOAMFEN_SLUICEHOUSE = [...GLOAMFEN_SLUICE, "visit-gloamfen-sluicehouse"] as const;
+const GLOAMFEN_MARSH_ROAD = [...GLOAMFEN_MARSH, "visit-gloamfen-marsh-road"] as const;
+const GLOAMFEN_SLUICE_DONE = [...GLOAMFEN_SLUICEHOUSE, "secure-gloamfen-lock"] as const;
+const GLOAMFEN_MARSH_DONE = [...GLOAMFEN_MARSH_ROAD, "mark-gloamfen-marsh-road"] as const;
+const GLOAMFEN_RETURNED = [...GLOAMFEN_SLUICE_DONE, "return-to-cinderwake-from-gloamfen"] as const;
 
 export const AUTHORED_WITNESSES = {
   "scene": {
@@ -192,6 +200,15 @@ export const AUTHORED_WITNESSES = {
     ],
     "cinderwake-smoke-road": [
       ...CINDERWAKE_SMOKE_ROAD
+    ],
+    "gloamfen-landing": [
+      ...GLOAMFEN_SLUICE
+    ],
+    "gloamfen-sluicehouse": [
+      ...GLOAMFEN_SLUICEHOUSE
+    ],
+    "gloamfen-marsh-road": [
+      ...GLOAMFEN_MARSH_ROAD
     ],
     "lantern-hearing": [
       "hear-council",
@@ -3248,6 +3265,46 @@ export const AUTHORED_WITNESSES = {
     "leave-cinderwake-smoke-road": [
       ...CINDERWAKE_SMOKE_ROAD,
       "leave-cinderwake-smoke-road"
+    ],
+    "take-gloamfen-sluice-road": [
+      ...GLOAMFEN_ORIGIN,
+      "take-gloamfen-sluice-road"
+    ],
+    "take-gloamfen-marsh-road": [
+      ...GLOAMFEN_ORIGIN,
+      "take-gloamfen-marsh-road"
+    ],
+    "revisit-gloamfen-from-cinderwake": [
+      ...GLOAMFEN_RETURNED,
+      "revisit-gloamfen-from-cinderwake"
+    ],
+    "visit-gloamfen-sluicehouse": [
+      ...GLOAMFEN_SLUICE,
+      "visit-gloamfen-sluicehouse"
+    ],
+    "visit-gloamfen-marsh-road": [
+      ...GLOAMFEN_MARSH,
+      "visit-gloamfen-marsh-road"
+    ],
+    "return-to-cinderwake-from-gloamfen": [
+      ...GLOAMFEN_SLUICE_DONE,
+      "return-to-cinderwake-from-gloamfen"
+    ],
+    "secure-gloamfen-lock": [
+      ...GLOAMFEN_SLUICEHOUSE,
+      "secure-gloamfen-lock"
+    ],
+    "mark-gloamfen-marsh-road": [
+      ...GLOAMFEN_MARSH_ROAD,
+      "mark-gloamfen-marsh-road"
+    ],
+    "leave-gloamfen-sluicehouse": [
+      ...GLOAMFEN_SLUICEHOUSE,
+      "leave-gloamfen-sluicehouse"
+    ],
+    "leave-gloamfen-marsh-road": [
+      ...GLOAMFEN_MARSH_ROAD,
+      "leave-gloamfen-marsh-road"
     ]
   },
   "ending": {

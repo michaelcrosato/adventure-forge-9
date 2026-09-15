@@ -30,6 +30,14 @@ export const CINDERWAKE_SCENES = [
         text: "Tessa's smoke-road marks lead the night haul between the kilns. The route is exposed, but the carts no longer need a guide at every turn.",
         when: [{ type: "flag", flag: "cinderwake-smoke-road-marked", value: true }],
       },
+      {
+        text: "Mara's Gloamfen sluice now holds. The next convoy can load at Cinderwake without turning back for a gate brace.",
+        when: [{ type: "flag", flag: "gloamfen-lock-secured", value: true }],
+      },
+      {
+        text: "Iven's Gloamfen marsh-road marks now guide the return haul. Cinderwake's carts can cross the kiln edge without calling a guide into the heat.",
+        when: [{ type: "flag", flag: "gloamfen-marsh-road-marked", value: true }],
+      },
     ],
   },
   {
