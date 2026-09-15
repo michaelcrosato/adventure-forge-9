@@ -43,6 +43,13 @@ const SALTREACH_CHANNEL = [...SALTREACH_FERRY_SCENE, "visit-saltreach-channel-wo
 const SALTREACH_TIDEHOUSE_DONE = [...SALTREACH_TIDEHOUSE, "secure-saltreach-tidehouse"] as const;
 const SALTREACH_CHANNEL_DONE = [...SALTREACH_CHANNEL, "mark-saltreach-channel"] as const;
 const SALTREACH_RETURNED = [...SALTREACH_TIDEHOUSE_DONE, "return-to-reedway-from-saltreach"] as const;
+const FENWARD_ORIGIN = [...SALTREACH_CHANNEL_DONE] as const;
+const FENWARD_CAUSEWAY = [...FENWARD_ORIGIN, "take-fenward-causeway"] as const;
+const FENWARD_BEACON = [...FENWARD_CAUSEWAY, "visit-fenward-beacon"] as const;
+const FENWARD_FORD = [...FENWARD_CAUSEWAY, "visit-fenward-ford"] as const;
+const FENWARD_BEACON_DONE = [...FENWARD_BEACON, "secure-fenward-beacon"] as const;
+const FENWARD_FORD_DONE = [...FENWARD_FORD, "chart-fenward-ford"] as const;
+const FENWARD_RETURNED = [...FENWARD_BEACON_DONE, "return-to-saltreach-from-fenward"] as const;
 
 export const AUTHORED_WITNESSES = {
   "scene": {
@@ -160,6 +167,15 @@ export const AUTHORED_WITNESSES = {
       "open-evacuation-route",
       "signal-evacuation",
       "organize-high-ground-evacuation"
+    ],
+    "fenward-beacon": [
+      ...FENWARD_BEACON
+    ],
+    "fenward-ford": [
+      ...FENWARD_FORD
+    ],
+    "fenward-landing": [
+      ...FENWARD_CAUSEWAY
     ],
     "lantern-hearing": [
       "hear-council",
@@ -3136,6 +3152,46 @@ export const AUTHORED_WITNESSES = {
     "leave-saltreach-channel-works": [
       ...SALTREACH_CHANNEL,
       "leave-saltreach-channel-works"
+    ],
+    "take-fenward-causeway": [
+      ...FENWARD_ORIGIN,
+      "take-fenward-causeway"
+    ],
+    "take-fenward-night-ford": [
+      ...FENWARD_ORIGIN,
+      "take-fenward-night-ford"
+    ],
+    "revisit-fenward-from-saltreach": [
+      ...FENWARD_RETURNED,
+      "revisit-fenward-from-saltreach"
+    ],
+    "visit-fenward-beacon": [
+      ...FENWARD_CAUSEWAY,
+      "visit-fenward-beacon"
+    ],
+    "visit-fenward-ford": [
+      ...FENWARD_CAUSEWAY,
+      "visit-fenward-ford"
+    ],
+    "return-to-saltreach-from-fenward": [
+      ...FENWARD_BEACON_DONE,
+      "return-to-saltreach-from-fenward"
+    ],
+    "secure-fenward-beacon": [
+      ...FENWARD_BEACON,
+      "secure-fenward-beacon"
+    ],
+    "chart-fenward-ford": [
+      ...FENWARD_FORD,
+      "chart-fenward-ford"
+    ],
+    "leave-fenward-beacon": [
+      ...FENWARD_BEACON,
+      "leave-fenward-beacon"
+    ],
+    "leave-fenward-ford": [
+      ...FENWARD_FORD,
+      "leave-fenward-ford"
     ]
   },
   "ending": {

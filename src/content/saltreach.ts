@@ -31,6 +31,14 @@ export const SALTREACH_SCENES = [
         when: [{ type: "flag", flag: "saltreach-channel-marked", value: true }],
       },
       {
+        text: "Pera's Fenward beacon now marks the raised causeway beyond Saltreach. The convoy can see where the safe bank begins.",
+        when: [{ type: "flag", flag: "fenward-beacon-lit", value: true }],
+      },
+      {
+        text: "Jori's Fenward ford chart carries the night convoy beyond Saltreach, even when the beacon is out.",
+        when: [{ type: "flag", flag: "fenward-ford-charted", value: true }],
+      },
+      {
         text: "The tidehouse and channel works remain open to inspection. You can return to the Reedway commons without losing the route you made.",
       },
     ],

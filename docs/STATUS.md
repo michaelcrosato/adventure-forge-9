@@ -1,6 +1,19 @@
 # Current work
 
-## Current handoff: 2026-09-14, Saltreach beyond Reedway
+## Current handoff: 2026-09-14, Fenward beyond Saltreach
+
+Fenward now extends the campaign beyond the resolved Saltreach commons. The raised causeway and submerged night ford are both available from the same Saltreach state, then Pera Holt's beacon can be secured with Supply or Jori Kett's ford can be charted with Risk. Returning to Saltreach exposes the Fenward outcome and permits a later revisit without reopening the unresolved choice.
+
+External evidence is preserved outside the repository:
+
+- Candidate catalog: `/tmp/af9-fenward-projected-long-20260914-v2/candidates.json` with 37 scene forests and 788 choice failure forests, 825 forests total.
+- Independent verifier: `/tmp/af9-fenward-projected-long-20260914-v2-verification.json` with 37 scene checks and 788 failure seeds.
+- Installed stage: `/tmp/af9-fenward-stage-20260914-v1`; prior bundle backup: `/tmp/af9-campaign-previous-20260914-v4`.
+- Required gate: `/tmp/af9-fenward-verify-20260914-v1.log`, 294/294 passing in 718823.927418 ms.
+
+Browser, save/load in a live browser, mobile layout, and three-player acceptance remain unverified. The complete user goal remains larger than this slice.
+
+## Previous handoff: 2026-09-14, Saltreach beyond Reedway
 
 Saltreach now extends the campaign beyond the Reedway upper watch. Either the public ferry warning or the quiet towpath warning can open Saltreach from the same resolved Blackglass state, with a supply-costing tidehouse response or a risk-costing channel-mark response. The resolved Saltreach state changes the Reedway commons text and can be revisited without leaking the unchosen route.
 
