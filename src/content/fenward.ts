@@ -30,6 +30,14 @@ export const FENWARD_SCENES = [
         text: "Jori's ford chart carries the night convoy around the flooded reed beds. The route is dangerous, but it no longer depends on a guide standing in the dark.",
         when: [{ type: "flag", flag: "fenward-ford-charted", value: true }],
       },
+      {
+        text: "Bex's Cinderwake lock now holds the industrial flow beyond Fenward. The causeway carries clean stores instead of soot water.",
+        when: [{ type: "flag", flag: "cinderwake-lock-secured", value: true }],
+      },
+      {
+        text: "Tessa's Cinderwake smoke-road marks guide the night haul beyond Fenward. The kiln route remains exposed, but the carts keep moving.",
+        when: [{ type: "flag", flag: "cinderwake-smoke-road-marked", value: true }],
+      },
     ],
   },
   {

@@ -3,6 +3,7 @@ import { LANTERN_CHOICES, LANTERN_SCENES } from "./lantern.js";
 import { REEDWAY_CHOICES, REEDWAY_FACT_LABELS, REEDWAY_SCENES } from "./reedway.js";
 import { SALTREACH_CHOICES, SALTREACH_FACT_LABELS, SALTREACH_SCENES } from "./saltreach.js";
 import { FENWARD_CHOICES, FENWARD_FACT_LABELS, FENWARD_SCENES } from "./fenward.js";
+import { CINDERWAKE_CHOICES, CINDERWAKE_FACT_LABELS, CINDERWAKE_SCENES } from "./cinderwake.js";
 
 export type ScenarioStatus = "completed" | "departed" | "dead";
 
@@ -190,6 +191,7 @@ export const FACT_LABELS = {
   ...REEDWAY_FACT_LABELS,
   ...SALTREACH_FACT_LABELS,
   ...FENWARD_FACT_LABELS,
+  ...CINDERWAKE_FACT_LABELS,
 } as const satisfies Readonly<Record<string, string>>;
 
 /**
@@ -437,6 +439,7 @@ export const RAW_SCENARIO = {
     ...REEDWAY_SCENES,
     ...SALTREACH_SCENES,
     ...FENWARD_SCENES,
+    ...CINDERWAKE_SCENES,
   ],
   choices: [
     {
@@ -1205,5 +1208,6 @@ export const RAW_SCENARIO = {
     ...REEDWAY_CHOICES,
     ...SALTREACH_CHOICES,
     ...FENWARD_CHOICES,
+    ...CINDERWAKE_CHOICES,
   ],
 } as const satisfies ScenarioData;

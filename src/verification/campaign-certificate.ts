@@ -53,8 +53,8 @@ export const CAMPAIGN_CERTIFICATE_CONFIG = Object.freeze({
     failurePartition: "choice",
   }),
   runtimePolicy: Object.freeze({
-    checkedElapsedMs: 720_000,
-    externalTimeoutMs: 750_000,
+    checkedElapsedMs: 1_800_000,
+    externalTimeoutMs: 1_830_000,
     nodeMaxOldSpaceSizeMiB: 1536,
   }),
 });

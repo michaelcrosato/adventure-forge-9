@@ -50,6 +50,13 @@ const FENWARD_FORD = [...FENWARD_CAUSEWAY, "visit-fenward-ford"] as const;
 const FENWARD_BEACON_DONE = [...FENWARD_BEACON, "secure-fenward-beacon"] as const;
 const FENWARD_FORD_DONE = [...FENWARD_FORD, "chart-fenward-ford"] as const;
 const FENWARD_RETURNED = [...FENWARD_BEACON_DONE, "return-to-saltreach-from-fenward"] as const;
+const CINDERWAKE_ORIGIN = [...FENWARD_FORD_DONE] as const;
+const CINDERWAKE_BELT = [...CINDERWAKE_ORIGIN, "take-cinderwake-lock-road"] as const;
+const CINDERWAKE_LOCKHOUSE = [...CINDERWAKE_BELT, "visit-cinderwake-lockhouse"] as const;
+const CINDERWAKE_SMOKE_ROAD = [...CINDERWAKE_BELT, "visit-cinderwake-smoke-road"] as const;
+const CINDERWAKE_LOCK_DONE = [...CINDERWAKE_LOCKHOUSE, "secure-cinderwake-lock"] as const;
+const CINDERWAKE_SMOKE_DONE = [...CINDERWAKE_SMOKE_ROAD, "mark-cinderwake-smoke-road"] as const;
+const CINDERWAKE_RETURNED = [...CINDERWAKE_LOCK_DONE, "return-to-fenward-from-cinderwake"] as const;
 
 export const AUTHORED_WITNESSES = {
   "scene": {
@@ -176,6 +183,15 @@ export const AUTHORED_WITNESSES = {
     ],
     "fenward-landing": [
       ...FENWARD_CAUSEWAY
+    ],
+    "cinderwake-landing": [
+      ...CINDERWAKE_BELT
+    ],
+    "cinderwake-lockhouse": [
+      ...CINDERWAKE_LOCKHOUSE
+    ],
+    "cinderwake-smoke-road": [
+      ...CINDERWAKE_SMOKE_ROAD
     ],
     "lantern-hearing": [
       "hear-council",
@@ -3192,6 +3208,46 @@ export const AUTHORED_WITNESSES = {
     "leave-fenward-ford": [
       ...FENWARD_FORD,
       "leave-fenward-ford"
+    ],
+    "take-cinderwake-lock-road": [
+      ...CINDERWAKE_ORIGIN,
+      "take-cinderwake-lock-road"
+    ],
+    "take-cinderwake-smoke-road": [
+      ...CINDERWAKE_ORIGIN,
+      "take-cinderwake-smoke-road"
+    ],
+    "revisit-cinderwake-from-fenward": [
+      ...CINDERWAKE_RETURNED,
+      "revisit-cinderwake-from-fenward"
+    ],
+    "visit-cinderwake-lockhouse": [
+      ...CINDERWAKE_BELT,
+      "visit-cinderwake-lockhouse"
+    ],
+    "visit-cinderwake-smoke-road": [
+      ...CINDERWAKE_BELT,
+      "visit-cinderwake-smoke-road"
+    ],
+    "return-to-fenward-from-cinderwake": [
+      ...CINDERWAKE_LOCK_DONE,
+      "return-to-fenward-from-cinderwake"
+    ],
+    "secure-cinderwake-lock": [
+      ...CINDERWAKE_LOCKHOUSE,
+      "secure-cinderwake-lock"
+    ],
+    "mark-cinderwake-smoke-road": [
+      ...CINDERWAKE_SMOKE_ROAD,
+      "mark-cinderwake-smoke-road"
+    ],
+    "leave-cinderwake-lockhouse": [
+      ...CINDERWAKE_LOCKHOUSE,
+      "leave-cinderwake-lockhouse"
+    ],
+    "leave-cinderwake-smoke-road": [
+      ...CINDERWAKE_SMOKE_ROAD,
+      "leave-cinderwake-smoke-road"
     ]
   },
   "ending": {

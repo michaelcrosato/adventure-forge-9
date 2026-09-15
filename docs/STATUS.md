@@ -1,6 +1,20 @@
 # Current work
 
-## Current handoff: 2026-09-14, Fenward beyond Saltreach
+## Current handoff: 2026-09-14, Cinderwake beyond Fenward
+
+Cinderwake extends the authored campaign beyond Fenward with an industrial-belt landing, a lockhouse route, and a smoke-road route. The branch is deterministic and content-owned: `take-cinderwake-lock-road` spends one Supply to reach Bex's Lockhouse, while `take-cinderwake-smoke-road` spends one Risk to reach Tessa's Smoke Road; each route has its own resolution and return path. Fenward revisit text now records the Cinderwake outcome, and the authored witness catalog covers 40 scenes and 207 choices.
+
+The policy-aligned external certificate evidence is preserved outside the repository:
+
+- Functional scene-prefix source: `/tmp/af9-cinderwake-functional-policy-20260914-v1` (40 scene forests preserved from the interrupted producer prefix).
+- Projected catalog: `/tmp/af9-cinderwake-projected-policy-20260914-v1/candidates.json` (868 forests: 40 scene forests plus 828 choice-failure forests).
+- Independent verifier: `/tmp/af9-cinderwake-projected-policy-20260914-v1-verification.json` (40 scenes, 828 failure seeds, complete, accepted false, `865649.849347 ms`).
+- Staged bundle source: `/tmp/af9-cinderwake-stage-20260914-v1`; previous Fenward bundle: `/tmp/af9-campaign-previous-20260914-v5`.
+- Full repository gate: `/tmp/af9-cinderwake-verify-policy-20260914-v1.log` (`296/296`, `892728.29218 ms`).
+
+The verifier wall-clock window is now 30 minutes checked / 30.5 minutes external; node, cache, round, resource, and relational checks are unchanged. Browser surface, live browser acceptance, mobile layout, and three-player coordination remain unverified. The complete campaign goal remains larger than this slice.
+
+## Previous handoff: 2026-09-14, Fenward beyond Saltreach
 
 Fenward now extends the campaign beyond the resolved Saltreach commons. The raised causeway and submerged night ford are both available from the same Saltreach state, then Pera Holt's beacon can be secured with Supply or Jori Kett's ford can be charted with Risk. Returning to Saltreach exposes the Fenward outcome and permits a later revisit without reopening the unresolved choice.
 
